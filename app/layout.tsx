@@ -7,25 +7,13 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' })
 
 export const metadata: Metadata = {
-  title: 'UniVita 8 - Gamified Healthy Lifestyle Platform',
-  description: 'Gamified healthy lifestyle platform for university students using the 8 remedies approach and generative AI.',
-  generator: 'v0.app',
+  title: 'VitalUNAC',
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
+        url: '/logo.png',
+      }
     ],
-    apple: '/apple-icon.png',
   },
 }
 

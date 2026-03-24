@@ -19,36 +19,36 @@ import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { LevelBadge } from "@/components/level-badge"
 
 const remedies = [
-  { name: "Water", icon: Droplets, completed: false },
-  { name: "Sunlight", icon: Sun, completed: false },
-  { name: "Exercise", icon: Dumbbell, completed: false },
-  { name: "Nutrition", icon: Salad, completed: false },
-  { name: "Fresh Air", icon: Wind, completed: false },
-  { name: "Temperance", icon: Heart, completed: false },
-  { name: "Rest", icon: Moon, completed: false },
-  { name: "Trust", icon: Brain, completed: false },
+  { name: "Agua", icon: Droplets, completed: false },
+  { name: "Luz solar", icon: Sun, completed: false },
+  { name: "Ejercicio", icon: Dumbbell, completed: false },
+  { name: "Nutrición", icon: Salad, completed: false },
+  { name: "Aire puro", icon: Wind, completed: false },
+  { name: "Temperancia", icon: Heart, completed: false },
+  { name: "Descanso", icon: Moon, completed: false },
+  { name: "Confianza en Dios", icon: Brain, completed: false },
 ]
 
 const activities = [
-  { title: "Drink 8 glasses of water", category: "Water", xp: 10 },
-  { title: "Take a 30-min walk outside", category: "Exercise", xp: 20 },
-  { title: "Sleep 7+ hours tonight", category: "Rest", xp: 15 },
+  { title: "Bebe 8 vasos de agua.", category: "Agua", xp: 10 },
+  { title: "Salga a caminar durante 30 minutos.", category: "Ejercicio", xp: 20 },
+  { title: "Duerme más de 7 horas esta noche.", category: "Descanso", xp: 15 },
 ]
 
 export default function UserDashboard() {
   return (
     <>
-      <DashboardNavbar role="user" userName="Student" />
+      <DashboardNavbar role="user" userName="Estudiante" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-2xl font-bold font-heading text-[#1F2937]">
-              Welcome back!
+            <h2 className="text-4xl font-bold font-heading text-[#1F2937]">
+              Bienvenido!
             </h2>
             <p className="mt-1 text-sm text-[#6B7280]">
-              Track your healthy lifestyle progress with the 8 Remedies
+              Controla tu progreso hacia un estilo de vida saludable con los 8 Remedios.
             </p>
           </div>
           <LevelBadge level={1} />
@@ -62,7 +62,7 @@ export default function UserDashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold text-[#1F2937]">35</p>
-              <p className="text-xs text-[#6B7280]">XP Earned</p>
+              <p className="text-xs text-[#6B7280]">XP Obtenida</p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-4 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
@@ -71,7 +71,7 @@ export default function UserDashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold text-[#1F2937]">0/8</p>
-              <p className="text-xs text-[#6B7280]">Remedies Done</p>
+              <p className="text-xs text-[#6B7280]">Remedios Hechos</p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-4 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
@@ -80,7 +80,7 @@ export default function UserDashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold text-[#1F2937]">0</p>
-              <p className="text-xs text-[#6B7280]">Activities</p>
+              <p className="text-xs text-[#6B7280]">Actividades</p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-4 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
@@ -89,7 +89,7 @@ export default function UserDashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold text-[#1F2937]">0</p>
-              <p className="text-xs text-[#6B7280]">Day Streak</p>
+              <p className="text-xs text-[#6B7280]">Racha diaria</p>
             </div>
           </div>
         </div>
@@ -105,9 +105,9 @@ export default function UserDashboard() {
               <ClipboardList className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-lg font-bold font-heading">Start 8 Remedies Survey</p>
+              <p className="text-lg font-bold font-heading">Encuesta sobre 8 remedios</p>
               <p className="text-sm text-[#FFFFFF]/80">
-                Evaluate your lifestyle across all 8 health dimensions
+                Evalúa tu estilo de vida en las 8 dimensiones de la salud.
               </p>
             </div>
           </div>
@@ -117,8 +117,8 @@ export default function UserDashboard() {
         <div className="grid lg:grid-cols-2 gap-6">
           {/* 8 Remedies Progress */}
           <section className="rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm p-6">
-            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">
-              8 Remedies Progress
+            <h3 className="text-xl font-bold font-heading text-[#1F2937] mb-4">
+              Progreso
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {remedies.map((remedy) => {
@@ -126,7 +126,7 @@ export default function UserDashboard() {
                 return (
                   <div
                     key={remedy.name}
-                    className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-colors ${
+                    className={`flex flex-col items-center gap-2 p-2 rounded-xl border transition-colors ${
                       remedy.completed
                         ? "border-[#22C55E] bg-[#F0FDF4]"
                         : "border-[#E2E8F0] bg-[#F8FAFC]"
@@ -158,7 +158,7 @@ export default function UserDashboard() {
           {/* Recommended Activities */}
           <section className="rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm p-6">
             <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">
-              Recommended Activities
+              Actividades recomendadas
             </h3>
             <div className="flex flex-col gap-3">
               {activities.map((activity) => (

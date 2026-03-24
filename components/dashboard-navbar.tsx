@@ -29,8 +29,8 @@ interface DashboardNavbarProps {
 const navItemsByRole: Record<string, NavItem[]> = {
   user: [
     { label: "Dashboard", href: "/dashboard/user", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { label: "8 Remedies Survey", href: "/dashboard/user/survey", icon: <ClipboardList className="w-4 h-4" /> },
-    { label: "My Results", href: "/dashboard/user/results", icon: <BarChart3 className="w-4 h-4" /> },
+    { label: "Encuesta remedios naturales", href: "/dashboard/user/survey", icon: <ClipboardList className="w-4 h-4" /> },
+    { label: "Mis resultados", href: "/dashboard/user/results", icon: <BarChart3 className="w-4 h-4" /> },
   ],
   admin: [
     { label: "Dashboard", href: "/dashboard/admin", icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -41,7 +41,7 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
 }
 
-export function DashboardNavbar({ role, userName = "Student" }: DashboardNavbarProps) {
+export function DashboardNavbar({ role, userName = "Estudiante" }: DashboardNavbarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const navItems = navItemsByRole[role] || []
@@ -54,14 +54,14 @@ export function DashboardNavbar({ role, userName = "Student" }: DashboardNavbarP
           <UniVitaLogo size="sm" />
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold font-heading text-[#1F2937] leading-tight">
-              UniVita 8
+              VitalUNAC
             </h1>
             <p className="text-[10px] text-[#6B7280] leading-none">
-              Healthy Lifestyle Platform
+              Plataforma para un estilo de vida saludable
             </p>
           </div>
           <h1 className="sm:hidden text-lg font-bold font-heading text-[#1F2937]">
-            UniVita 8
+            VitalUNAC
           </h1>
         </div>
 
@@ -106,7 +106,7 @@ export function DashboardNavbar({ role, userName = "Student" }: DashboardNavbarP
             className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            <span className="sr-only sm:not-sr-only">Logout</span>
+            <span className="sr-only sm:not-sr-only">Cerrar Sesión</span>
           </Link>
 
           {/* Mobile toggle */}
@@ -151,7 +151,7 @@ export function DashboardNavbar({ role, userName = "Student" }: DashboardNavbarP
               className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              Logout
+              Cerrar Sesión
             </Link>
           </nav>
         </div>

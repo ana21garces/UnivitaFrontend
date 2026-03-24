@@ -34,7 +34,7 @@ export function WellnessPanel() {
             <span className="text-sm font-medium text-[#1F2937]">+2,500 usuarios activos</span>
           </div>
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFFFFF] shadow-sm border border-[#E2E8F0]">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#6D28D9]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#549d87]" />
             <span className="text-sm font-medium text-[#1F2937]">8 Remedios</span>
           </div>
         </div>

@@ -28,7 +28,7 @@ import {
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 
 const remedyKeys = [
-  { key: "water", name: "Water", icon: Droplets },
+  { key: "water", name: "Agua", icon: Droplets },
   { key: "sunlight", name: "Sunlight", icon: Sun },
   { key: "exercise", name: "Exercise", icon: Dumbbell },
   { key: "nutrition", name: "Nutrition", icon: Salad },
@@ -79,7 +79,7 @@ function ResultsContent() {
 
   return (
     <>
-      <DashboardNavbar role="user" userName="Student" />
+      <DashboardNavbar role="user" userName="Estudiante" />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
         {/* Back link */}

@@ -31,7 +31,7 @@ interface RemedyStep {
 const remedySteps: RemedyStep[] = [
   {
     id: 1,
-    name: "Water",
+    name: "Agua",
     icon: Droplets,
     question: "How would you rate your daily water intake?",
     description: "Adequate hydration is essential for physical and mental health. Aim for at least 8 glasses per day.",
@@ -133,7 +133,7 @@ export default function SurveyPage() {
   if (submitted) {
     return (
       <>
-        <DashboardNavbar role="user" userName="Student" />
+        <DashboardNavbar role="user" userName="Estudiante" />
         <main className="mx-auto max-w-xl px-4 py-16 sm:px-6">
           <div className="flex flex-col items-center text-center gap-6">
             {/* Success icon */}
@@ -207,7 +207,7 @@ export default function SurveyPage() {
 
   return (
     <>
-      <DashboardNavbar role="user" userName="Student" />
+      <DashboardNavbar role="user" userName="Estudiante" />
 
       <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
         {/* Step Progress */}
