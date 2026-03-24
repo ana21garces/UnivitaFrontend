@@ -7,7 +7,7 @@ interface LevelBadgeProps {
 }
 
 const levelTitles: Record<number, string> = {
-  1: "Beginner",
+  1: "Principiante",
   2: "Explorer",
   3: "Apprentice",
   4: "Practitioner",
@@ -15,7 +15,7 @@ const levelTitles: Record<number, string> = {
 }
 
 export function LevelBadge({ level, title, size = "md" }: LevelBadgeProps) {
-  const displayTitle = title || levelTitles[level] || "Beginner"
+  const displayTitle = title || levelTitles[level] || "Principiante"
 
   if (size === "sm") {
     return (
@@ -37,9 +37,9 @@ export function LevelBadge({ level, title, size = "md" }: LevelBadgeProps) {
       </div>
       <div>
         <p className="text-sm font-bold text-[#1F2937]">
-          Level {level} &ndash; {displayTitle}
+          Nivel {level} &ndash; {displayTitle}
         </p>
-        <p className="text-xs text-[#6B7280]">Keep completing activities to level up</p>
+        <p className="text-xs text-[#6B7280]">Sigue completando actividades para subir de nivel.</p>
       </div>
     </div>
   )

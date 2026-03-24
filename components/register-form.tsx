@@ -19,7 +19,7 @@ import {
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
 
-const API_URL = "http://127.0.0.1:8000/api/v1"
+const API_URL = "https://petrographical-jamal-apical.ngrok-free.dev/api/v1"
 
 export function RegisterForm() {
   const router = useRouter()

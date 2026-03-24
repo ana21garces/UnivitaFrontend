@@ -1,120 +1,191 @@
-"use client"
+"use client";
 
-import { useState, useRef, useCallback, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import {
-  CheckCircle2,
-  AlertCircle,
-  ChevronUp,
-  Send,
-} from "lucide-react"
-import { UniVitaLogo } from "@/components/univita-logo"
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, AlertCircle, ChevronUp, Send } from "lucide-react";
+import { UniVitaLogo } from "@/components/univita-logo";
 import {
   QUESTIONS,
   LIKERT_LABELS,
   calculateSubscaleScores,
-} from "@/lib/survey-data"
+} from "@/lib/survey-data";
 
-type Sexo = "masculino" | "femenino" | null
-type Anio = "primero" | "ultimo" | null
+import Select from "react-select";
 
-const TOTAL_QUESTIONS = QUESTIONS.length
-const QUESTIONS_PER_PAGE = 8
-const TOTAL_PAGES = Math.ceil(TOTAL_QUESTIONS / QUESTIONS_PER_PAGE)
+type Sexo = "masculino" | "femenino" | null;
+
+const TOTAL_QUESTIONS = QUESTIONS.length;
+const QUESTIONS_PER_PAGE = 8;
+const TOTAL_PAGES = Math.ceil(TOTAL_QUESTIONS / QUESTIONS_PER_PAGE);
 
 export default function OnboardingSurveyPage() {
-  const router = useRouter()
+  const router = useRouter();
 
   // Demographics
-  const [sexo, setSexo] = useState<Sexo>(null)
-  const [anio, setAnio] = useState<Anio>(null)
+  const [sexo, setSexo] = useState<Sexo>(null);
+
+  const facultades = {
+    "Ciencias de la Salud": [
+      "Enfermería",
+      "Tecnología en atención prehospitalaria",
+    ],
+    Ingeniería: ["Ingeniería industrial", "Ingeniería de sistemas"],
+    "Ciencias Administrativas y Contables": [
+      "Administración de empresas",
+      "Contaduría pública",
+      "Marketing y comunicación digital",
+    ],
+    "Ciencias Humanas y de la Educación": [
+      "Licenciatura en español e inglés",
+      "Licenciatura en educación infantil",
+      "Licenciatura en música",
+    ],
+    "Teología y Religión": ["Teología", "Licenciatura en educación religiosa"],
+  } as const;
+
+  const [facultad, setFacultad] = useState<string>("");
+  const [programa, setPrograma] = useState<string>("");
+  const [tipoUsuario, setTipoUsuario] = useState<string>("");
+
+  const handleFacultadChange = (value: string) => {
+    setFacultad(value);
+    setPrograma(""); // 🔥 reset automático
+  };
+
+  const facultadOptions = Object.keys(facultades).map((fac) => ({
+    value: fac,
+    label: fac,
+  }));
+
+  const programaOptions = facultad
+    ? facultades[facultad as keyof typeof facultades].map((prog) => ({
+        value: prog,
+        label: prog,
+      }))
+    : [];
+
+  const customStyles = {
+    control: (base: any, state: any) => ({
+      ...base,
+      borderRadius: "10px",
+      borderColor: state.isFocused ? "#16A34A" : "#E2E8F0",
+      boxShadow: state.isFocused ? "0 0 0 2px #DCFCE7" : "none",
+      "&:hover": {
+        borderColor: "#16A34A",
+      },
+      padding: "2px",
+    }),
+    option: (base: any, state: any) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? "#16A34A"
+        : state.isFocused
+          ? "#F0FDF4"
+          : "white",
+      color: state.isSelected ? "white" : "#1F2937",
+      cursor: "pointer",
+    }),
+    menu: (base: any) => ({
+      ...base,
+      borderRadius: "10px",
+      overflow: "hidden",
+    }),
+  };
 
   // Answers: key = 1-based question index, value = 1-4
-  const [answers, setAnswers] = useState<Record<number, number>>({})
+  const [answers, setAnswers] = useState<Record<number, number>>({});
 
   // UI state
-  const [currentPage, setCurrentPage] = useState(0)
-  const [showErrors, setShowErrors] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const topRef = useRef<HTMLDivElement>(null)
+  const [currentPage, setCurrentPage] = useState(0);
+  const [showErrors, setShowErrors] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const topRef = useRef<HTMLDivElement>(null);
 
   const handleAnswer = useCallback((qIndex: number, value: number) => {
-    setAnswers((prev) => ({ ...prev, [qIndex]: value }))
-  }, [])
+    setAnswers((prev) => ({ ...prev, [qIndex]: value }));
+  }, []);
 
   // Which questions are on the current page
-  const pageStart = currentPage * QUESTIONS_PER_PAGE
-  const pageEnd = Math.min(pageStart + QUESTIONS_PER_PAGE, TOTAL_QUESTIONS)
+  const pageStart = currentPage * QUESTIONS_PER_PAGE;
+  const pageEnd = Math.min(pageStart + QUESTIONS_PER_PAGE, TOTAL_QUESTIONS);
   const pageQuestions = Array.from(
     { length: pageEnd - pageStart },
-    (_, i) => pageStart + i + 1 // 1-based
-  )
+    (_, i) => pageStart + i + 1, // 1-based
+  );
 
   // Validation
-  const answeredCount = Object.keys(answers).length
-  const progressPct = Math.round((answeredCount / TOTAL_QUESTIONS) * 100)
-  const allDemographicsFilled = sexo !== null && anio !== null
-  const allQuestionsFilled = answeredCount === TOTAL_QUESTIONS
-  const canSubmit = allDemographicsFilled && allQuestionsFilled
+  const answeredCount = Object.keys(answers).length;
+  const progressPct = Math.round((answeredCount / TOTAL_QUESTIONS) * 100);
+  const allDemographicsFilled =
+    sexo !== null && facultad !== "" && programa !== "" && tipoUsuario !== "";
+  const allQuestionsFilled = answeredCount === TOTAL_QUESTIONS;
+  const canSubmit = allDemographicsFilled && allQuestionsFilled;
 
   // Unanswered on current page
-  const unansweredOnPage = pageQuestions.filter((q) => answers[q] === undefined)
+  const unansweredOnPage = pageQuestions.filter(
+    (q) => answers[q] === undefined,
+  );
 
   const scrollToTop = () => {
-    topRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const handleNextPage = () => {
+    if (currentPage === 0 && !allDemographicsFilled) {
+      setShowErrors(true);
+      return;
+    }
+
     if (unansweredOnPage.length > 0) {
-      setShowErrors(true)
-      return
+      setShowErrors(true);
+      return;
     }
-    setShowErrors(false)
+    setShowErrors(false);
     if (currentPage < TOTAL_PAGES - 1) {
-      setCurrentPage((p) => p + 1)
-      scrollToTop()
+      setCurrentPage((p) => p + 1);
+      scrollToTop();
     }
-  }
+  };
 
   const handlePrevPage = () => {
-    setShowErrors(false)
+    setShowErrors(false);
     if (currentPage > 0) {
-      setCurrentPage((p) => p - 1)
-      scrollToTop()
+      setCurrentPage((p) => p - 1);
+      scrollToTop();
     }
-  }
+  };
 
   const handleSubmit = () => {
     if (!canSubmit) {
-      setShowErrors(true)
-      return
+      setShowErrors(true);
+      return;
     }
-    setSubmitting(true)
+    setSubmitting(true);
 
     // Calculate subscale scores
-    const scores = calculateSubscaleScores(answers)
+    const scores = calculateSubscaleScores(answers);
 
     // Store in localStorage for the MVP (no DB yet)
     const surveyData = {
       sexo,
-      anio,
       answers,
       subscaleScores: scores,
       completedAt: new Date().toISOString(),
-    }
-    localStorage.setItem("univita8_survey_completed", "true")
-    localStorage.setItem("univita8_survey_data", JSON.stringify(surveyData))
+    };
+    localStorage.setItem("univita8_survey_completed", "true");
+    localStorage.setItem("univita8_survey_data", JSON.stringify(surveyData));
 
     // Set cookie so middleware can enforce skip-survey on next login
-    document.cookie = "univita8_survey_done=true; path=/; max-age=31536000; SameSite=Lax"
+    document.cookie =
+      "univita8_survey_done=true; path=/; max-age=31536000; SameSite=Lax";
 
     // Redirect to dashboard
     setTimeout(() => {
-      router.push("/dashboard/user")
-    }, 600)
-  }
+      router.push("/dashboard/user");
+    }, 600);
+  };
 
-  const isLastPage = currentPage === TOTAL_PAGES - 1
+  const isLastPage = currentPage === TOTAL_PAGES - 1;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]" ref={topRef}>
@@ -126,11 +197,11 @@ export default function OnboardingSurveyPage() {
             <div className="flex items-center gap-2.5">
               <UniVitaLogo size="sm" />
               <div>
-                <h1 className="text-base font-bold font-heading text-[#1F2937] leading-tight">
+                <h1 className="text-2xl font-bold font-heading text-[#1F2937] leading-tight">
                   Encuesta de Estilo de Vida
                 </h1>
                 <p className="text-[10px] text-[#6B7280] leading-none mt-0.5">
-                  UniVita 8 -- Health Profile
+                  VitalUNAC -- Health Profile
                 </p>
               </div>
             </div>
@@ -147,7 +218,9 @@ export default function OnboardingSurveyPage() {
                   }}
                 />
               </div>
-              <span className="text-xs font-bold text-[#1F2937]">{progressPct}%</span>
+              <span className="text-xs font-bold text-[#1F2937]">
+                {progressPct}%
+              </span>
             </div>
           </div>
 
@@ -186,7 +259,7 @@ export default function OnboardingSurveyPage() {
                 </legend>
                 <div className="flex gap-3">
                   {(["masculino", "femenino"] as const).map((opt) => {
-                    const isSelected = sexo === opt
+                    const isSelected = sexo === opt;
                     return (
                       <button
                         key={opt}
@@ -201,42 +274,84 @@ export default function OnboardingSurveyPage() {
                       >
                         {opt}
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </fieldset>
 
-              {/* Ano cursado */}
+              {/* Facultad */}
+              <div>
+                <label className="text-sm font-medium text-[#1F2937] block mb-2">
+                  Facultad
+                </label>
+
+                <Select
+                  options={facultadOptions}
+                  value={
+                    facultadOptions.find((f) => f.value === facultad) || null
+                  }
+                  onChange={(selected) => {
+                    setFacultad(selected?.value || "");
+                    setPrograma(""); // 🔥 reset programa
+                  }}
+                  placeholder="Seleccione una facultad"
+                  styles={customStyles}
+                  isSearchable={false}
+                />
+                {showErrors && !facultad && (
+                  <p className="text-xs text-[#EF4444] mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Requerido
+                  </p>
+                )}
+              </div>
+              {/*Programa*/}
+              <div>
+                <label className="text-sm font-medium text-[#1F2937] block mb-2">
+                  Programa
+                </label>
+
+                <Select
+                  options={programaOptions}
+                  value={
+                    programaOptions.find((p) => p.value === programa) || null
+                  }
+                  onChange={(selected) => setPrograma(selected?.value || "")}
+                  placeholder="Seleccione un programa"
+                  isDisabled={!facultad}
+                  styles={customStyles}
+                  isSearchable={false}
+                />
+                {showErrors && !programa && (
+                  <p className="text-xs text-[#EF4444] mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Requerido
+                  </p>
+                )}
+              </div>
+              {/*Tipo de usuario*/}
               <fieldset>
-                <legend className="text-sm font-medium text-[#1F2937] mb-2.5">
-                  Ano cursado
-                  {showErrors && !anio && (
-                    <span className="ml-2 text-xs text-[#EF4444] font-normal inline-flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> Requerido
-                    </span>
-                  )}
+                <legend className="text-sm font-medium text-[#1F2937] mb-2">
+                  Tipo de usuario
                 </legend>
+                {showErrors && !tipoUsuario && (
+                  <span className="ml-2 text-xs text-[#EF4444]">Requerido</span>
+                )}
                 <div className="flex gap-3">
-                  {([
-                    { value: "primero" as const, label: "Primero" },
-                    { value: "ultimo" as const, label: "Ultimo" },
-                  ]).map((opt) => {
-                    const isSelected = anio === opt.value
+                  {["Estudiante", "Docente", "Administrativo"].map((tipo) => {
+                    const isSelected = tipoUsuario === tipo;
                     return (
                       <button
-                        key={opt.value}
+                        key={tipo}
                         type="button"
-                        onClick={() => setAnio(opt.value)}
-                        className={`flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-all cursor-pointer ${
+                        onClick={() => setTipoUsuario(tipo)}
+                        className={`flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
                           isSelected
                             ? "border-[#16A34A] bg-[#F0FDF4] text-[#16A34A]"
-                            : "border-[#E2E8F0] bg-[#FFFFFF] text-[#6B7280] hover:border-[#16A34A]/40"
+                            : "border-[#E2E8F0] text-[#6B7280]"
                         }`}
-                        aria-pressed={isSelected}
                       >
-                        {opt.label}
+                        {tipo}
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </fieldset>
@@ -258,41 +373,41 @@ export default function OnboardingSurveyPage() {
         <div className="flex items-center gap-1.5 mb-6">
           {Array.from({ length: TOTAL_PAGES }, (_, i) => {
             // Check if all questions on this page are answered
-            const pStart = i * QUESTIONS_PER_PAGE
-            const pEnd = Math.min(pStart + QUESTIONS_PER_PAGE, TOTAL_QUESTIONS)
+            const pStart = i * QUESTIONS_PER_PAGE;
+            const pEnd = Math.min(pStart + QUESTIONS_PER_PAGE, TOTAL_QUESTIONS);
             const allAnsweredOnThisPage = Array.from(
               { length: pEnd - pStart },
-              (__, j) => pStart + j + 1
-            ).every((q) => answers[q] !== undefined)
+              (__, j) => pStart + j + 1,
+            ).every((q) => answers[q] !== undefined);
 
-            const isCurrent = i === currentPage
+            const isCurrent = i === currentPage;
             return (
               <button
                 key={i}
                 onClick={() => {
-                  setShowErrors(false)
-                  setCurrentPage(i)
-                  scrollToTop()
+                  setShowErrors(false);
+                  setCurrentPage(i);
+                  scrollToTop();
                 }}
                 className={`h-2 rounded-full transition-all cursor-pointer ${
                   isCurrent
                     ? "w-8 bg-[#16A34A]"
                     : allAnsweredOnThisPage
-                    ? "w-2 bg-[#22C55E]/50"
-                    : "w-2 bg-[#E2E8F0]"
+                      ? "w-2 bg-[#22C55E]/50"
+                      : "w-2 bg-[#E2E8F0]"
                 }`}
                 aria-label={`Ir a pagina ${i + 1}`}
               />
-            )
+            );
           })}
         </div>
 
         {/* Questions */}
         <div className="flex flex-col gap-4">
           {pageQuestions.map((qIndex) => {
-            const questionText = QUESTIONS[qIndex - 1]
-            const selectedValue = answers[qIndex]
-            const hasError = showErrors && selectedValue === undefined
+            const questionText = QUESTIONS[qIndex - 1];
+            const selectedValue = answers[qIndex];
+            const hasError = showErrors && selectedValue === undefined;
 
             return (
               <div
@@ -301,8 +416,8 @@ export default function OnboardingSurveyPage() {
                   hasError
                     ? "border-[#EF4444]/50 bg-[#FEF2F2]"
                     : selectedValue !== undefined
-                    ? "border-[#22C55E]/30"
-                    : "border-[#E2E8F0]"
+                      ? "border-[#22C55E]/30"
+                      : "border-[#E2E8F0]"
                 }`}
               >
                 <div className="flex items-start gap-3 mb-3">
@@ -320,7 +435,7 @@ export default function OnboardingSurveyPage() {
                 {/* Likert options -- horizontal on desktop, wrapping on mobile */}
                 <div className="flex flex-wrap gap-2 ml-10">
                   {([1, 2, 3, 4] as const).map((val) => {
-                    const isSelected = selectedValue === val
+                    const isSelected = selectedValue === val;
                     return (
                       <button
                         key={val}
@@ -342,9 +457,11 @@ export default function OnboardingSurveyPage() {
                         >
                           {val}
                         </span>
-                        <span className="hidden sm:inline">{LIKERT_LABELS[val]}</span>
+                        <span className="hidden sm:inline">
+                          {LIKERT_LABELS[val]}
+                        </span>
                       </button>
-                    )
+                    );
                   })}
                 </div>
 
@@ -355,7 +472,7 @@ export default function OnboardingSurveyPage() {
                   </p>
                 )}
               </div>
-            )
+            );
           })}
         </div>
 
@@ -365,9 +482,12 @@ export default function OnboardingSurveyPage() {
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4.5 h-4.5 text-[#EF4444] mt-0.5 shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-[#EF4444]">Formulario incompleto</p>
+                <p className="text-sm font-semibold text-[#EF4444]">
+                  Formulario incompleto
+                </p>
                 <p className="text-xs text-[#6B7280] mt-1">
-                  {!allDemographicsFilled && "Falta seleccionar Sexo y/o Ano cursado (pagina 1). "}
+                  {!allDemographicsFilled &&
+                    "Faltan datos demográficos (sexo, facultad, programa o tipo de usuario)."}
                   {!allQuestionsFilled &&
                     `Faltan ${TOTAL_QUESTIONS - answeredCount} pregunta(s) por responder.`}
                 </p>
@@ -401,7 +521,9 @@ export default function OnboardingSurveyPage() {
                 onClick={handleSubmit}
                 disabled={submitting}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-[#FFFFFF] text-sm font-semibold transition-all shadow-md shadow-[#16A34A]/20 hover:shadow-lg hover:shadow-[#16A34A]/25 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-                style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
+                style={{
+                  background: "linear-gradient(135deg, #16A34A, #22C55E)",
+                }}
               >
                 <Send className="w-4 h-4" />
                 {submitting ? "Enviando..." : "Enviar Encuesta"}
@@ -410,7 +532,9 @@ export default function OnboardingSurveyPage() {
               <button
                 onClick={handleNextPage}
                 className="px-6 py-2.5 rounded-lg text-[#FFFFFF] text-sm font-semibold transition-all shadow-md shadow-[#16A34A]/20 hover:shadow-lg hover:shadow-[#16A34A]/25 cursor-pointer"
-                style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
+                style={{
+                  background: "linear-gradient(135deg, #16A34A, #22C55E)",
+                }}
               >
                 Siguiente
               </button>
@@ -419,5 +543,5 @@ export default function OnboardingSurveyPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

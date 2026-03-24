@@ -8,7 +8,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
 
-const API_URL = "http://127.0.0.1:8000/api/v1"
+const API_URL = "https://petrographical-jamal-apical.ngrok-free.dev/api/v1"
 
 export function LoginForm() {
   const router = useRouter()
@@ -58,10 +58,10 @@ export function LoginForm() {
         <UniVitaLogo size="md" />
         <div className="text-center">
           <h1 className="text-2xl font-bold font-heading text-[#1F2937]">
-            UniVita 8
+            VitalUNAC
           </h1>
-          <p className="mt-1 text-sm text-[#6B7280]">
-            Gamified Healthy Lifestyle Platform for University Students
+          <p className="mt-1 text-md text-[#6B7280]">
+            Plataforma gamificada de estilo de vida saludable para estudiantes universitarios
           </p>
         </div>
       </div>
@@ -98,7 +98,7 @@ export function LoginForm() {
         {/* Password field */}
         <div className="flex flex-col gap-1.5">
           <label htmlFor="login-password" className="text-sm font-medium text-[#1F2937]">
-            Contrasena
+            Contraseña
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
@@ -126,9 +126,12 @@ export function LoginForm() {
         <div className="flex justify-end">
           <Link
             href="#"
-            className="text-sm font-medium text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+            className="relative text-sm font-medium text-[#16A34A] transition-colors
+            after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 
+            after:bg-[#16A34A] after:transition-all after:duration-300
+            hover:after:w-full"
           >
-            Olvidaste tu contrasena?
+            Olvidaste tu contraseña?
           </Link>
         </div>
 
@@ -148,7 +151,10 @@ export function LoginForm() {
         No tienes cuenta?{" "}
         <Link
           href="/register"
-          className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+          className="relative font-semibold text-[#16A34A] transition-colors
+          after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0
+          after:bg-[#16A34A] after:transition-all after:duration-300
+          hover:after:w-full pb-1"
         >
           Registrate aqui
         </Link>

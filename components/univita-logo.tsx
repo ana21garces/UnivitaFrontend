@@ -1,3 +1,6 @@
+import Image from "next/image"
+import  Logo  from "../assets/images/logo.png"
+
 export function UniVitaLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   const dims = size === "sm" ? "w-9 h-9" : size === "lg" ? "w-16 h-16" : "w-12 h-12"
   const eightSize = size === "sm" ? "text-lg" : size === "lg" ? "text-3xl" : "text-2xl"
@@ -11,10 +14,7 @@ export function UniVitaLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
         style={{ background: "linear-gradient(135deg, #6D28D9, transparent 60%)" }}
       />
       {/* Main green container */}
-      <div
-        className={`relative ${dims} rounded-2xl flex items-center justify-center shadow-sm`}
-        style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
-      >
+      
         {/* Inner highlight for depth */}
         <div
           className="absolute inset-0 rounded-2xl opacity-25"
@@ -25,9 +25,9 @@ export function UniVitaLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
           className={`relative ${eightSize} font-extrabold text-[#FFFFFF] font-heading leading-none`}
           style={{ textShadow: "0 1px 3px rgba(0,0,0,0.12)" }}
         >
-          8
+          <Image src={Logo} alt="Logo" />
         </span>
       </div>
-    </div>
+    
   )
 }
