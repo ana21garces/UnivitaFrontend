@@ -4,10 +4,12 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertCircle, ChevronUp, Send } from "lucide-react";
 import { UniVitaLogo } from "@/components/univita-logo";
+import axios from "axios";
 import {
   QUESTIONS,
   LIKERT_LABELS,
   calculateSubscaleScores,
+  buildSurveyPayload,
 } from "@/lib/survey-data";
 
 import Select from "react-select";
@@ -155,34 +157,36 @@ export default function OnboardingSurveyPage() {
     }
   };
 
-  const handleSubmit = () => {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const handleSubmit = async () => {
     if (!canSubmit) {
       setShowErrors(true);
       return;
     }
     setSubmitting(true);
 
-    // Calculate subscale scores
-    const scores = calculateSubscaleScores(answers);
+    try {
+      const payload = buildSurveyPayload(answers);
 
-    // Store in localStorage for the MVP (no DB yet)
-    const surveyData = {
-      sexo,
-      answers,
-      subscaleScores: scores,
-      completedAt: new Date().toISOString(),
-    };
-    localStorage.setItem("univita8_survey_completed", "true");
-    localStorage.setItem("univita8_survey_data", JSON.stringify(surveyData));
+      const token = localStorage.getItem("access_token");
 
-    // Set cookie so middleware can enforce skip-survey on next login
-    document.cookie =
-      "univita8_survey_done=true; path=/; max-age=31536000; SameSite=Lax";
+      const { data } = await axios.post(`${API_URL}/encuesta`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    // Redirect to dashboard
-    setTimeout(() => {
+      console.log("Respuesta backend:", data);
+
+      console.log("lo que envio:", payload);
+
       router.push("/dashboard/user");
-    }, 600);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const isLastPage = currentPage === TOTAL_PAGES - 1;
