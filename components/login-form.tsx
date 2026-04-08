@@ -8,7 +8,7 @@ import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
 
-const API_URL = "https://petrographical-jamal-apical.ngrok-free.dev/api/v1"
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export function LoginForm() {
   const router = useRouter()
