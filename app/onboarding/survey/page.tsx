@@ -174,6 +174,7 @@ export default function OnboardingSurveyPage() {
       const { data } = await axios.post(`${API_URL}/encuesta`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
         },
       });
 

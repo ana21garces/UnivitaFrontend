@@ -33,7 +33,19 @@ export function LoginForm() {
       localStorage.setItem("access_token", data.access_token)
       localStorage.setItem("refresh_token", data.refresh_token)
 
-      router.push("/onboarding/survey")
+      // Verificar si el usuario ya completó la encuesta
+      const { data: estado } = await axios.get(`${API_URL}/encuesta/estado`, {
+        headers: {
+          Authorization: `Bearer ${data.access_token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+      })
+
+      if (estado.completada) {
+        router.push("/dashboard/user")
+      } else {
+        router.push("/onboarding/survey")
+      }
     } catch (err: any) {
       const detail = err.response?.data?.detail
       if (Array.isArray(detail)) {
