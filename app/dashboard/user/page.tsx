@@ -223,7 +223,10 @@ export default function UserDashboard() {
         })
         setResultado(data)
       } catch (err: any) {
-        if (err.response?.status === 404) router.push("/onboarding/survey")
+        if (err.response?.status === 404) {
+          document.cookie = "univita8_survey_done=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+          router.push("/onboarding/survey")
+        }
       } finally {
         setLoading(false)
       }

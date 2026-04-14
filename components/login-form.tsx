@@ -45,6 +45,7 @@ export function LoginForm() {
           document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
           router.push("/dashboard/user")
         } else {
+          document.cookie = "univita8_survey_done=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
           router.push("/onboarding/survey")
         }
       } catch {
