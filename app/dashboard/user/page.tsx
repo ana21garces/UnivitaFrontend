@@ -97,7 +97,7 @@ type Badge = {
   description: string
   gradient: string
   unlocked: boolean
-  rarity: "común" | "raro" | "épico" | "legendario"
+  rarity: "inicio" | "plata" | "oro" | "platino"
 }
 
 function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
@@ -112,7 +112,7 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Completaste el cuestionario PEPS II",
       gradient: "linear-gradient(135deg, #16A34A, #22C55E)",
       unlocked: true,
-      rarity: "común",
+      rarity: "inicio",
     },
     {
       id: "atleta",
@@ -121,7 +121,7 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Actividad física en nivel Bueno o superior",
       gradient: "linear-gradient(135deg, #2563EB, #38BDF8)",
       unlocked: dim.actividad_fisica.nivel === "Bueno" || dim.actividad_fisica.nivel === "Excelente",
-      rarity: "raro",
+      rarity: "plata",
     },
     {
       id: "nutricionista",
@@ -130,7 +130,7 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Nutrición en nivel Bueno o superior",
       gradient: "linear-gradient(135deg, #16A34A, #86EFAC)",
       unlocked: dim.nutricion.nivel === "Bueno" || dim.nutricion.nivel === "Excelente",
-      rarity: "raro",
+      rarity: "plata",
     },
     {
       id: "zen",
@@ -139,7 +139,7 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Manejo del estrés en nivel Bueno o superior",
       gradient: "linear-gradient(135deg, #7C3AED, #C4B5FD)",
       unlocked: dim.manejo_estres.nivel === "Bueno" || dim.manejo_estres.nivel === "Excelente",
-      rarity: "raro",
+      rarity: "plata",
     },
     {
       id: "social",
@@ -148,7 +148,7 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Relaciones interpersonales en nivel Bueno o superior",
       gradient: "linear-gradient(135deg, #EA580C, #FCD34D)",
       unlocked: dim.relaciones_interpersonales.nivel === "Bueno" || dim.relaciones_interpersonales.nivel === "Excelente",
-      rarity: "raro",
+      rarity: "plata",
     },
     {
       id: "responsable",
@@ -157,7 +157,7 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Responsabilidad en salud en nivel Bueno o superior",
       gradient: "linear-gradient(135deg, #0891B2, #67E8F9)",
       unlocked: dim.responsabilidad_salud.nivel === "Bueno" || dim.responsabilidad_salud.nivel === "Excelente",
-      rarity: "raro",
+      rarity: "plata",
     },
     {
       id: "espiritual",
@@ -166,7 +166,7 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Psicología positiva en nivel Bueno o superior",
       gradient: "linear-gradient(135deg, #DB2777, #F9A8D4)",
       unlocked: dim.psicologia_positiva.nivel === "Bueno" || dim.psicologia_positiva.nivel === "Excelente",
-      rarity: "épico",
+      rarity: "oro",
     },
     {
       id: "moderado",
@@ -175,7 +175,7 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Alcanza nivel Moderado en PEPS II",
       gradient: "linear-gradient(135deg, #F59E0B, #FCD34D)",
       unlocked: nivel === "Moderado" || nivel === "Bueno" || nivel === "Excelente",
-      rarity: "raro",
+      rarity: "plata",
     },
     {
       id: "bueno",
@@ -184,7 +184,7 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Alcanza nivel Bueno en PEPS II",
       gradient: "linear-gradient(135deg, #2563EB, #818CF8)",
       unlocked: nivel === "Bueno" || nivel === "Excelente",
-      rarity: "épico",
+      rarity: "oro",
     },
     {
       id: "excelente",
@@ -193,16 +193,16 @@ function buildBadges(r: EncuestaResultado["resultados"]): Badge[] {
       description: "Alcanza el nivel máximo en PEPS II",
       gradient: "linear-gradient(135deg, #D97706, #FDE68A)",
       unlocked: nivel === "Excelente",
-      rarity: "legendario",
+      rarity: "platino",
     },
   ]
 }
 
 const rarityColors: Record<string, { text: string; bg: string; border: string }> = {
-  común:      { text: "#6B7280", bg: "#F1F5F9", border: "#E2E8F0" },
-  raro:       { text: "#2563EB", bg: "#EFF6FF", border: "#BFDBFE" },
-  épico:      { text: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
-  legendario: { text: "#D97706", bg: "#FFFBEB", border: "#FDE68A" },
+  inicio:  { text: "#6B7280", bg: "#F1F5F9", border: "#E2E8F0" },
+  plata:   { text: "#475569", bg: "#F1F5F9", border: "#CBD5E1" },
+  oro:     { text: "#B45309", bg: "#FFFBEB", border: "#FDE68A" },
+  platino: { text: "#7C3AED", bg: "#F5F3FF", border: "#DDD6FE" },
 }
 
 export default function UserDashboard() {
