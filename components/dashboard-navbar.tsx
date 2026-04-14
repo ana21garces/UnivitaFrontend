@@ -4,8 +4,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
-  ClipboardList,
-  BarChart3,
   LogOut,
   Menu,
   X,
@@ -24,13 +22,14 @@ interface NavItem {
 interface DashboardNavbarProps {
   role: "user" | "admin" | "health-manager"
   userName?: string
+  xp?: number
+  maxXp?: number
+  level?: number
 }
 
 const navItemsByRole: Record<string, NavItem[]> = {
   user: [
     { label: "Dashboard", href: "/dashboard/user", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { label: "Encuesta remedios naturales", href: "/dashboard/user/survey", icon: <ClipboardList className="w-4 h-4" /> },
-    { label: "Mis resultados", href: "/dashboard/user/results", icon: <BarChart3 className="w-4 h-4" /> },
   ],
   admin: [
     { label: "Dashboard", href: "/dashboard/admin", icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -41,7 +40,7 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
 }
 
-export function DashboardNavbar({ role, userName = "Estudiante" }: DashboardNavbarProps) {
+export function DashboardNavbar({ role, userName = "Estudiante", xp = 0, maxXp = 100, level = 1 }: DashboardNavbarProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const navItems = navItemsByRole[role] || []
@@ -89,7 +88,7 @@ export function DashboardNavbar({ role, userName = "Estudiante" }: DashboardNavb
         {/* Right: XP + User + Mobile menu */}
         <div className="flex items-center gap-4">
           <div className="hidden sm:block w-40">
-            <XpProgressBar currentXp={35} maxXp={100} level={1} />
+            <XpProgressBar currentXp={xp} maxXp={maxXp} level={level} />
           </div>
 
           <div className="flex items-center gap-2">
@@ -124,7 +123,7 @@ export function DashboardNavbar({ role, userName = "Estudiante" }: DashboardNavb
       {mobileOpen && (
         <div className="md:hidden border-t border-[#E2E8F0] bg-[#FFFFFF] px-4 py-3">
           <div className="mb-3 sm:hidden">
-            <XpProgressBar currentXp={35} maxXp={100} level={1} />
+            <XpProgressBar currentXp={xp} maxXp={maxXp} level={level} />
           </div>
           <nav className="flex flex-col gap-1" aria-label="Mobile navigation">
             {navItems.map((item) => {
