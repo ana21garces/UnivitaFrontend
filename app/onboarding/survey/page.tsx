@@ -178,13 +178,14 @@ export default function OnboardingSurveyPage() {
         },
       });
 
-      console.log("Respuesta backend:", data);
-
-      console.log("lo que envio:", payload);
-
       router.push("/dashboard/user");
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      // Si ya completó la encuesta, redirige al dashboard directamente
+      if (error?.response?.status === 409) {
+        router.push("/dashboard/user");
+      } else {
+        console.error(error);
+      }
     } finally {
       setSubmitting(false);
     }
