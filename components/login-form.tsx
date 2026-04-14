@@ -42,6 +42,7 @@ export function LoginForm() {
           },
         })
         if (estado.completada) {
+          document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
           router.push("/dashboard/user")
         } else {
           router.push("/onboarding/survey")

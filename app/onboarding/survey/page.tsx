@@ -178,10 +178,12 @@ export default function OnboardingSurveyPage() {
         },
       });
 
+      document.cookie = "univita8_survey_done=true; path=/; max-age=31536000";
       router.push("/dashboard/user");
     } catch (error: any) {
       // Si ya completó la encuesta, redirige al dashboard directamente
       if (error?.response?.status === 409) {
+        document.cookie = "univita8_survey_done=true; path=/; max-age=31536000";
         router.push("/dashboard/user");
       } else {
         console.error(error);
