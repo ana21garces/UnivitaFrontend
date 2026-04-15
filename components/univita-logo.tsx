@@ -2,32 +2,13 @@ import Image from "next/image"
 import  Logo  from "../assets/images/logo.png"
 
 export function UniVitaLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
-  const dims = size === "sm" ? "w-9 h-9" : size === "lg" ? "w-16 h-16" : "w-12 h-12"
+  const dims = size === "sm" ? "w-20 h-20" : size === "lg" ? "w-40 h-40" : "w-32 h-32"
   const eightSize = size === "sm" ? "text-lg" : size === "lg" ? "text-3xl" : "text-2xl"
-  const ringSize = size === "sm" ? "w-11 h-11" : size === "lg" ? "w-[4.5rem] h-[4.5rem]" : "w-14 h-14"
+  const ringSize = size === "sm" ? "w-24 h-24" : size === "lg" ? "w-44 h-44" : "w-36 h-36"
 
   return (
     <div className={`relative flex items-center justify-center ${ringSize}`}>
-      {/* Outer subtle ring -- purple accent */}
-      <div
-        className={`absolute inset-0 rounded-2xl opacity-20`}
-        style={{ background: "linear-gradient(135deg, #6D28D9, transparent 60%)" }}
-      />
-      {/* Main green container */}
-      
-        {/* Inner highlight for depth */}
-        <div
-          className="absolute inset-0 rounded-2xl opacity-25"
-          style={{ background: "radial-gradient(ellipse at 30% 25%, rgba(255,255,255,0.5), transparent 55%)" }}
-        />
-        {/* The "8" symbol */}
-        <span
-          className={`relative ${eightSize} font-extrabold text-[#FFFFFF] font-heading leading-none`}
-          style={{ textShadow: "0 1px 3px rgba(0,0,0,0.12)" }}
-        >
-          <Image src={Logo} alt="Logo" />
-        </span>
-      </div>
-    
+      <Image src={Logo} alt="Logo" className={dims} />
+    </div>
   )
 }
