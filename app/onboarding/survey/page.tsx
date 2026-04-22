@@ -327,7 +327,7 @@ export default function OnboardingSurveyPage() {
             </h2>
 
             <p className="text-sm text-[#065F46] leading-relaxed">
-              Este cuestionario contiene oraciones acera de su estilo de vida o
+              Este cuestionario contiene oraciones acerca de su estilo de vida o
               hábitos personales en el presente. Por favor, responda a cada
               oración lo más exacto posible y trate de no pasar por alto ninguna
               oración. Indique la frecuencia con la que usted se dedica a cada
