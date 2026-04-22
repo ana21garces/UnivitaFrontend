@@ -101,6 +101,12 @@ export default function OnboardingSurveyPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [showErrors, setShowErrors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Consentimiento informado
+  const [showConsentModal, setShowConsentModal] = useState(true);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
+
   const topRef = useRef<HTMLDivElement>(null);
 
   const handleAnswer = useCallback((qIndex: number, value: number) => {
@@ -193,6 +199,75 @@ export default function OnboardingSurveyPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]" ref={topRef}>
+      {showConsentModal && (
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white max-w-lg w-full rounded-2xl shadow-xl border border-slate-200 p-6">
+            <h2 className="text-center text-xl font-bold text-slate-800 mb-4">
+              Consentimiento informado
+            </h2>
+
+            <div className="text-sm text-slate-600 leading-relaxed space-y-3 max-h-[55vh] overflow-y-auto pr-2">
+              <p>
+                Reciba un cordial saludo. Esta encuesta tiene como objetivo
+                analizar el grado en que los estudiantes, docentes y personal
+                administrativo adoptan un estilo de vida saludable, con el fin
+                de identificar áreas críticas y desarrollar un programa de
+                intervención.
+              </p>
+
+              <p>
+                La información que usted provea será utilizada solo con fines de
+                investigación y los datos serán tratados con la más estricta
+                confidencialidad.
+              </p>
+
+              <p>
+                Su participación es totalmente voluntaria. No hay respuestas
+                correctas o incorrectas y puede abstenerse de responder
+                cualquier pregunta si le genera incomodidad.
+              </p>
+
+              <p>
+                Puede retirarse del estudio en cualquier momento. Para dudas o
+                consultas puede comunicarse al{" "}
+                <span className="font-semibold text-green-600 text-base">
+                  317 7745079
+                </span>
+              </p>
+            </div>
+
+            {/* Checkbox */}
+            <label className="flex items-start gap-3 mt-5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consentChecked}
+                onChange={(e) => setConsentChecked(e.target.checked)}
+                className="mt-1 w-4 h-4 accent-green-600"
+              />
+              <span className="text-sm text-slate-700">
+                He leído y acepto participar voluntariamente en esta encuesta.
+              </span>
+            </label>
+
+            {/* Buttons */}
+            <div className="flex justify-center mt-6">
+              <button
+                disabled={!consentChecked}
+                onClick={() => {
+                  setShowConsentModal(false);
+                  setShowIntro(true);
+                }}
+                className="px-10 py-2.5 rounded-lg text-white font-semibold disabled:opacity-40"
+                style={{
+                  background: "linear-gradient(135deg,#16A34A,#22C55E)",
+                }}
+              >
+                Continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Sticky header: logo + progress + legend */}
       <header className="sticky top-0 z-50 bg-[#FFFFFF] border-b border-[#E2E8F0] shadow-sm">
         <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6">
@@ -244,6 +319,22 @@ export default function OnboardingSurveyPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+        {/* Intro encuesta */}
+        {showIntro && (
+          <section className="mb-6 rounded-xl bg-[#ECFDF5] border border-[#BBF7D0] p-5 shadow-sm">
+            <h2 className="text-lg font-bold text-[#166534] mb-2">
+              Antes de comenzar
+            </h2>
+
+            <p className="text-sm text-[#065F46] leading-relaxed">
+              Este cuestionario contiene oraciones acera de su estilo de vida o
+              hábitos personales en el presente. Por favor, responda a cada
+              oración lo más exacto posible y trate de no pasar por alto ninguna
+              oración. Indique la frecuencia con la que usted se dedica a cada
+              conducta o costumbre
+            </p>
+          </section>
+        )}
         {/* Demographics section -- only show on first page */}
         {currentPage === 0 && (
           <section className="mb-8 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm p-5 sm:p-6">
