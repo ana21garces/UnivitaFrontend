@@ -31,18 +31,29 @@ export default function OnboardingSurveyPage() {
       "Enfermería",
       "Tecnología en atención prehospitalaria",
     ],
-    Ingeniería: ["Ingeniería industrial", "Ingeniería de sistemas"],
+    "Ingeniería": [
+      "Ingeniería industrial",
+      "Ingeniería de sistemas",
+      "Especialización en Inteligencia de Negocios y Big Data",
+    ],
     "Ciencias Administrativas y Contables": [
       "Administración de empresas",
       "Contaduría pública",
       "Marketing y comunicación digital",
+      "Especialización en alta gerencia"
     ],
     "Ciencias Humanas y de la Educación": [
       "Licenciatura en español e inglés",
       "Licenciatura en educación infantil",
       "Licenciatura en música",
+      "Especialización en docencia",
+      "Maestría en educación"
     ],
-    "Teología y Religión": ["Teología", "Licenciatura en educación religiosa"],
+    "Teología y Religión": [
+      "Teología",
+      "Licenciatura en educación religiosa",
+      "Maestría en estudios religiosos y teología"
+    ],
   } as const;
 
   const [facultad, setFacultad] = useState<string>("");
