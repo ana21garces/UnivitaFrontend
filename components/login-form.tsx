@@ -76,7 +76,7 @@ export function LoginForm() {
         <UniVitaLogo size="md" />
         <div className="text-center">
           <h1 className="text-2xl font-bold font-heading text-[#1F2937]">
-            VitalUNAC
+            UnacHealt
           </h1>
           <p className="mt-1 text-md text-[#6B7280]">
             Plataforma gamificada de estilo de vida saludable para estudiantes universitarios

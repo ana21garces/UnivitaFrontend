@@ -28,7 +28,7 @@ type EncuestaResultado = {
 
 const DIMENSION_NAMES: Record<string, string> = {
   responsabilidad_salud: "Responsabilidad salud",
-  psicologia_positiva: "Crecimiento espiritual",
+  psicologia_positiva: "Psicología positiva",
   actividad_fisica: "Actividad física",
   relaciones_interpersonales: "Relaciones interpersonales",
   nutricion: "Nutrición",
@@ -280,26 +280,26 @@ export default function UserDashboard() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-3xl font-bold font-heading text-[#1F2937]">Welcome back, Student!</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold font-heading text-[#1F2937]">¡Bienvenido de nuevo!</h2>
           <p className="mt-1 text-sm text-[#6B7280]">
             Completaste el cuestionario PEPS II — aquí están tus resultados de estilo de vida.
           </p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
           {[
-            { icon: <Zap className="w-5 h-5 text-[#22C55E]" />, bg: "bg-[#22C55E]/10", value: xpTotal, label: "XP Earned" },
-            { icon: <Activity className="w-5 h-5 text-[#7C3AED]" />, bg: "bg-[#7C3AED]/10", value: Math.round(resultados.indice_global), label: "PEPS II índice" },
-            { icon: <Timer className="w-5 h-5 text-[#FACC15]" />, bg: "bg-[#FACC15]/10", value: 5, label: "Day Streak" },
+            { icon: <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#22C55E]" />, bg: "bg-[#22C55E]/10", value: xpTotal, label: "XP Earned" },
+            { icon: <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-[#7C3AED]" />, bg: "bg-[#7C3AED]/10", value: Math.round(resultados.indice_global), label: "PEPS II índice" },
+            { icon: <Timer className="w-4 h-4 sm:w-5 sm:h-5 text-[#FACC15]" />, bg: "bg-[#FACC15]/10", value: 5, label: "Day Streak" },
           ].map((stat) => (
-            <div key={stat.label} className="flex items-center gap-3 p-4 rounded-xl bg-white border border-[#E2E8F0] shadow-sm">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${stat.bg}`}>
+            <div key={stat.label} className="flex flex-col items-center gap-1.5 p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-4 rounded-xl bg-white border border-[#E2E8F0] shadow-sm text-center sm:text-left">
+              <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-xl shrink-0 ${stat.bg}`}>
                 {stat.icon}
               </div>
               <div>
-                <p className="text-2xl font-bold text-[#1F2937]">{stat.value}</p>
-                <p className="text-xs text-[#6B7280]">{stat.label}</p>
+                <p className="text-xl sm:text-2xl font-bold text-[#1F2937]">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-[#6B7280] leading-tight">{stat.label}</p>
               </div>
             </div>
           ))}
@@ -319,8 +319,8 @@ export default function UserDashboard() {
                 Nivel {levelInfo.numero} — {levelInfo.nivel}
               </p>
               <p className="text-sm text-white/80">
-                Tu estilo de vida PEPS II es {levelInfo.nivel.toLowerCase()}
-                {levelInfo.nextNivel && ` · Sube a Nivel ${levelInfo.numero + 1} (${levelInfo.nextNivel})`}
+                Estilo de vida: {levelInfo.nivel.toLowerCase()}
+                {levelInfo.nextNivel && <span className="hidden sm:inline"> · Sube a Nivel {levelInfo.numero + 1} ({levelInfo.nextNivel})</span>}
               </p>
             </div>
           </div>
@@ -382,13 +382,13 @@ export default function UserDashboard() {
             <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Índice por dimensión</h3>
             <div className="flex flex-col gap-3.5">
               {dimensions.map((dim) => (
-                <div key={dim.key} className="flex items-center gap-3">
-                  <span className="text-xs text-[#6B7280] w-44 shrink-0">{DIMENSION_NAMES[dim.key]}</span>
+                <div key={dim.key} className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-xs text-[#6B7280] w-24 sm:w-44 shrink-0 leading-tight">{DIMENSION_NAMES[dim.key]}</span>
                   <div className="flex-1 h-2 bg-[#F1F5F9] rounded-full">
                     <div className={`h-full rounded-full ${getBarColor(dim.nivel)}`} style={{ width: `${dim.indice}%` }} />
                   </div>
-                  <span className="text-sm font-bold text-[#1F2937] w-8 text-right">{Math.round(dim.indice)}</span>
-                  <span className="text-xs font-semibold w-20 text-right" style={{ color: getNivelColor(dim.nivel) }}>
+                  <span className="text-sm font-bold text-[#1F2937] w-8 text-right shrink-0">{Math.round(dim.indice)}</span>
+                  <span className="hidden sm:inline text-xs font-semibold w-20 text-right shrink-0" style={{ color: getNivelColor(dim.nivel) }}>
                     {dim.nivel}
                   </span>
                 </div>

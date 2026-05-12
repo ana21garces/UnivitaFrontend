@@ -288,14 +288,15 @@ export default function OnboardingSurveyPage() {
         <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6">
           {/* Top row: brand + progress */}
           <div className="flex items-center justify-between mb-2.5">
-            <div className="flex items-center gap-2.5">
-              <UniVitaLogo size="sm" />
+            <div className="flex items-center gap-2">
+              <div className="sm:hidden"><UniVitaLogo size="xs" /></div>
+              <div className="hidden sm:block"><UniVitaLogo size="sm" /></div>
               <div>
-                <h1 className="text-2xl font-bold font-heading text-[#1F2937] leading-tight">
+                <h1 className="text-base sm:text-2xl font-bold font-heading text-[#1F2937] leading-tight">
                   Encuesta de Estilo de Vida
                 </h1>
                 <p className="text-[10px] text-[#6B7280] leading-none mt-0.5">
-                  VitalUNAC -- Health Profile
+                  UnacHealt -- Health Profile
                 </p>
               </div>
             </div>
@@ -453,7 +454,7 @@ export default function OnboardingSurveyPage() {
                         key={tipo}
                         type="button"
                         onClick={() => setTipoUsuario(tipo)}
-                        className={`flex-1 py-2.5 px-3 rounded-lg border-2 text-sm font-medium transition-all ${
+                        className={`flex-1 py-2.5 px-1 sm:px-3 rounded-lg border-2 text-xs sm:text-sm font-medium transition-all ${
                           isSelected
                             ? "border-[#16A34A] bg-[#F0FDF4] text-[#16A34A]"
                             : "border-[#E2E8F0] text-[#6B7280]"
