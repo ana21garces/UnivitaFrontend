@@ -11,7 +11,7 @@ export function WellnessPanel() {
       <div className="relative z-10 flex flex-col items-center gap-8 max-w-md">
         <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-lg">
           <Image
-            src="/images/wellness-illustration.jpg"
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/images/wellness-illustration.jpg`}
             alt="Healthy lifestyle illustration showing people practicing wellness activities"
             fill
             className="object-cover"
