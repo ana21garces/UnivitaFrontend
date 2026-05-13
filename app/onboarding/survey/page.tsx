@@ -296,7 +296,7 @@ export default function OnboardingSurveyPage() {
                   Encuesta de Estilo de Vida
                 </h1>
                 <p className="text-[10px] text-[#6B7280] leading-none mt-0.5">
-                  UnacHealt -- Health Profile
+                  UnacHealth -- Health Profile
                 </p>
               </div>
             </div>

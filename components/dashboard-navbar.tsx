@@ -53,14 +53,14 @@ export function DashboardNavbar({ role, userName = "Estudiante", xp = 0, maxXp =
           <UniVitaLogo size="sm" />
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold font-heading text-[#1F2937] leading-tight">
-              UnacHealt
+              UnacHealth
             </h1>
             <p className="text-[10px] text-[#6B7280] leading-none">
               Plataforma para un estilo de vida saludable
             </p>
           </div>
           <h1 className="sm:hidden text-lg font-bold font-heading text-[#1F2937]">
-            UnacHealt
+            UnacHealth
           </h1>
         </div>
 

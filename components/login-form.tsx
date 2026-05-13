@@ -76,7 +76,7 @@ export function LoginForm() {
         <UniVitaLogo size="md" />
         <div className="text-center">
           <h1 className="text-2xl font-bold font-heading text-[#1F2937]">
-            UnacHealt
+            UnacHealth
           </h1>
           <p className="mt-1 text-md text-[#6B7280]">
             Plataforma gamificada de estilo de vida saludable para estudiantes universitarios
@@ -123,7 +123,7 @@ export function LoginForm() {
             <input
               id="login-password"
               type={showPassword ? "text" : "password"}
-              placeholder="Ingresa tu contrasena"
+              placeholder="Ingresa tu contraseña"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -133,7 +133,7 @@ export function LoginForm() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1F2937] transition-colors"
-              aria-label={showPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
             </button>
