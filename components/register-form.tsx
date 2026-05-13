@@ -135,7 +135,7 @@ export function RegisterForm() {
           {/* Password */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="register-password" className="text-sm font-medium text-[#1F2937]">
-              Contrasena
+              Contraseña
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
@@ -161,14 +161,14 @@ export function RegisterForm() {
           {/* Confirm password */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="register-confirm" className="text-sm font-medium text-[#1F2937]">
-              Confirmar contrasena
+              Confirmar contraseña
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
               <input
                 id="register-confirm"
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="Repite tu contrasena"
+                placeholder="Repite tu contraseña"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
