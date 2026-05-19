@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
+import Link from "next/link"
 import { Zap, Activity, Timer, Star, Lock } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 
@@ -515,9 +516,12 @@ export default function UserDashboard() {
                     </span>
                   </div>
                 ))}
-                <button className="w-full mt-4 h-10 rounded-lg border border-[#E2E8F0] text-sm text-[#6B7280] hover:bg-[#F1F5F9] transition-colors">
+                <Link
+                  href="/dashboard/plan-semanal"
+                  className="flex items-center justify-center w-full mt-4 h-10 rounded-lg border border-[#16A34A] text-sm font-medium text-[#16A34A] hover:bg-[#F0FDF4] transition-colors"
+                >
                   Ver plan semanal personalizado ↗
-                </button>
+                </Link>
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-6 gap-4">

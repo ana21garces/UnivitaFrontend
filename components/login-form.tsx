@@ -33,6 +33,22 @@ export function LoginForm() {
       localStorage.setItem("access_token", data.access_token)
       localStorage.setItem("refresh_token", data.refresh_token)
 
+      // Leer el rol del JWT (payload en base64, índice 1)
+      let role: string | null = null
+      try {
+        const payload = JSON.parse(atob(data.access_token.split(".")[1]))
+        role = payload.role ?? null
+      } catch {
+        // JWT malformado → ignorar, usar flujo normal
+      }
+
+      // El capellán va directo a su vista sin pasar por la encuesta
+      if (role === "capellan") {
+        document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
+        router.push("/dashboard/capellan")
+        return
+      }
+
       // Verificar si el usuario ya completó la encuesta
       try {
         const { data: estado } = await axios.get(`${API_URL}/encuesta/estado`, {
