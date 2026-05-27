@@ -56,8 +56,9 @@ const ACTIVITIES_BY_DIMENSION: Record<string, Array<{ title: string; xp: number 
 
 // Dimensiones que ya tienen plan en el backend — las demás no muestran enlace
 const DIMENSION_PLAN_ROUTE: Record<string, string> = {
-  psicologia_positiva: "/dashboard/plan-semanal",
-  actividad_fisica:    "/dashboard/recomendaciones-af",
+  psicologia_positiva:   "/dashboard/plan-semanal",
+  actividad_fisica:      "/dashboard/recomendaciones-af",
+  responsabilidad_salud: "/dashboard/recomendaciones/responsabilidad-salud",
 }
 
 const PUNTAJE_RANGES: Record<string, string> = {
