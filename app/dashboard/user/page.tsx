@@ -514,29 +514,37 @@ export default function UserDashboard() {
                   />
                 </div>
                 <p className="text-xs font-semibold text-[#1F2937] mb-2">Dimensiones que más impactan tu nivel:</p>
-                {lowestThree.map((d, i) => {
-                  const planRoute = DIMENSION_PLAN_ROUTE[d.key]
-                  return (
-                    <div key={d.key} className="flex items-center gap-2 py-1.5">
-                      <span className="text-sm text-[#1F2937] flex-1 min-w-0 truncate">
-                        {DIMENSION_NAMES[d.key]} ({Math.round(d.indice)})
-                      </span>
-                      <span className="text-xs font-semibold shrink-0" style={{ color: i === 0 ? "#EF4444" : "#F59E0B" }}>
-                        {i === 0 ? "Prioridad alta" : "Prioridad media"}
-                      </span>
-                      {planRoute ? (
-                        <Link
-                          href={planRoute}
-                          className="text-xs font-semibold text-[#16A34A] hover:underline shrink-0"
-                        >
-                          Ver plan →
-                        </Link>
-                      ) : (
-                        <span className="w-14 shrink-0" />
-                      )}
-                    </div>
-                  )
-                })}
+                <div className="flex flex-col divide-y divide-[#F1F5F9]">
+                  {lowestThree.map((d, i) => {
+                    const planRoute = DIMENSION_PLAN_ROUTE[d.key]
+                    const prioColor = i === 0 ? "#EF4444" : "#F59E0B"
+                    const prioLabel = i === 0 ? "Prioridad alta" : "Prioridad media"
+                    return (
+                      <div key={d.key} className="flex items-center justify-between py-2.5 gap-3">
+                        <span className="text-sm text-[#1F2937] min-w-0">
+                          {DIMENSION_NAMES[d.key]}{" "}
+                          <span className="text-[#9CA3AF] font-normal">({Math.round(d.indice)})</span>
+                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs font-semibold" style={{ color: prioColor }}>
+                            {prioLabel}
+                          </span>
+                          {planRoute && (
+                            <Link
+                              href={planRoute}
+                              className="text-xs font-semibold px-2.5 py-1 rounded-full transition-colors"
+                              style={{ background: "#F0FDF4", color: "#16A34A" }}
+                              onMouseEnter={e => (e.currentTarget.style.background = "#DCFCE7")}
+                              onMouseLeave={e => (e.currentTarget.style.background = "#F0FDF4")}
+                            >
+                              Ver plan →
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-6 gap-4">
