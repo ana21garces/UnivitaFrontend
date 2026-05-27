@@ -47,11 +47,11 @@ type CapellanData = {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const NIVEL_CONFIG: Record<string, { color: string; bg: string; rango: string }> = {
-  Pobre:     { color: "text-red-700",    bg: "bg-red-100",    rango: "0 – 25" },
-  Moderado:  { color: "text-orange-700", bg: "bg-orange-100", rango: "26 – 50" },
-  Bueno:     { color: "text-yellow-700", bg: "bg-yellow-100", rango: "51 – 75" },
-  Excelente: { color: "text-green-700",  bg: "bg-green-100",  rango: "76 – 100" },
+const NIVEL_CONFIG: Record<string, { color: string; bg: string; bar: string; rango: string }> = {
+  Pobre:     { color: "#E53E3E", bg: "#FFF5F5", bar: "#E53E3E", rango: "0 – 33" },
+  Moderado:  { color: "#DD6B20", bg: "#FFFAF0", bar: "#DD6B20", rango: "34 – 55" },
+  Bueno:     { color: "#3182CE", bg: "#EBF8FF", bar: "#3182CE", rango: "56 – 77" },
+  Excelente: { color: "#38A169", bg: "#F0FFF4", bar: "#38A169", rango: "78 – 100" },
 }
 
 const PP_ITEMS = [
@@ -72,32 +72,39 @@ const PP_ITEM_TEXTO: Record<string, string> = {
 }
 
 const PUNTAJE_CONFIG: Record<number, { label: string; color: string; bg: string }> = {
-  1: { label: "Pobre",     color: "text-red-700",       bg: "bg-red-100" },
-  2: { label: "Moderado",  color: "text-orange-700",    bg: "bg-orange-100" },
-  3: { label: "Bueno",     color: "text-green-700",     bg: "bg-green-100" },
-  4: { label: "Excelente", color: "text-emerald-800",   bg: "bg-emerald-100" },
+  1: { label: "Pobre",     color: "#E53E3E", bg: "#FFF5F5" },
+  2: { label: "Moderado",  color: "#DD6B20", bg: "#FFFAF0" },
+  3: { label: "Bueno",     color: "#3182CE", bg: "#EBF8FF" },
+  4: { label: "Excelente", color: "#38A169", bg: "#F0FFF4" },
+}
+
+function getNivelFromIndice(indice: number): string {
+  if (indice <= 33) return "Pobre"
+  if (indice <= 55) return "Moderado"
+  if (indice <= 77) return "Bueno"
+  return "Excelente"
 }
 
 function NivelBadge({ nivel }: { nivel: string }) {
-  const cfg = NIVEL_CONFIG[nivel] ?? { color: "text-gray-700", bg: "bg-gray-100", rango: "" }
+  const cfg = NIVEL_CONFIG[nivel] ?? { color: "#718096", bg: "#EDF2F7", bar: "#718096", rango: "" }
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.color}`}>
+    <span
+      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+      style={{ background: cfg.bg, color: cfg.color }}
+    >
       {nivel}
     </span>
   )
 }
 
 function IndiceBar({ indice }: { indice: number }) {
-  const nivel = indice <= 25 ? "Pobre" : indice <= 50 ? "Moderado" : indice <= 75 ? "Bueno" : "Excelente"
-  const barColor =
-    indice <= 25 ? "bg-red-500" :
-    indice <= 50 ? "bg-orange-400" :
-    indice <= 75 ? "bg-yellow-400" : "bg-green-500"
+  const nivel = getNivelFromIndice(indice)
+  const cfg = NIVEL_CONFIG[nivel]
 
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
-        <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${indice}%` }} />
+        <div className="h-full rounded-full transition-all" style={{ width: `${indice}%`, backgroundColor: cfg.bar }} />
       </div>
       <span className="text-xs font-semibold text-[#1F2937] w-12 text-right">{indice.toFixed(1)}%</span>
       <NivelBadge nivel={nivel} />
@@ -153,7 +160,10 @@ function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
                   <span className="flex-1 text-xs text-[#1F2937] leading-tight">{PP_ITEM_TEXTO[item]}</span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-sm font-bold text-[#1F2937]">{puntaje}</span>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                    <span
+                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                      style={{ background: cfg.bg, color: cfg.color }}
+                    >
                       {cfg.label}
                     </span>
                   </div>
@@ -212,8 +222,8 @@ function NivelesLeyenda() {
   return (
     <div className="flex flex-wrap gap-3">
       {Object.entries(NIVEL_CONFIG).map(([nivel, cfg]) => (
-        <div key={nivel} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${cfg.bg}`}>
-          <span className={`text-xs font-semibold ${cfg.color}`}>{nivel}</span>
+        <div key={nivel} className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: cfg.bg }}>
+          <span className="text-xs font-semibold" style={{ color: cfg.color }}>{nivel}</span>
           <span className="text-xs text-[#6B7280]">{cfg.rango}</span>
         </div>
       ))}

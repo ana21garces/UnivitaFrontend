@@ -33,16 +33,19 @@ type RecomendacionesAFData = {
 // ── Helpers de estilo ──────────────────────────────────────────────────────
 
 const NIVEL_CHIP: Record<string, { bg: string; text: string }> = {
-  POBRE:     { bg: "bg-red-100",    text: "text-red-700" },
-  MODERADO:  { bg: "bg-orange-100", text: "text-orange-700" },
-  BUENO:     { bg: "bg-green-100",  text: "text-green-700" },
-  EXCELENTE: { bg: "bg-emerald-100",text: "text-emerald-800" },
+  POBRE:     { bg: "#FFF5F5", text: "#E53E3E" },
+  MODERADO:  { bg: "#FFFAF0", text: "#DD6B20" },
+  BUENO:     { bg: "#EBF8FF", text: "#3182CE" },
+  EXCELENTE: { bg: "#F0FFF4", text: "#38A169" },
 }
 
 function NivelChip({ nivel }: { nivel: string }) {
-  const cfg = NIVEL_CHIP[nivel.toUpperCase()] ?? { bg: "bg-gray-100", text: "text-gray-700" }
+  const cfg = NIVEL_CHIP[nivel.toUpperCase()] ?? { bg: "#EDF2F7", text: "#718096" }
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${cfg.bg} ${cfg.text}`}>
+    <span
+      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide"
+      style={{ background: cfg.bg, color: cfg.text }}
+    >
       {nivel}
     </span>
   )
