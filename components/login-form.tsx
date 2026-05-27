@@ -55,6 +55,12 @@ export function LoginForm() {
         return
       }
 
+      if (role === "responsabilidad_salud") {
+        document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
+        router.push("/dashboard/responsabilidad-salud")
+        return
+      }
+
       // Verificar si el usuario ya completó la encuesta
       try {
         const { data: estado } = await axios.get(`${API_URL}/encuesta/estado`, {

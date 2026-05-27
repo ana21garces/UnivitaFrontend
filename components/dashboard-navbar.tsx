@@ -10,6 +10,7 @@ import {
   Users,
   BookHeart,
   Dumbbell,
+  Stethoscope,
 } from "lucide-react"
 import { useState } from "react"
 import { XpProgressBar } from "@/components/xp-progress-bar"
@@ -22,7 +23,7 @@ interface NavItem {
 }
 
 interface DashboardNavbarProps {
-  role: "user" | "admin" | "health-manager" | "capellan" | "actividad-fisica"
+  role: "user" | "admin" | "health-manager" | "capellan" | "actividad-fisica" | "responsabilidad-salud"
   userName?: string
   xp?: number
   maxXp?: number
@@ -45,6 +46,9 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
   "actividad-fisica": [
     { label: "Actividad Física", href: "/dashboard/actividad-fisica", icon: <Dumbbell className="w-4 h-4" /> },
+  ],
+  "responsabilidad-salud": [
+    { label: "Responsabilidad en Salud", href: "/dashboard/responsabilidad-salud", icon: <Stethoscope className="w-4 h-4" /> },
   ],
 }
 
