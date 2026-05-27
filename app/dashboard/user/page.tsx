@@ -473,7 +473,7 @@ export default function UserDashboard() {
         </section>
 
         {/* Actividades + Ruta siguiente nivel */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-6 items-start">
           {/* Actividades recomendadas */}
           <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
             <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Actividades recomendadas</h3>
