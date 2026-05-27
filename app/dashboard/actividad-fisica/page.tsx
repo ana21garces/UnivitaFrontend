@@ -3,25 +3,25 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
-import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle } from "lucide-react"
+import { ChevronDown, ChevronUp, Users, Dumbbell, AlertCircle } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
-type PsicologiaPositiva = {
-  pp_item_06: number
-  pp_item_12: number
-  pp_item_19: number
-  pp_item_25: number
-  pp_item_31: number
-  pp_item_37: number
-  pp_item_44: number
-  pp_item_49: number
-  pp_item_52: number
-  pp_indice: number
-  pp_nivel: string
+type ActividadFisica = {
+  af_item_04: number
+  af_item_10: number
+  af_item_16: number
+  af_item_17: number
+  af_item_23: number
+  af_item_29: number
+  af_item_35: number
+  af_item_42: number
+  af_item_47: number
+  af_indice: number
+  af_nivel: string
 }
 
 type Estudiante = {
@@ -31,7 +31,7 @@ type Estudiante = {
   programa: string
   universidad: string
   fecha: string
-  psicologia_positiva: PsicologiaPositiva
+  actividad_fisica: ActividadFisica
 }
 
 type Grupo = {
@@ -40,7 +40,7 @@ type Grupo = {
   estudiantes: Estudiante[]
 }
 
-type CapellanData = {
+type ActFisicaData = {
   total_estudiantes: number
   grupos: Grupo[]
 }
@@ -54,21 +54,21 @@ const NIVEL_CONFIG: Record<string, { color: string; bg: string; bar: string; ran
   Excelente: { color: "#38A169", bg: "#F0FFF4", bar: "#38A169", rango: "78 – 100" },
 }
 
-const PP_ITEMS = [
-  "pp_item_06", "pp_item_12", "pp_item_19", "pp_item_25",
-  "pp_item_31", "pp_item_37", "pp_item_44", "pp_item_49", "pp_item_52",
+const AF_ITEMS = [
+  "af_item_04", "af_item_10", "af_item_16", "af_item_17",
+  "af_item_23", "af_item_29", "af_item_35", "af_item_42", "af_item_47",
 ] as const
 
-const PP_ITEM_TEXTO: Record<string, string> = {
-  pp_item_06: "Cambiar tus comportamientos habituales de una forma positiva",
-  pp_item_12: "Aceptar que tu vida tiene un propósito",
-  pp_item_19: "Mirar hacia el futuro de forma positiva",
-  pp_item_25: "Sentir satisfacción hacia tu persona",
-  pp_item_31: "Establecer metas a largo plazo para tu vida",
-  pp_item_37: "Hacer que tu día sea interesante y retador",
-  pp_item_44: "Enfocarte en lo que es importante para ti en la vida",
-  pp_item_49: "Sentirte unido a Dios",
-  pp_item_52: "Exponerte a nuevas experiencias y retos constructivos",
+const AF_ITEM_TEXTO: Record<string, string> = {
+  af_item_04: "Seguir un programa de ejercicio físico planificado por un profesional",
+  af_item_10: "Practicar ejercicios vigorosos ≥ 3 días y ≥ 20 min/sesión",
+  af_item_16: "Caminata ≥ 5 días y ≥ 30 min/sesión",
+  af_item_17: "Actividades moderadas ≥ 5 días y ≥ 30 min/sesión",
+  af_item_23: "Realizar actividades recreativas en tiempo libre",
+  af_item_29: "Estiramientos de grandes grupos musculares 3× por semana",
+  af_item_35: "Mejorar actividad física diaria (escaleras, caminar al almuerzo...)",
+  af_item_42: "Medir la frecuencia cardíaca al ejercitarse",
+  af_item_47: "Alcanzar el pulso cardíaco objetivo en ejercicio aeróbico",
 }
 
 const PUNTAJE_CONFIG: Record<number, { label: string; color: string; bg: string }> = {
@@ -114,50 +114,48 @@ function IndiceBar({ indice }: { indice: number }) {
 
 function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
   const [open, setOpen] = useState(false)
-  const pp = estudiante.psicologia_positiva
+  const af = estudiante.actividad_fisica
   const fecha = new Date(estudiante.fecha).toLocaleDateString("es-CO", {
     year: "numeric", month: "short", day: "numeric",
   })
 
   return (
     <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
-      {/* Cabecera del estudiante */}
       <button
         className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-[#F8FAFC] transition-colors text-left"
         onClick={() => setOpen(!open)}
       >
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-[#1F2937] truncate">{estudiante.nombre}</p>
-          <p className="text-xs text-[#6B7280] truncate">{estudiante.universidad} · {fecha}</p>
+          <p className="text-xs text-[#6B7280] truncate">{estudiante.universidad ?? estudiante.programa} · {fecha}</p>
         </div>
         <div className="flex items-center gap-3 ml-4">
           <div className="hidden sm:flex items-center gap-2 w-52">
-            <IndiceBar indice={pp.pp_indice} />
+            <IndiceBar indice={af.af_indice} />
           </div>
           {open ? <ChevronUp className="w-4 h-4 text-[#6B7280] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#6B7280] shrink-0" />}
         </div>
       </button>
 
-      {/* Detalle expandible */}
       {open && (
         <div className="px-4 pb-4 pt-2 bg-[#F8FAFC] border-t border-[#E2E8F0]">
           {/* Índice en móvil */}
           <div className="sm:hidden mb-3">
             <p className="text-xs font-medium text-[#6B7280] mb-1">Índice general</p>
-            <IndiceBar indice={pp.pp_indice} />
+            <IndiceBar indice={af.af_indice} />
           </div>
 
           {/* Grilla de ítems */}
           <div className="flex flex-col gap-2 mb-3">
-            {PP_ITEMS.map((item) => {
-              const puntaje = pp[item]
+            {AF_ITEMS.map((item) => {
+              const puntaje = af[item]
               const cfg = PUNTAJE_CONFIG[puntaje] ?? { label: "—", color: "text-gray-600", bg: "bg-gray-100" }
               return (
                 <div key={item} className="flex items-center gap-3 bg-white border border-[#E2E8F0] rounded-lg px-3 py-2">
                   <span className="text-xs font-bold text-[#6B7280] w-14 shrink-0">
-                    Ítem {item.replace("pp_item_", "")}
+                    Ítem {item.replace("af_item_", "")}
                   </span>
-                  <span className="flex-1 text-xs text-[#1F2937] leading-tight">{PP_ITEM_TEXTO[item]}</span>
+                  <span className="flex-1 text-xs text-[#1F2937] leading-tight">{AF_ITEM_TEXTO[item]}</span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-sm font-bold text-[#1F2937]">{puntaje}</span>
                     <span
@@ -172,7 +170,6 @@ function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
             })}
           </div>
 
-          {/* Programa */}
           <p className="text-xs text-[#6B7280]">
             <span className="font-medium">Programa:</span> {estudiante.programa}
           </p>
@@ -192,8 +189,8 @@ function GrupoCard({ grupo }: { grupo: Grupo }) {
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#F0FDF4] flex items-center justify-center">
-            <Users className="w-4 h-4 text-[#16A34A]" />
+          <div className="w-9 h-9 rounded-xl bg-[#EFF6FF] flex items-center justify-center">
+            <Users className="w-4 h-4 text-[#2563EB]" />
           </div>
           <div className="text-left">
             <p className="font-semibold text-[#1F2937]">{grupo.programa}</p>
@@ -216,8 +213,6 @@ function GrupoCard({ grupo }: { grupo: Grupo }) {
   )
 }
 
-// ── Referencia de niveles ──────────────────────────────────────────────────
-
 function NivelesLeyenda() {
   return (
     <div className="flex flex-wrap gap-3">
@@ -233,9 +228,9 @@ function NivelesLeyenda() {
 
 // ── Página principal ──────────────────────────────────────────────────────
 
-export default function CapellanPage() {
+export default function ActividadFisicaPage() {
   const router = useRouter()
-  const [data, setData] = useState<CapellanData | null>(null)
+  const [data, setData] = useState<ActFisicaData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -247,7 +242,7 @@ export default function CapellanPage() {
     }
 
     axios
-      .get(`${API_URL}/encuesta/capellan/psicologia-positiva`, {
+      .get(`${API_URL}/encuesta/actividad-fisica/resultados`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "ngrok-skip-browser-warning": "true",
@@ -271,24 +266,24 @@ export default function CapellanPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <DashboardNavbar role="capellan" userName="Capellán" />
+      <DashboardNavbar role="actividad-fisica" userName="Prof. Actividad Física" />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 flex flex-col gap-6">
 
         {/* Encabezado */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#F0FDF4] flex items-center justify-center">
-              <BookHeart className="w-5 h-5 text-[#16A34A]" />
+            <div className="w-10 h-10 rounded-2xl bg-[#EFF6FF] flex items-center justify-center">
+              <Dumbbell className="w-5 h-5 text-[#2563EB]" />
             </div>
             <div>
-              <h1 className="text-xl font-bold font-heading text-[#1F2937]">Psicología Positiva</h1>
+              <h1 className="text-xl font-bold font-heading text-[#1F2937]">Actividad Física</h1>
               <p className="text-sm text-[#6B7280]">Resultados agrupados por programa</p>
             </div>
           </div>
           {data && (
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E2E8F0] shadow-sm self-start sm:self-auto">
-              <Users className="w-4 h-4 text-[#16A34A]" />
+              <Users className="w-4 h-4 text-[#2563EB]" />
               <span className="text-sm font-semibold text-[#1F2937]">{data.total_estudiantes} estudiantes</span>
             </div>
           )}
@@ -321,7 +316,7 @@ export default function CapellanPage() {
           <div className="flex flex-col gap-4">
             {data.grupos.length === 0 ? (
               <div className="text-center py-16 text-[#6B7280]">
-                <BookHeart className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <Dumbbell className="w-10 h-10 mx-auto mb-3 opacity-30" />
                 <p className="text-sm">No hay resultados disponibles aún.</p>
               </div>
             ) : (
