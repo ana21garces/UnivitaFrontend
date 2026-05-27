@@ -42,10 +42,16 @@ export function LoginForm() {
         // JWT malformado → ignorar, usar flujo normal
       }
 
-      // El capellán va directo a su vista sin pasar por la encuesta
+      // Roles profesionales: van directo a su vista sin pasar por la encuesta
       if (role === "capellan") {
         document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
         router.push("/dashboard/capellan")
+        return
+      }
+
+      if (role === "actividad_fisica") {
+        document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
+        router.push("/dashboard/actividad-fisica")
         return
       }
 

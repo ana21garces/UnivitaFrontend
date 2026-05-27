@@ -1,0 +1,231 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import axios from "axios"
+import { ArrowLeft, ChevronDown, ChevronUp, AlertCircle, Dumbbell } from "lucide-react"
+import { DashboardNavbar } from "@/components/dashboard-navbar"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+// ── Tipos ──────────────────────────────────────────────────────────────────
+
+type Tarjeta = {
+  pregunta_num: number
+  pregunta_texto: string
+  nivel: string
+  puntaje: number
+  tecnica: string
+  objetivo: string
+  instrucciones: string[]
+}
+
+type RecomendacionesAFData = {
+  usuario_id: string
+  nombre: string
+  af_nivel: string
+  af_indice: number
+  total_tarjetas: number
+  tarjetas: Tarjeta[]
+}
+
+// ── Helpers de estilo ──────────────────────────────────────────────────────
+
+const NIVEL_CHIP: Record<string, { bg: string; text: string }> = {
+  POBRE:     { bg: "bg-red-100",    text: "text-red-700" },
+  MODERADO:  { bg: "bg-orange-100", text: "text-orange-700" },
+  BUENO:     { bg: "bg-green-100",  text: "text-green-700" },
+  EXCELENTE: { bg: "bg-emerald-100",text: "text-emerald-800" },
+}
+
+function NivelChip({ nivel }: { nivel: string }) {
+  const cfg = NIVEL_CHIP[nivel.toUpperCase()] ?? { bg: "bg-gray-100", text: "text-gray-700" }
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${cfg.bg} ${cfg.text}`}>
+      {nivel}
+    </span>
+  )
+}
+
+// ── Tarjeta de recomendación ───────────────────────────────────────────────
+
+function TarjetaAF({ tarjeta }: { tarjeta: Tarjeta }) {
+  const [open, setOpen] = useState(true)
+
+  return (
+    <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
+      <button
+        className="w-full flex items-start justify-between px-5 py-4 hover:bg-[#F8FAFC] transition-colors text-left"
+        onClick={() => setOpen(!open)}
+      >
+        <div className="flex-1 pr-4">
+          <div className="flex items-center gap-2 mb-1">
+            <NivelChip nivel={tarjeta.nivel} />
+          </div>
+          <p className="text-xs text-[#6B7280] mb-1">Pregunta {tarjeta.pregunta_num} · {tarjeta.pregunta_texto}</p>
+          <h3 className="text-base font-bold text-[#1F2937]">{tarjeta.tecnica}</h3>
+        </div>
+        {open
+          ? <ChevronUp className="w-5 h-5 text-[#6B7280] shrink-0 mt-1" />
+          : <ChevronDown className="w-5 h-5 text-[#6B7280] shrink-0 mt-1" />
+        }
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5 border-t border-[#E2E8F0]">
+          <p className="text-sm text-[#374151] mt-4 mb-3 leading-relaxed">{tarjeta.objetivo}</p>
+          <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">Instrucciones</p>
+          <ol className="flex flex-col gap-2">
+            {tarjeta.instrucciones.map((paso, i) => (
+              <li key={i} className="flex gap-3 text-sm text-[#374151]">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#EFF6FF] text-[#2563EB] font-bold text-[10px] shrink-0 mt-0.5">
+                  {i + 1}
+                </span>
+                <span className="leading-relaxed">{paso}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Página principal ───────────────────────────────────────────────────────
+
+export default function RecomendacionesAFPage() {
+  const router = useRouter()
+  const [data, setData] = useState<RecomendacionesAFData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [noEncuesta, setNoEncuesta] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token")
+    if (!token) { router.replace("/"); return }
+
+    axios
+      .get(`${API_URL}/encuesta/recomendaciones/actividad-fisica`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "ngrok-skip-browser-warning": "true",
+        },
+      })
+      .then((res) => setData(res.data))
+      .catch((err) => {
+        const status = err.response?.status
+        if (status === 401) {
+          localStorage.removeItem("access_token")
+          localStorage.removeItem("refresh_token")
+          router.replace("/")
+        } else if (status === 403) {
+          router.replace("/dashboard/user")
+        } else if (status === 404) {
+          setNoEncuesta(true)
+        } else {
+          setError("No se pudo cargar el plan. Intenta de nuevo más tarde.")
+        }
+      })
+      .finally(() => setLoading(false))
+  }, [router])
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <DashboardNavbar role="user" userName={data?.nombre ?? "Estudiante"} />
+
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 flex flex-col gap-6">
+
+        {/* Cabecera */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/user"
+            className="flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver
+          </Link>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#EFF6FF] flex items-center justify-center">
+              <Dumbbell className="w-5 h-5 text-[#2563EB]" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Plan de Actividad Física</h1>
+              <p className="text-sm text-[#6B7280] mt-0.5">Recomendaciones personalizadas</p>
+            </div>
+          </div>
+          {data && (
+            <div className="flex items-center gap-3 self-start sm:self-auto">
+              <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm text-center">
+                <p className="text-lg font-bold text-[#1F2937]">{data.af_indice.toFixed(1)}</p>
+                <p className="text-[10px] text-[#6B7280]">Índice AF</p>
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm text-center">
+                <p className="text-sm font-bold text-[#1F2937]">{data.af_nivel}</p>
+                <p className="text-[10px] text-[#6B7280]">Nivel AF</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Encuesta no completada */}
+        {noEncuesta && (
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <Dumbbell className="w-12 h-12 text-[#CBD5E1]" />
+            <div>
+              <p className="font-semibold text-[#1F2937]">Completa la encuesta primero</p>
+              <p className="text-sm text-[#6B7280] mt-1">
+                Debes completar el cuestionario de salud para ver tus recomendaciones de actividad física.
+              </p>
+            </div>
+            <Link
+              href="/onboarding/survey"
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
+              style={{ background: "linear-gradient(135deg,#2563EB,#3B82F6)" }}
+            >
+              Ir a la encuesta
+            </Link>
+          </div>
+        )}
+
+        {/* Carga */}
+        {loading && (
+          <div className="flex flex-col gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-28 rounded-2xl bg-gray-100 animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {/* Error genérico */}
+        {error && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Tarjetas */}
+        {!loading && !error && !noEncuesta && data && (
+          <>
+            {data.tarjetas.length === 0 ? (
+              <div className="text-center py-16 text-[#6B7280]">
+                <Dumbbell className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">¡Excelente! No tienes áreas de mejora en actividad física.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {data.tarjetas.map((t, i) => (
+                  <TarjetaAF key={i} tarjeta={t} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </main>
+    </div>
+  )
+}
