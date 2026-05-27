@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   Users,
+  BookHeart,
 } from "lucide-react"
 import { useState } from "react"
 import { XpProgressBar } from "@/components/xp-progress-bar"
@@ -20,7 +21,7 @@ interface NavItem {
 }
 
 interface DashboardNavbarProps {
-  role: "user" | "admin" | "health-manager"
+  role: "user" | "admin" | "health-manager" | "capellan"
   userName?: string
   xp?: number
   maxXp?: number
@@ -37,6 +38,9 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
   "health-manager": [
     { label: "Dashboard", href: "/dashboard/health-manager", icon: <LayoutDashboard className="w-4 h-4" /> },
+  ],
+  capellan: [
+    { label: "Psicología Positiva", href: "/dashboard/capellan", icon: <BookHeart className="w-4 h-4" /> },
   ],
 }
 

@@ -18,18 +18,26 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
     ? await req.text()
     : undefined
 
-  const response = await fetch(targetUrl, {
-    method: req.method,
-    headers,
-    body,
-  })
+  try {
+    const response = await fetch(targetUrl, {
+      method: req.method,
+      headers,
+      body,
+    })
 
-  const data = await response.text()
+    const data = await response.text()
 
-  return new NextResponse(data, {
-    status: response.status,
-    headers: { "Content-Type": "application/json" },
-  })
+    return new NextResponse(data, {
+      status: response.status,
+      headers: { "Content-Type": "application/json" },
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error connecting to backend"
+    return new NextResponse(JSON.stringify({ detail: message }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
 }
 
 export const GET = handler

@@ -13,9 +13,17 @@ import type { NextRequest } from "next/server"
  * In production this would check a DB-backed session; for the MVP we use a cookie
  * that the client sets after survey submission.
  */
+// Rutas de dashboard que no requieren encuesta completada (roles sin encuesta)
+const SURVEY_EXEMPT_PATHS = ["/dashboard/capellan"]
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const surveyDone = request.cookies.get("univita8_survey_done")?.value === "true"
+
+  // Rutas exentas del requisito de encuesta
+  if (SURVEY_EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next()
+  }
 
   // Heading to dashboard without completing survey -> redirect to survey
   if (pathname.startsWith("/dashboard") && !surveyDone) {
