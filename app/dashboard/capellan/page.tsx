@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
 import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap } from "lucide-react"
@@ -205,7 +205,7 @@ function CarreraCard({ carrera }: { carrera: Carrera }) {
       >
         <div className="flex items-center gap-2">
           <GraduationCap className="w-4 h-4 text-[#6B7280]" />
-          <span className="text-sm font-semibold text-[#1F2937]">{carrera.carrera}</span>
+          <span className="text-sm font-semibold text-[#1F2937]">{carrera.carrera || "Sin carrera asignada"}</span>
           <span className="text-xs text-[#6B7280]">({carrera.total})</span>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />}
@@ -239,7 +239,7 @@ function FacultadCard({ facultad }: { facultad: Facultad }) {
             <Building2 className="w-4 h-4 text-[#16A34A]" />
           </div>
           <div className="text-left">
-            <p className="font-semibold text-[#1F2937]">{facultad.facultad}</p>
+            <p className="font-semibold text-[#1F2937]">{facultad.facultad || "Sin facultad asignada"}</p>
             <p className="text-xs text-[#6B7280]">
               {facultad.total} usuario{facultad.total !== 1 ? "s" : ""} ·{" "}
               {facultad.carreras.length} carrera{facultad.carreras.length !== 1 ? "s" : ""}
@@ -358,40 +358,66 @@ export default function CapellanPage() {
   const [error, setError] = useState("")
   const [filtros, setFiltros] = useState<Filtros>({ facultad: "", carrera: "", tipo_usuario: "" })
 
-  // Opciones para los dropdowns (derivadas del primer response completo)
+  // Fuente permanente de opciones — se llena UNA vez con datos sin filtros
+  const allFacultadesRef = useRef<Facultad[]>([])
   const [opcionesFacultades, setOpcionesFacultades] = useState<string[]>([])
   const [opcionesCarreras, setOpcionesCarreras] = useState<string[]>([])
 
-  const fetchData = useCallback(
-    (f: Filtros) => {
-      const token = localStorage.getItem("access_token")
-      if (!token) { router.replace("/"); return }
+  const getToken = () => {
+    const t = localStorage.getItem("access_token")
+    if (!t) { router.replace("/"); return null }
+    return t
+  }
 
+  // Carga inicial SIN filtros — solo para poblar los dropdowns
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    axios
+      .get(`${API_URL}/encuesta/capellan/psicologia-positiva`, {
+        headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
+      })
+      .then((res) => {
+        const d: CapellanData = res.data
+        allFacultadesRef.current = d.facultades
+        // Solo agregar nombres no vacíos al dropdown
+        const facs = d.facultades.map((f) => f.facultad).filter(Boolean)
+        setOpcionesFacultades(facs)
+        // Primera carga también muestra todos los datos
+        setData(d)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Cuando cambia la facultad seleccionada, derivar carreras de la ref permanente
+  useEffect(() => {
+    if (filtros.facultad) {
+      const fac = allFacultadesRef.current.find((f) => f.facultad === filtros.facultad)
+      setOpcionesCarreras(fac ? fac.carreras.map((c) => c.carrera).filter(Boolean) : [])
+    } else {
+      setOpcionesCarreras([])
+    }
+  }, [filtros.facultad])
+
+  // Re-fetch con filtros activos
+  const fetchFiltrado = useCallback(
+    (f: Filtros) => {
+      const token = getToken()
+      if (!token) return
       setLoading(true)
       setError("")
-
       const params = new URLSearchParams()
       if (f.facultad)     params.set("facultad", f.facultad)
       if (f.carrera)      params.set("carrera", f.carrera)
       if (f.tipo_usuario) params.set("tipo_usuario", f.tipo_usuario)
-
       const url = `${API_URL}/encuesta/capellan/psicologia-positiva${params.toString() ? `?${params}` : ""}`
-
       axios
         .get(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "ngrok-skip-browser-warning": "true",
-          },
+          headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
         })
-        .then((res) => {
-          const d: CapellanData = res.data
-          setData(d)
-          // Solo actualizar opciones en la carga inicial (sin filtros)
-          if (!f.facultad && !f.carrera && !f.tipo_usuario) {
-            setOpcionesFacultades(d.facultades.map((fac) => fac.facultad))
-          }
-        })
+        .then((res) => setData(res.data))
         .catch((err) => {
           const status = err.response?.status
           if (status === 401) {
@@ -406,29 +432,13 @@ export default function CapellanPage() {
         })
         .finally(() => setLoading(false))
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [router]
   )
 
-  // Actualizar carreras disponibles cuando cambia facultad seleccionada
-  useEffect(() => {
-    if (!data) return
-    if (filtros.facultad) {
-      const fac = data.facultades.find((f) => f.facultad === filtros.facultad)
-      setOpcionesCarreras(fac ? fac.carreras.map((c) => c.carrera) : [])
-    } else {
-      setOpcionesCarreras([])
-    }
-  }, [filtros.facultad, data])
-
-  // Carga inicial
-  useEffect(() => {
-    fetchData(filtros)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   const handleFiltrosChange = (f: Filtros) => {
     setFiltros(f)
-    fetchData(f)
+    fetchFiltrado(f)
   }
 
   return (
