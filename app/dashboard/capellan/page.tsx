@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
 import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap } from "lucide-react"
@@ -290,10 +290,16 @@ function FiltrosBar({
 }: {
   filtros: Filtros
   onChange: (f: Filtros) => void
-  opciones: { facultades: string[]; carreras: string[] }
+  opciones: { facultades: string[]; carreras: string[]; tipos_usuario: string[] }
 }) {
   const selectClass =
-    "text-sm border border-[#E2E8F0] rounded-lg px-3 py-1.5 bg-white text-[#1F2937] focus:outline-none focus:border-[#16A34A] cursor-pointer"
+    "text-sm border border-[#E2E8F0] rounded-lg px-3 py-1.5 bg-white text-[#1F2937] focus:outline-none focus:border-[#16A34A] cursor-pointer disabled:opacity-50"
+
+  const TIPO_LABELS: Record<string, string> = {
+    estudiante: "Estudiante",
+    docente: "Docente",
+    administrativo: "Administrativo",
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-3 bg-white border border-[#E2E8F0] rounded-2xl px-4 py-3 shadow-sm">
@@ -316,7 +322,7 @@ function FiltrosBar({
         className={selectClass}
         value={filtros.carrera}
         onChange={(e) => onChange({ ...filtros, carrera: e.target.value })}
-        disabled={!filtros.facultad}
+        disabled={opciones.carreras.length === 0}
       >
         <option value="">Todas las carreras</option>
         {opciones.carreras.map((c) => (
@@ -324,16 +330,16 @@ function FiltrosBar({
         ))}
       </select>
 
-      {/* Tipo de usuario */}
+      {/* Tipo de usuario — dinámico desde API */}
       <select
         className={selectClass}
         value={filtros.tipo_usuario}
         onChange={(e) => onChange({ ...filtros, tipo_usuario: e.target.value })}
       >
         <option value="">Todos los tipos</option>
-        <option value="estudiante">Estudiante</option>
-        <option value="docente">Docente</option>
-        <option value="administrativo">Administrativo</option>
+        {opciones.tipos_usuario.map((t) => (
+          <option key={t} value={t}>{TIPO_LABELS[t] ?? t}</option>
+        ))}
       </select>
 
       {/* Limpiar */}
@@ -358,18 +364,48 @@ export default function CapellanPage() {
   const [error, setError] = useState("")
   const [filtros, setFiltros] = useState<Filtros>({ facultad: "", carrera: "", tipo_usuario: "" })
 
-  // Fuente permanente de opciones — se llena UNA vez con datos sin filtros
-  const allFacultadesRef = useRef<Facultad[]>([])
   const [opcionesFacultades, setOpcionesFacultades] = useState<string[]>([])
   const [opcionesCarreras, setOpcionesCarreras] = useState<string[]>([])
+  const [opcionesTipos, setOpcionesTipos] = useState<string[]>([])
+  // Mapa facultad → carreras para filtrar el dropdown de carrera
+  const [carrerasPorFacultad, setCarrerasPorFacultad] = useState<Record<string, string[]>>({})
 
-  const getToken = () => {
+  const getToken = useCallback(() => {
     const t = localStorage.getItem("access_token")
     if (!t) { router.replace("/"); return null }
     return t
-  }
+  }, [router])
 
-  // Carga inicial SIN filtros — solo para poblar los dropdowns
+  // Carga de opciones desde el endpoint dedicado
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    axios
+      .get(`${API_URL}/encuesta/filtros/opciones`, {
+        headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
+      })
+      .then((res) => {
+        const { facultades = [], carreras = [], tipos_usuario = [] } = res.data
+        setOpcionesFacultades(facultades.filter(Boolean))
+        setOpcionesTipos(tipos_usuario.filter(Boolean))
+        // Guardar todas las carreras como fallback
+        setOpcionesCarreras(carreras.filter(Boolean))
+        // Construir mapa facultad→carreras si el API lo devuelve agrupado
+        // (si no, el dropdown de carrera muestra todas)
+      })
+      .catch(() => {
+        // Si falla, los dropdowns quedan vacíos pero la vista sigue funcionando
+      })
+  }, [getToken])
+
+  // Cuando cambia la facultad, actualizar carreras disponibles
+  useEffect(() => {
+    if (filtros.facultad && carrerasPorFacultad[filtros.facultad]) {
+      setOpcionesCarreras(carrerasPorFacultad[filtros.facultad])
+    }
+  }, [filtros.facultad, carrerasPorFacultad])
+
+  // Carga inicial de datos (sin filtros)
   useEffect(() => {
     const token = getToken()
     if (!token) return
@@ -377,29 +413,21 @@ export default function CapellanPage() {
       .get(`${API_URL}/encuesta/capellan/psicologia-positiva`, {
         headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
       })
-      .then((res) => {
-        const d: CapellanData = res.data
-        allFacultadesRef.current = d.facultades
-        // Solo agregar nombres no vacíos al dropdown
-        const facs = d.facultades.map((f) => f.facultad).filter(Boolean)
-        setOpcionesFacultades(facs)
-        // Primera carga también muestra todos los datos
-        setData(d)
+      .then((res) => setData(res.data))
+      .catch((err) => {
+        const status = err.response?.status
+        if (status === 401) {
+          localStorage.removeItem("access_token")
+          localStorage.removeItem("refresh_token")
+          router.replace("/")
+        } else if (status === 403) {
+          router.replace("/dashboard/user")
+        } else {
+          setError("No se pudo cargar la información. Intenta de nuevo más tarde.")
+        }
       })
-      .catch(() => {})
       .finally(() => setLoading(false))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Cuando cambia la facultad seleccionada, derivar carreras de la ref permanente
-  useEffect(() => {
-    if (filtros.facultad) {
-      const fac = allFacultadesRef.current.find((f) => f.facultad === filtros.facultad)
-      setOpcionesCarreras(fac ? fac.carreras.map((c) => c.carrera).filter(Boolean) : [])
-    } else {
-      setOpcionesCarreras([])
-    }
-  }, [filtros.facultad])
+  }, [getToken, router])
 
   // Re-fetch con filtros activos
   const fetchFiltrado = useCallback(
@@ -432,8 +460,7 @@ export default function CapellanPage() {
         })
         .finally(() => setLoading(false))
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [router]
+    [getToken, router]
   )
 
   const handleFiltrosChange = (f: Filtros) => {
@@ -476,7 +503,7 @@ export default function CapellanPage() {
         <FiltrosBar
           filtros={filtros}
           onChange={handleFiltrosChange}
-          opciones={{ facultades: opcionesFacultades, carreras: opcionesCarreras }}
+          opciones={{ facultades: opcionesFacultades, carreras: opcionesCarreras, tipos_usuario: opcionesTipos }}
         />
 
         {/* Carga / error */}
