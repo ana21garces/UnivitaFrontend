@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
-import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle } from "lucide-react"
+import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -24,34 +24,42 @@ type PsicologiaPositiva = {
   pp_nivel: string
 }
 
-type Estudiante = {
-  encuesta_id: number
-  usuario_id: string
+type Usuario = {
+  encuesta_id?: number
+  usuario_id?: string
   nombre: string
+  facultad: string
   programa: string
-  universidad: string
-  fecha: string
+  tipo_usuario: string
+  universidad?: string
+  fecha?: string
   psicologia_positiva: PsicologiaPositiva
 }
 
-type Grupo = {
-  programa: string
+type Carrera = {
+  carrera: string
   total: number
-  estudiantes: Estudiante[]
+  usuarios: Usuario[]
+}
+
+type Facultad = {
+  facultad: string
+  total: number
+  carreras: Carrera[]
 }
 
 type CapellanData = {
-  total_estudiantes: number
-  grupos: Grupo[]
+  total_usuarios: number
+  facultades: Facultad[]
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-const NIVEL_CONFIG: Record<string, { color: string; bg: string; bar: string; rango: string }> = {
-  Pobre:     { color: "#E53E3E", bg: "#FFF5F5", bar: "#E53E3E", rango: "0 – 33" },
-  Moderado:  { color: "#DD6B20", bg: "#FFFAF0", bar: "#DD6B20", rango: "34 – 55" },
-  Bueno:     { color: "#3182CE", bg: "#EBF8FF", bar: "#3182CE", rango: "56 – 77" },
-  Excelente: { color: "#38A169", bg: "#F0FFF4", bar: "#38A169", rango: "78 – 100" },
+const NIVEL_CONFIG: Record<string, { color: string; bg: string; rango: string }> = {
+  Pobre:     { color: "text-red-700",    bg: "bg-red-100",    rango: "0 – 25" },
+  Moderado:  { color: "text-orange-700", bg: "bg-orange-100", rango: "26 – 50" },
+  Bueno:     { color: "text-yellow-700", bg: "bg-yellow-100", rango: "51 – 75" },
+  Excelente: { color: "text-green-700",  bg: "bg-green-100",  rango: "76 – 100" },
 }
 
 const PP_ITEMS = [
@@ -72,39 +80,37 @@ const PP_ITEM_TEXTO: Record<string, string> = {
 }
 
 const PUNTAJE_CONFIG: Record<number, { label: string; color: string; bg: string }> = {
-  1: { label: "Pobre",     color: "#E53E3E", bg: "#FFF5F5" },
-  2: { label: "Moderado",  color: "#DD6B20", bg: "#FFFAF0" },
-  3: { label: "Bueno",     color: "#3182CE", bg: "#EBF8FF" },
-  4: { label: "Excelente", color: "#38A169", bg: "#F0FFF4" },
+  1: { label: "Pobre",     color: "text-red-700",     bg: "bg-red-100" },
+  2: { label: "Moderado",  color: "text-orange-700",  bg: "bg-orange-100" },
+  3: { label: "Bueno",     color: "text-green-700",   bg: "bg-green-100" },
+  4: { label: "Excelente", color: "text-emerald-800", bg: "bg-emerald-100" },
 }
 
-function getNivelFromIndice(indice: number): string {
-  if (indice <= 33) return "Pobre"
-  if (indice <= 55) return "Moderado"
-  if (indice <= 77) return "Bueno"
-  return "Excelente"
+const TIPO_USUARIO_LABELS: Record<string, string> = {
+  estudiante:     "Estudiante",
+  docente:        "Docente",
+  administrativo: "Administrativo",
 }
 
 function NivelBadge({ nivel }: { nivel: string }) {
-  const cfg = NIVEL_CONFIG[nivel] ?? { color: "#718096", bg: "#EDF2F7", bar: "#718096", rango: "" }
+  const cfg = NIVEL_CONFIG[nivel] ?? { color: "text-gray-700", bg: "bg-gray-100", rango: "" }
   return (
-    <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
-      style={{ background: cfg.bg, color: cfg.color }}
-    >
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.color}`}>
       {nivel}
     </span>
   )
 }
 
 function IndiceBar({ indice }: { indice: number }) {
-  const nivel = getNivelFromIndice(indice)
-  const cfg = NIVEL_CONFIG[nivel]
-
+  const nivel = indice <= 25 ? "Pobre" : indice <= 50 ? "Moderado" : indice <= 75 ? "Bueno" : "Excelente"
+  const barColor =
+    indice <= 25 ? "bg-red-500" :
+    indice <= 50 ? "bg-orange-400" :
+    indice <= 75 ? "bg-yellow-400" : "bg-green-500"
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${indice}%`, backgroundColor: cfg.bar }} />
+        <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${indice}%` }} />
       </div>
       <span className="text-xs font-semibold text-[#1F2937] w-12 text-right">{indice.toFixed(1)}%</span>
       <NivelBadge nivel={nivel} />
@@ -112,23 +118,33 @@ function IndiceBar({ indice }: { indice: number }) {
   )
 }
 
-function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
+// ── Fila de usuario ────────────────────────────────────────────────────────
+
+function UsuarioRow({ usuario }: { usuario: Usuario }) {
   const [open, setOpen] = useState(false)
-  const pp = estudiante.psicologia_positiva
-  const fecha = new Date(estudiante.fecha).toLocaleDateString("es-CO", {
-    year: "numeric", month: "short", day: "numeric",
-  })
+  const pp = usuario.psicologia_positiva
+  const fecha = usuario.fecha
+    ? new Date(usuario.fecha).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" })
+    : null
 
   return (
     <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
-      {/* Cabecera del estudiante */}
       <button
         className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-[#F8FAFC] transition-colors text-left"
         onClick={() => setOpen(!open)}
       >
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-[#1F2937] truncate">{estudiante.nombre}</p>
-          <p className="text-xs text-[#6B7280] truncate">{estudiante.universidad} · {fecha}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-[#1F2937] truncate">{usuario.nombre}</p>
+            {usuario.tipo_usuario && (
+              <span className="hidden sm:inline text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[#6B7280]">
+                {TIPO_USUARIO_LABELS[usuario.tipo_usuario] ?? usuario.tipo_usuario}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-[#6B7280] truncate">
+            {usuario.universidad && `${usuario.universidad} · `}{fecha}
+          </p>
         </div>
         <div className="flex items-center gap-3 ml-4">
           <div className="hidden sm:flex items-center gap-2 w-52">
@@ -138,17 +154,16 @@ function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
         </div>
       </button>
 
-      {/* Detalle expandible */}
       {open && (
         <div className="px-4 pb-4 pt-2 bg-[#F8FAFC] border-t border-[#E2E8F0]">
           {/* Índice en móvil */}
           <div className="sm:hidden mb-3">
-            <p className="text-xs font-medium text-[#6B7280] mb-1">Índice general</p>
+            <p className="text-xs font-medium text-[#6B7280] mb-1">Índice PP</p>
             <IndiceBar indice={pp.pp_indice} />
           </div>
 
-          {/* Grilla de ítems */}
-          <div className="flex flex-col gap-2 mb-3">
+          {/* Ítems con texto de pregunta */}
+          <div className="flex flex-col gap-1.5 mb-3">
             {PP_ITEMS.map((item) => {
               const puntaje = pp[item]
               const cfg = PUNTAJE_CONFIG[puntaje] ?? { label: "—", color: "text-gray-600", bg: "bg-gray-100" }
@@ -160,10 +175,7 @@ function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
                   <span className="flex-1 text-xs text-[#1F2937] leading-tight">{PP_ITEM_TEXTO[item]}</span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-sm font-bold text-[#1F2937]">{puntaje}</span>
-                    <span
-                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                      style={{ background: cfg.bg, color: cfg.color }}
-                    >
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
                       {cfg.label}
                     </span>
                   </div>
@@ -172,9 +184,8 @@ function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
             })}
           </div>
 
-          {/* Programa */}
           <p className="text-xs text-[#6B7280]">
-            <span className="font-medium">Programa:</span> {estudiante.programa}
+            <span className="font-medium">Programa:</span> {usuario.programa}
           </p>
         </div>
       )}
@@ -182,32 +193,29 @@ function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
   )
 }
 
-function GrupoCard({ grupo }: { grupo: Grupo }) {
-  const [open, setOpen] = useState(true)
+// ── Tarjeta de carrera ─────────────────────────────────────────────────────
 
+function CarreraCard({ carrera }: { carrera: Carrera }) {
+  const [open, setOpen] = useState(true)
   return (
-    <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
+    <div className="rounded-xl border border-[#E2E8F0] bg-[#FAFAFA] overflow-hidden">
       <button
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-[#F8FAFC] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#F1F5F9] transition-colors"
         onClick={() => setOpen(!open)}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#F0FDF4] flex items-center justify-center">
-            <Users className="w-4 h-4 text-[#16A34A]" />
-          </div>
-          <div className="text-left">
-            <p className="font-semibold text-[#1F2937]">{grupo.programa}</p>
-            <p className="text-xs text-[#6B7280]">{grupo.total} estudiante{grupo.total !== 1 ? "s" : ""}</p>
-          </div>
+        <div className="flex items-center gap-2">
+          <GraduationCap className="w-4 h-4 text-[#6B7280]" />
+          <span className="text-sm font-semibold text-[#1F2937]">{carrera.carrera}</span>
+          <span className="text-xs text-[#6B7280]">({carrera.total})</span>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />}
       </button>
 
       {open && (
-        <div className="px-4 pb-4 flex flex-col gap-2 border-t border-[#E2E8F0]">
-          <div className="pt-3 flex flex-col gap-2">
-            {grupo.estudiantes.map((est) => (
-              <EstudianteRow key={est.encuesta_id} estudiante={est} />
+        <div className="px-3 pb-3 flex flex-col gap-2 border-t border-[#E2E8F0]">
+          <div className="pt-2 flex flex-col gap-2">
+            {carrera.usuarios.map((u, i) => (
+              <UsuarioRow key={u.encuesta_id ?? i} usuario={u} />
             ))}
           </div>
         </div>
@@ -216,14 +224,50 @@ function GrupoCard({ grupo }: { grupo: Grupo }) {
   )
 }
 
-// ── Referencia de niveles ──────────────────────────────────────────────────
+// ── Tarjeta de facultad ────────────────────────────────────────────────────
+
+function FacultadCard({ facultad }: { facultad: Facultad }) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
+      <button
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-[#F8FAFC] transition-colors"
+        onClick={() => setOpen(!open)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#F0FDF4] flex items-center justify-center">
+            <Building2 className="w-4 h-4 text-[#16A34A]" />
+          </div>
+          <div className="text-left">
+            <p className="font-semibold text-[#1F2937]">{facultad.facultad}</p>
+            <p className="text-xs text-[#6B7280]">
+              {facultad.total} usuario{facultad.total !== 1 ? "s" : ""} ·{" "}
+              {facultad.carreras.length} carrera{facultad.carreras.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+        {open ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />}
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 flex flex-col gap-3 border-t border-[#E2E8F0] pt-3">
+          {facultad.carreras.map((c) => (
+            <CarreraCard key={c.carrera} carrera={c} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Leyenda de niveles ─────────────────────────────────────────────────────
 
 function NivelesLeyenda() {
   return (
     <div className="flex flex-wrap gap-3">
       {Object.entries(NIVEL_CONFIG).map(([nivel, cfg]) => (
-        <div key={nivel} className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: cfg.bg }}>
-          <span className="text-xs font-semibold" style={{ color: cfg.color }}>{nivel}</span>
+        <div key={nivel} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${cfg.bg}`}>
+          <span className={`text-xs font-semibold ${cfg.color}`}>{nivel}</span>
           <span className="text-xs text-[#6B7280]">{cfg.rango}</span>
         </div>
       ))}
@@ -231,43 +275,161 @@ function NivelesLeyenda() {
   )
 }
 
-// ── Página principal ──────────────────────────────────────────────────────
+// ── Filtros ────────────────────────────────────────────────────────────────
+
+type Filtros = {
+  facultad: string
+  carrera: string
+  tipo_usuario: string
+}
+
+function FiltrosBar({
+  filtros,
+  onChange,
+  opciones,
+}: {
+  filtros: Filtros
+  onChange: (f: Filtros) => void
+  opciones: { facultades: string[]; carreras: string[] }
+}) {
+  const selectClass =
+    "text-sm border border-[#E2E8F0] rounded-lg px-3 py-1.5 bg-white text-[#1F2937] focus:outline-none focus:border-[#16A34A] cursor-pointer"
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 bg-white border border-[#E2E8F0] rounded-2xl px-4 py-3 shadow-sm">
+      <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Filtrar por</span>
+
+      {/* Facultad */}
+      <select
+        className={selectClass}
+        value={filtros.facultad}
+        onChange={(e) => onChange({ ...filtros, facultad: e.target.value, carrera: "" })}
+      >
+        <option value="">Todas las facultades</option>
+        {opciones.facultades.map((f) => (
+          <option key={f} value={f}>{f}</option>
+        ))}
+      </select>
+
+      {/* Carrera */}
+      <select
+        className={selectClass}
+        value={filtros.carrera}
+        onChange={(e) => onChange({ ...filtros, carrera: e.target.value })}
+        disabled={!filtros.facultad}
+      >
+        <option value="">Todas las carreras</option>
+        {opciones.carreras.map((c) => (
+          <option key={c} value={c}>{c}</option>
+        ))}
+      </select>
+
+      {/* Tipo de usuario */}
+      <select
+        className={selectClass}
+        value={filtros.tipo_usuario}
+        onChange={(e) => onChange({ ...filtros, tipo_usuario: e.target.value })}
+      >
+        <option value="">Todos los tipos</option>
+        <option value="estudiante">Estudiante</option>
+        <option value="docente">Docente</option>
+        <option value="administrativo">Administrativo</option>
+      </select>
+
+      {/* Limpiar */}
+      {(filtros.facultad || filtros.carrera || filtros.tipo_usuario) && (
+        <button
+          className="text-xs text-[#6B7280] hover:text-[#1F2937] underline"
+          onClick={() => onChange({ facultad: "", carrera: "", tipo_usuario: "" })}
+        >
+          Limpiar filtros
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Página principal ───────────────────────────────────────────────────────
 
 export default function CapellanPage() {
   const router = useRouter()
   const [data, setData] = useState<CapellanData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [filtros, setFiltros] = useState<Filtros>({ facultad: "", carrera: "", tipo_usuario: "" })
 
+  // Opciones para los dropdowns (derivadas del primer response completo)
+  const [opcionesFacultades, setOpcionesFacultades] = useState<string[]>([])
+  const [opcionesCarreras, setOpcionesCarreras] = useState<string[]>([])
+
+  const fetchData = useCallback(
+    (f: Filtros) => {
+      const token = localStorage.getItem("access_token")
+      if (!token) { router.replace("/"); return }
+
+      setLoading(true)
+      setError("")
+
+      const params = new URLSearchParams()
+      if (f.facultad)     params.set("facultad", f.facultad)
+      if (f.carrera)      params.set("carrera", f.carrera)
+      if (f.tipo_usuario) params.set("tipo_usuario", f.tipo_usuario)
+
+      const url = `${API_URL}/encuesta/capellan/psicologia-positiva${params.toString() ? `?${params}` : ""}`
+
+      axios
+        .get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "ngrok-skip-browser-warning": "true",
+          },
+        })
+        .then((res) => {
+          const d: CapellanData = res.data
+          setData(d)
+          // Solo actualizar opciones en la carga inicial (sin filtros)
+          if (!f.facultad && !f.carrera && !f.tipo_usuario) {
+            setOpcionesFacultades(d.facultades.map((fac) => fac.facultad))
+          }
+        })
+        .catch((err) => {
+          const status = err.response?.status
+          if (status === 401) {
+            localStorage.removeItem("access_token")
+            localStorage.removeItem("refresh_token")
+            router.replace("/")
+          } else if (status === 403) {
+            router.replace("/dashboard/user")
+          } else {
+            setError("No se pudo cargar la información. Intenta de nuevo más tarde.")
+          }
+        })
+        .finally(() => setLoading(false))
+    },
+    [router]
+  )
+
+  // Actualizar carreras disponibles cuando cambia facultad seleccionada
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
-    if (!token) {
-      router.replace("/")
-      return
+    if (!data) return
+    if (filtros.facultad) {
+      const fac = data.facultades.find((f) => f.facultad === filtros.facultad)
+      setOpcionesCarreras(fac ? fac.carreras.map((c) => c.carrera) : [])
+    } else {
+      setOpcionesCarreras([])
     }
+  }, [filtros.facultad, data])
 
-    axios
-      .get(`${API_URL}/encuesta/capellan/psicologia-positiva`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": "true",
-        },
-      })
-      .then((res) => setData(res.data))
-      .catch((err) => {
-        const status = err.response?.status
-        if (status === 401) {
-          localStorage.removeItem("access_token")
-          localStorage.removeItem("refresh_token")
-          router.replace("/")
-        } else if (status === 403) {
-          router.replace("/dashboard/user")
-        } else {
-          setError("No se pudo cargar la información. Intenta de nuevo más tarde.")
-        }
-      })
-      .finally(() => setLoading(false))
-  }, [router])
+  // Carga inicial
+  useEffect(() => {
+    fetchData(filtros)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleFiltrosChange = (f: Filtros) => {
+    setFiltros(f)
+    fetchData(f)
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -283,24 +445,31 @@ export default function CapellanPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold font-heading text-[#1F2937]">Psicología Positiva</h1>
-              <p className="text-sm text-[#6B7280]">Resultados agrupados por programa</p>
+              <p className="text-sm text-[#6B7280]">Resultados agrupados por facultad y carrera</p>
             </div>
           </div>
           {data && (
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E2E8F0] shadow-sm self-start sm:self-auto">
               <Users className="w-4 h-4 text-[#16A34A]" />
-              <span className="text-sm font-semibold text-[#1F2937]">{data.total_estudiantes} estudiantes</span>
+              <span className="text-sm font-semibold text-[#1F2937]">{data.total_usuarios} usuarios</span>
             </div>
           )}
         </div>
 
-        {/* Leyenda de niveles */}
+        {/* Leyenda */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-3">Referencia de niveles</p>
           <NivelesLeyenda />
         </div>
 
-        {/* Estados de carga / error */}
+        {/* Filtros */}
+        <FiltrosBar
+          filtros={filtros}
+          onChange={handleFiltrosChange}
+          opciones={{ facultades: opcionesFacultades, carreras: opcionesCarreras }}
+        />
+
+        {/* Carga / error */}
         {loading && (
           <div className="flex flex-col gap-3">
             {[1, 2, 3].map((i) => (
@@ -316,17 +485,17 @@ export default function CapellanPage() {
           </div>
         )}
 
-        {/* Grupos */}
+        {/* Facultades */}
         {!loading && !error && data && (
           <div className="flex flex-col gap-4">
-            {data.grupos.length === 0 ? (
+            {data.facultades.length === 0 ? (
               <div className="text-center py-16 text-[#6B7280]">
                 <BookHeart className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">No hay resultados disponibles aún.</p>
+                <p className="text-sm">No hay resultados para los filtros seleccionados.</p>
               </div>
             ) : (
-              data.grupos.map((grupo) => (
-                <GrupoCard key={grupo.programa} grupo={grupo} />
+              data.facultades.map((fac) => (
+                <FacultadCard key={fac.facultad} facultad={fac} />
               ))
             )}
           </div>

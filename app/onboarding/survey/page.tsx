@@ -184,7 +184,12 @@ export default function OnboardingSurveyPage() {
     setSubmitting(true);
 
     try {
-      const payload = buildSurveyPayload(answers);
+      const payload = {
+        facultad,
+        program: programa,
+        tipo_usuario: tipoUsuario.toLowerCase() as "estudiante" | "docente" | "administrativo",
+        ...buildSurveyPayload(answers),
+      };
 
       const token = localStorage.getItem("access_token");
 
