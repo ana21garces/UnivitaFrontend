@@ -274,6 +274,20 @@ function FiltrosBar({ filtros, onChange, opciones }: {
   )
 }
 
+// ── Helpers de opciones ────────────────────────────────────────────────────
+
+function uniq(arr: (string | undefined | null)[]): string[] {
+  return [...new Set(arr.filter(Boolean) as string[])]
+}
+
+function extraerOpciones(facultades: Facultad[]) {
+  return {
+    facultades: uniq(facultades.map((f) => f.facultad)),
+    carreras: uniq(facultades.flatMap((f) => f.carreras.map((c) => c.carrera))),
+    tipos: uniq(facultades.flatMap((f) => f.carreras.flatMap((c) => c.usuarios.map((u) => u.tipo_usuario)))),
+  }
+}
+
 // ── Página principal ───────────────────────────────────────────────────────
 
 export default function ActividadFisicaPage() {
@@ -292,7 +306,13 @@ export default function ActividadFisicaPage() {
     return t
   }, [router])
 
-  // Cargar opciones de filtros desde el endpoint dedicado
+  const mergeOpciones = useCallback((facs: string[], cars: string[], tipos: string[]) => {
+    if (facs.length) setOpcionesFacultades((p) => uniq([...p, ...facs]))
+    if (cars.length) setOpcionesCarreras((p) => uniq([...p, ...cars]))
+    if (tipos.length) setOpcionesTipos((p) => uniq([...p, ...tipos]))
+  }, [])
+
+  // 1. Endpoint dedicado de opciones
   useEffect(() => {
     const token = getToken()
     if (!token) return
@@ -300,13 +320,11 @@ export default function ActividadFisicaPage() {
       headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
     }).then((res) => {
       const { facultades = [], carreras = [], tipos_usuario = [] } = res.data
-      setOpcionesFacultades(facultades.filter(Boolean))
-      setOpcionesCarreras(carreras.filter(Boolean))
-      setOpcionesTipos(tipos_usuario.filter(Boolean))
+      mergeOpciones(facultades, carreras, tipos_usuario)
     }).catch(() => {})
-  }, [getToken])
+  }, [getToken, mergeOpciones])
 
-  // Carga inicial y re-fetch con filtros
+  // 2. Fetch de datos — extrae opciones como fallback
   const fetchData = useCallback((f: Filtros) => {
     const token = getToken()
     if (!token) return
@@ -317,8 +335,13 @@ export default function ActividadFisicaPage() {
     if (f.carrera)      params.set("carrera", f.carrera)
     if (f.tipo_usuario) params.set("tipo_usuario", f.tipo_usuario)
     const url = `${API_URL}/encuesta/actividad-fisica/resultados${params.toString() ? `?${params}` : ""}`
-    axios.get(url, { headers: { Authorization: `Bearer ${getToken()}`, "ngrok-skip-browser-warning": "true" } })
-      .then((res) => setData(res.data))
+    axios.get(url, { headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" } })
+      .then((res) => {
+        const d: ActFisicaData = res.data
+        setData(d)
+        const { facultades, carreras, tipos } = extraerOpciones(d.facultades)
+        mergeOpciones(facultades, carreras, tipos)
+      })
       .catch((err) => {
         const status = err.response?.status
         if (status === 401) { localStorage.removeItem("access_token"); localStorage.removeItem("refresh_token"); router.replace("/") }
@@ -326,7 +349,7 @@ export default function ActividadFisicaPage() {
         else { setError("No se pudo cargar la información. Intenta de nuevo más tarde.") }
       })
       .finally(() => setLoading(false))
-  }, [getToken, router])
+  }, [getToken, mergeOpciones, router])
 
   useEffect(() => { fetchData(filtros) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

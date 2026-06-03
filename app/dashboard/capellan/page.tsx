@@ -355,6 +355,20 @@ function FiltrosBar({
   )
 }
 
+// ── Helpers de opciones ────────────────────────────────────────────────────
+
+function uniq(arr: (string | undefined | null)[]): string[] {
+  return [...new Set(arr.filter(Boolean) as string[])]
+}
+
+function extraerOpciones(facultades: Facultad[]) {
+  return {
+    facultades: uniq(facultades.map((f) => f.facultad)),
+    carreras: uniq(facultades.flatMap((f) => f.carreras.map((c) => c.carrera))),
+    tipos: uniq(facultades.flatMap((f) => f.carreras.flatMap((c) => c.usuarios.map((u) => u.tipo_usuario)))),
+  }
+}
+
 // ── Página principal ───────────────────────────────────────────────────────
 
 export default function CapellanPage() {
@@ -367,8 +381,6 @@ export default function CapellanPage() {
   const [opcionesFacultades, setOpcionesFacultades] = useState<string[]>([])
   const [opcionesCarreras, setOpcionesCarreras] = useState<string[]>([])
   const [opcionesTipos, setOpcionesTipos] = useState<string[]>([])
-  // Mapa facultad → carreras para filtrar el dropdown de carrera
-  const [carrerasPorFacultad, setCarrerasPorFacultad] = useState<Record<string, string[]>>({})
 
   const getToken = useCallback(() => {
     const t = localStorage.getItem("access_token")
@@ -376,7 +388,14 @@ export default function CapellanPage() {
     return t
   }, [router])
 
-  // Carga de opciones desde el endpoint dedicado
+  // Helper: fusionar opciones sin duplicar
+  const mergeOpciones = useCallback((facs: string[], cars: string[], tipos: string[]) => {
+    if (facs.length) setOpcionesFacultades((p) => uniq([...p, ...facs]))
+    if (cars.length) setOpcionesCarreras((p) => uniq([...p, ...cars]))
+    if (tipos.length) setOpcionesTipos((p) => uniq([...p, ...tipos]))
+  }, [])
+
+  // 1. Intentar cargar opciones desde el endpoint dedicado
   useEffect(() => {
     const token = getToken()
     if (!token) return
@@ -386,26 +405,12 @@ export default function CapellanPage() {
       })
       .then((res) => {
         const { facultades = [], carreras = [], tipos_usuario = [] } = res.data
-        setOpcionesFacultades(facultades.filter(Boolean))
-        setOpcionesTipos(tipos_usuario.filter(Boolean))
-        // Guardar todas las carreras como fallback
-        setOpcionesCarreras(carreras.filter(Boolean))
-        // Construir mapa facultad→carreras si el API lo devuelve agrupado
-        // (si no, el dropdown de carrera muestra todas)
+        mergeOpciones(facultades, carreras, tipos_usuario)
       })
-      .catch(() => {
-        // Si falla, los dropdowns quedan vacíos pero la vista sigue funcionando
-      })
-  }, [getToken])
+      .catch(() => { /* fallback: se extraen de los datos principales */ })
+  }, [getToken, mergeOpciones])
 
-  // Cuando cambia la facultad, actualizar carreras disponibles
-  useEffect(() => {
-    if (filtros.facultad && carrerasPorFacultad[filtros.facultad]) {
-      setOpcionesCarreras(carrerasPorFacultad[filtros.facultad])
-    }
-  }, [filtros.facultad, carrerasPorFacultad])
-
-  // Carga inicial de datos (sin filtros)
+  // 2. Carga inicial de datos (sin filtros) — también extrae opciones como fallback
   useEffect(() => {
     const token = getToken()
     if (!token) return
@@ -413,7 +418,12 @@ export default function CapellanPage() {
       .get(`${API_URL}/encuesta/capellan/psicologia-positiva`, {
         headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
       })
-      .then((res) => setData(res.data))
+      .then((res) => {
+        const d: CapellanData = res.data
+        setData(d)
+        const { facultades, carreras, tipos } = extraerOpciones(d.facultades)
+        mergeOpciones(facultades, carreras, tipos)
+      })
       .catch((err) => {
         const status = err.response?.status
         if (status === 401) {
@@ -445,7 +455,12 @@ export default function CapellanPage() {
         .get(url, {
           headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
         })
-        .then((res) => setData(res.data))
+        .then((res) => {
+          const d: CapellanData = res.data
+          setData(d)
+          const { facultades, carreras, tipos } = extraerOpciones(d.facultades)
+          mergeOpciones(facultades, carreras, tipos)
+        })
         .catch((err) => {
           const status = err.response?.status
           if (status === 401) {
@@ -460,7 +475,7 @@ export default function CapellanPage() {
         })
         .finally(() => setLoading(false))
     },
-    [getToken, router]
+    [getToken, mergeOpciones, router]
   )
 
   const handleFiltrosChange = (f: Filtros) => {
