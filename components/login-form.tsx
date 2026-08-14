@@ -7,8 +7,18 @@ import axios from "axios"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, getRoleFromToken, setSurveyDone } from "@/lib/auth"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// Roles que no pasan por la encuesta: entran directo a su vista.
+// Las claves son el `role` del JWT que emite el backend.
+const ROLE_HOME: Record<string, string> = {
+  admin: "/dashboard/admin",
+  capellan: "/dashboard/capellan",
+  actividad_fisica: "/dashboard/actividad-fisica",
+  responsabilidad_salud: "/dashboard/responsabilidad-salud",
+};
 
 export function LoginForm() {
   const router = useRouter()
@@ -30,34 +40,16 @@ export function LoginForm() {
       })
 
       // Guardar tokens
-      localStorage.setItem("access_token", data.access_token)
-      localStorage.setItem("refresh_token", data.refresh_token)
+      localStorage.setItem(ACCESS_TOKEN_KEY, data.access_token)
+      localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token)
 
-      // Leer el rol del JWT (payload en base64, índice 1)
-      let role: string | null = null
-      try {
-        const payload = JSON.parse(atob(data.access_token.split(".")[1]))
-        role = payload.role ?? null
-      } catch {
-        // JWT malformado → ignorar, usar flujo normal
-      }
+      const role = getRoleFromToken(data.access_token)
+      const home = role ? ROLE_HOME[role] : undefined
 
       // Roles profesionales: van directo a su vista sin pasar por la encuesta
-      if (role === "capellan") {
-        document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
-        router.push("/dashboard/capellan")
-        return
-      }
-
-      if (role === "actividad_fisica") {
-        document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
-        router.push("/dashboard/actividad-fisica")
-        return
-      }
-
-      if (role === "responsabilidad_salud") {
-        document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
-        router.push("/dashboard/responsabilidad-salud")
+      if (home) {
+        setSurveyDone(true)
+        router.push(home)
         return
       }
 
@@ -70,10 +62,10 @@ export function LoginForm() {
           },
         })
         if (estado.completada) {
-          document.cookie = "univita8_survey_done=true; path=/; max-age=31536000"
+          setSurveyDone(true)
           router.push("/dashboard/user")
         } else {
-          document.cookie = "univita8_survey_done=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+          setSurveyDone(false)
           router.push("/onboarding/survey")
         }
       } catch {

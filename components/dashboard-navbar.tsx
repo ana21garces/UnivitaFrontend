@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   LayoutDashboard,
   LogOut,
@@ -15,6 +15,7 @@ import {
 import { useState } from "react"
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
+import { clearSession } from "@/lib/auth"
 
 interface NavItem {
   label: string
@@ -23,7 +24,7 @@ interface NavItem {
 }
 
 interface DashboardNavbarProps {
-  role: "user" | "admin" | "health-manager" | "capellan" | "actividad-fisica" | "responsabilidad-salud"
+  role: "user" | "admin" | "capellan" | "actividad-fisica" | "responsabilidad-salud"
   userName?: string
   xp?: number
   maxXp?: number
@@ -38,9 +39,6 @@ const navItemsByRole: Record<string, NavItem[]> = {
     { label: "Dashboard", href: "/dashboard/admin", icon: <LayoutDashboard className="w-4 h-4" /> },
     { label: "User Management", href: "/dashboard/admin/user-management", icon: <Users className="w-4 h-4" /> },
   ],
-  "health-manager": [
-    { label: "Dashboard", href: "/dashboard/health-manager", icon: <LayoutDashboard className="w-4 h-4" /> },
-  ],
   capellan: [
     { label: "Psicología Positiva", href: "/dashboard/capellan", icon: <BookHeart className="w-4 h-4" /> },
   ],
@@ -54,8 +52,14 @@ const navItemsByRole: Record<string, NavItem[]> = {
 
 export function DashboardNavbar({ role, userName = "Estudiante", xp = 0, maxXp = 100, level = 1 }: DashboardNavbarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const navItems = navItemsByRole[role] || []
+
+  const handleLogout = () => {
+    clearSession()
+    router.replace("/")
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#E2E8F0] bg-[#FFFFFF]">
@@ -112,13 +116,14 @@ export function DashboardNavbar({ role, userName = "Estudiante", xp = 0, maxXp =
             </span>
           </div>
 
-          <Link
-            href="/"
-            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors"
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span className="sr-only sm:not-sr-only">Cerrar Sesión</span>
-          </Link>
+          </button>
 
           {/* Mobile toggle */}
           <button
@@ -156,14 +161,14 @@ export function DashboardNavbar({ role, userName = "Estudiante", xp = 0, maxXp =
                 </Link>
               )
             })}
-            <Link
-              href="/"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors"
+            <button
+              type="button"
+              onClick={() => { setMobileOpen(false); handleLogout() }}
+              className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors cursor-pointer text-left"
             >
               <LogOut className="w-4 h-4" />
               Cerrar Sesión
-            </Link>
+            </button>
           </nav>
         </div>
       )}

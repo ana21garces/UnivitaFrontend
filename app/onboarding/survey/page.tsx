@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertCircle, ChevronUp, Send } from "lucide-react";
 import { UniVitaLogo } from "@/components/univita-logo";
@@ -8,9 +8,9 @@ import axios from "axios";
 import {
   QUESTIONS,
   LIKERT_LABELS,
-  calculateSubscaleScores,
   buildSurveyPayload,
 } from "@/lib/survey-data";
+import { setSurveyDone } from "@/lib/auth";
 
 import Select from "react-select";
 
@@ -59,11 +59,6 @@ export default function OnboardingSurveyPage() {
   const [facultad, setFacultad] = useState<string>("");
   const [programa, setPrograma] = useState<string>("");
   const [tipoUsuario, setTipoUsuario] = useState<string>("");
-
-  const handleFacultadChange = (value: string) => {
-    setFacultad(value);
-    setPrograma(""); // 🔥 reset automático
-  };
 
   const facultadOptions = Object.keys(facultades).map((fac) => ({
     value: fac,
@@ -193,19 +188,19 @@ export default function OnboardingSurveyPage() {
 
       const token = localStorage.getItem("access_token");
 
-      const { data } = await axios.post(`${API_URL}/encuesta`, payload, {
+      await axios.post(`${API_URL}/encuesta`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           "ngrok-skip-browser-warning": "true",
         },
       });
 
-      document.cookie = "univita8_survey_done=true; path=/; max-age=31536000";
+      setSurveyDone(true);
       router.push("/dashboard/user");
     } catch (error: any) {
       // Si ya completó la encuesta, redirige al dashboard directamente
       if (error?.response?.status === 409) {
-        document.cookie = "univita8_survey_done=true; path=/; max-age=31536000";
+        setSurveyDone(true);
         router.push("/dashboard/user");
       } else {
         console.error(error);
@@ -402,6 +397,7 @@ export default function OnboardingSurveyPage() {
                 </label>
 
                 <Select
+                  instanceId="facultad"
                   options={facultadOptions}
                   value={
                     facultadOptions.find((f) => f.value === facultad) || null
@@ -427,6 +423,7 @@ export default function OnboardingSurveyPage() {
                 </label>
 
                 <Select
+                  instanceId="programa"
                   options={programaOptions}
                   value={
                     programaOptions.find((p) => p.value === programa) || null

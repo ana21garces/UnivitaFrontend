@@ -1,4 +1,5 @@
-// HPLP-II style 48-question survey: questions, subscales, and scoring logic
+// Encuesta PEPS-II (52 ítems): enunciados, escala Likert y mapeo al payload del backend.
+// El cálculo de índices por dimensión lo hace el backend, no el front.
 
 export const QUESTIONS: string[] = [
   "Dialogar tus problemas o preocupaciones con personas muy allegadas a ti.",
@@ -53,21 +54,6 @@ export const QUESTIONS: string[] = [
   "Comprometerte a encontrar puntos en común, por medio del diálogo, con otras personas.",
   "Desayunar diariamente.",
   "Exponerte a nuevas experiencias y retos constructivos",
-]
-
-export interface Subscale {
-  name: string
-  /** 1-based question indices */
-  items: number[]
-}
-
-export const SUBSCALES: Subscale[] = [
-  { name: "Nutricion", items: [2, 8, 14, 20, 26, 32, 38, 44, 50] },
-  { name: "Actividad fisica", items: [4, 10, 16, 22, 28, 34, 40, 46] },
-  { name: "Responsabilidad en Salud", items: [3, 9, 15, 21, 27, 33, 39, 45, 51] },
-  { name: "Manejo del Estres", items: [5, 11, 17, 23, 29, 35, 41, 47] },
-  { name: "Relaciones Interpersonales", items: [1, 7, 13, 19, 25, 31, 37, 43, 49] },
-  { name: "Crecimiento espiritual", items: [6, 12, 18, 24, 30, 36, 42, 48, 52] },
 ]
 
 export const LIKERT_LABELS: Record<number, string> = {
@@ -148,28 +134,4 @@ export function buildSurveyPayload(
   }
 
   return payload;
-}
-
-/** Calculate subscale scores from a Record<questionIndex(1-based), value(1-4)> */
-export function calculateSubscaleScores(
-  answers: Record<number, number>
-): Record<string, { total: number; count: number; avg: number }> {
-  const result: Record<string, { total: number; count: number; avg: number }> = {}
-  for (const sub of SUBSCALES) {
-    let total = 0
-    let count = 0
-    for (const qIdx of sub.items) {
-      const val = answers[qIdx]
-      if (val !== undefined) {
-        total += val
-        count++
-      }
-    }
-    result[sub.name] = {
-      total,
-      count,
-      avg: count > 0 ? Math.round((total / count) * 100) / 100 : 0,
-    }
-  }
-  return result
 }
