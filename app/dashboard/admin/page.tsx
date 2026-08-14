@@ -1,5 +1,8 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import axios from "axios"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { LevelBadge } from "@/components/level-badge"
 import {
@@ -9,8 +12,17 @@ import {
   ClipboardList,
   TrendingUp,
   BarChart3,
-  UserCheck,
+  UserX,
 } from "lucide-react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
+type Resumen = {
+  total_usuarios: number
+  completaron_encuesta: number
+  sin_completar: number
+  tasa_participacion: number
+}
 
 const roleDistribution = [
   { role: "Users (Clients)", count: 184, icon: Users, color: "#22C55E" },
@@ -27,6 +39,53 @@ const recentActivity = [
 ]
 
 export default function AdminDashboard() {
+  const router = useRouter()
+  const [resumen, setResumen] = useState<Resumen | null>(null)
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token")
+    if (!token) { router.replace("/"); return }
+    axios
+      .get(`${API_URL}/encuesta/admin/resumen`, {
+        headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
+      })
+      .then((res) => setResumen(res.data))
+      .catch((err) => {
+        if (err.response?.status === 401) {
+          localStorage.removeItem("access_token")
+          localStorage.removeItem("refresh_token")
+          router.replace("/")
+        }
+      })
+  }, [router])
+
+  const stats = [
+    {
+      icon: <Users className="w-5 h-5 text-[#22C55E]" />,
+      bg: "bg-[#22C55E]/10",
+      value: resumen ? resumen.total_usuarios : "—",
+      label: "Total usuarios",
+    },
+    {
+      icon: <ClipboardList className="w-5 h-5 text-[#2563EB]" />,
+      bg: "bg-[#2563EB]/10",
+      value: resumen ? resumen.completaron_encuesta : "—",
+      label: "Completaron encuesta",
+    },
+    {
+      icon: <UserX className="w-5 h-5 text-[#F59E0B]" />,
+      bg: "bg-[#F59E0B]/10",
+      value: resumen ? resumen.sin_completar : "—",
+      label: "Sin completar",
+    },
+    {
+      icon: <TrendingUp className="w-5 h-5 text-[#7C3AED]" />,
+      bg: "bg-[#7C3AED]/10",
+      value: resumen ? `${resumen.tasa_participacion}%` : "—",
+      label: "Tasa de participación",
+    },
+  ]
+
   return (
     <>
       <DashboardNavbar role="admin" userName="Admin" />
@@ -39,7 +98,7 @@ export default function AdminDashboard() {
               Admin Dashboard
             </h2>
             <p className="mt-1 text-sm text-[#6B7280]">
-              Overview of the UniVita 8 platform
+              Resumen general de la plataforma UnacHealth
             </p>
           </div>
           <LevelBadge level={1} size="sm" />
@@ -47,42 +106,17 @@ export default function AdminDashboard() {
 
         {/* Stats row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#22C55E]/10">
-              <Users className="w-5 h-5 text-[#22C55E]" />
+          {stats.map((stat) => (
+            <div key={stat.label} className="flex items-center gap-3 p-4 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
+              <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${stat.bg}`}>
+                {stat.icon}
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-[#1F2937]">{stat.value}</p>
+                <p className="text-xs text-[#6B7280]">{stat.label}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-[#1F2937]">204</p>
-              <p className="text-xs text-[#6B7280]">Total Users</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#2563EB]/10">
-              <ClipboardList className="w-5 h-5 text-[#2563EB]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-[#1F2937]">87</p>
-              <p className="text-xs text-[#6B7280]">Surveys Completed</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#7C3AED]/10">
-              <TrendingUp className="w-5 h-5 text-[#7C3AED]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-[#1F2937]">42%</p>
-              <p className="text-xs text-[#6B7280]">Completion Rate</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#FACC15]/10">
-              <UserCheck className="w-5 h-5 text-[#FACC15]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-[#1F2937]">23</p>
-              <p className="text-xs text-[#6B7280]">Active Today</p>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">

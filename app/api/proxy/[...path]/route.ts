@@ -4,7 +4,8 @@ const BACKEND_URL = process.env.BACKEND_URL
 
 async function handler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
-  const targetUrl = `${BACKEND_URL}/${path.join("/")}`
+  // La query string se reenvía tal cual: las vistas de rol filtran por facultad/programa
+  const targetUrl = `${BACKEND_URL}/${path.join("/")}${req.nextUrl.search}`
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

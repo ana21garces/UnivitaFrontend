@@ -6,6 +6,7 @@ import axios from "axios"
 import Link from "next/link"
 import { Zap, Activity, Timer, Star, Lock } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { setSurveyDone } from "@/lib/auth"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -232,7 +233,7 @@ export default function UserDashboard() {
         setResultado(data)
       } catch (err: any) {
         if (err.response?.status === 404) {
-          document.cookie = "univita8_survey_done=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+          setSurveyDone(false)
           router.push("/onboarding/survey")
         }
       } finally {

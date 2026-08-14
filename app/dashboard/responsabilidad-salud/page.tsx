@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import axios from "axios"
-import { ChevronDown, ChevronUp, Users, Stethoscope, AlertCircle } from "lucide-react"
+import { ChevronDown, ChevronUp, Users, Stethoscope, AlertCircle, Building2, GraduationCap } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -22,26 +22,21 @@ type ResponsabilidadSalud = {
   rs_nivel: string
 }
 
-type Estudiante = {
-  encuesta_id: number
-  usuario_id: string
+type Usuario = {
+  encuesta_id?: number
+  usuario_id?: string
   nombre: string
+  facultad: string
   programa: string
-  universidad: string
-  fecha: string
+  tipo_usuario?: string
+  universidad?: string
+  fecha?: string
   responsabilidad_salud: ResponsabilidadSalud
 }
 
-type Grupo = {
-  programa: string
-  total: number
-  estudiantes: Estudiante[]
-}
-
-type RespSaludData = {
-  total_estudiantes: number
-  grupos: Grupo[]
-}
+type Carrera = { carrera: string; total: number; usuarios: Usuario[] }
+type Facultad = { facultad: string; total: number; carreras: Carrera[] }
+type RespSaludData = { total_usuarios: number; facultades: Facultad[] }
 
 // ── Constantes ─────────────────────────────────────────────────────────────
 
@@ -74,24 +69,24 @@ const PUNTAJE_CONFIG: Record<number, { label: string; color: string; bg: string 
   4: { label: "Excelente", color: "#38A169", bg: "#F0FFF4" },
 }
 
+const TIPO_LABELS: Record<string, string> = {
+  estudiante: "Estudiante", docente: "Docente", administrativo: "Administrativo",
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function getNivelFromIndice(indice: number): string {
-  if (indice <= 33) return "Pobre"
-  if (indice <= 55) return "Moderado"
-  if (indice <= 77) return "Bueno"
+function getNivelFromIndice(i: number) {
+  if (i <= 33) return "Pobre"
+  if (i <= 55) return "Moderado"
+  if (i <= 77) return "Bueno"
   return "Excelente"
 }
 
 function NivelBadge({ nivel }: { nivel: string }) {
-  const cfg = NIVEL_CONFIG[nivel] ?? { color: "#718096", bg: "#EDF2F7", bar: "#718096", rango: "" }
+  const cfg = NIVEL_CONFIG[nivel] ?? { color: "#718096", bg: "#EDF2F7" }
   return (
-    <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
-      style={{ background: cfg.bg, color: cfg.color }}
-    >
-      {nivel}
-    </span>
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+      style={{ background: cfg.bg, color: cfg.color }}>{nivel}</span>
   )
 }
 
@@ -122,14 +117,14 @@ function NivelesLeyenda() {
   )
 }
 
-// ── Componentes ─────────────────────────────────────────────────────────────
+// ── UsuarioRow ─────────────────────────────────────────────────────────────
 
-function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
+function UsuarioRow({ usuario }: { usuario: Usuario }) {
   const [open, setOpen] = useState(false)
-  const rs = estudiante.responsabilidad_salud
-  const fecha = new Date(estudiante.fecha).toLocaleDateString("es-CO", {
-    year: "numeric", month: "short", day: "numeric",
-  })
+  const rs = usuario.responsabilidad_salud
+  const fecha = usuario.fecha
+    ? new Date(usuario.fecha).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" })
+    : null
 
   return (
     <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
@@ -138,13 +133,18 @@ function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
         onClick={() => setOpen(!open)}
       >
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-[#1F2937] truncate">{estudiante.nombre}</p>
-          <p className="text-xs text-[#6B7280] truncate">{estudiante.universidad ?? estudiante.programa} · {fecha}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-[#1F2937] truncate">{usuario.nombre}</p>
+            {usuario.tipo_usuario && (
+              <span className="hidden sm:inline text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[#6B7280]">
+                {TIPO_LABELS[usuario.tipo_usuario] ?? usuario.tipo_usuario}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-[#6B7280] truncate">{fecha}</p>
         </div>
         <div className="flex items-center gap-3 ml-4">
-          <div className="hidden sm:flex items-center gap-2 w-52">
-            <IndiceBar indice={rs.rs_indice} />
-          </div>
+          <div className="hidden sm:flex items-center gap-2 w-52"><IndiceBar indice={rs.rs_indice} /></div>
           {open ? <ChevronUp className="w-4 h-4 text-[#6B7280] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#6B7280] shrink-0" />}
         </div>
       </button>
@@ -152,114 +152,210 @@ function EstudianteRow({ estudiante }: { estudiante: Estudiante }) {
       {open && (
         <div className="px-4 pb-4 pt-2 bg-[#F8FAFC] border-t border-[#E2E8F0]">
           <div className="sm:hidden mb-3">
-            <p className="text-xs font-medium text-[#6B7280] mb-1">Índice general</p>
+            <p className="text-xs font-medium text-[#6B7280] mb-1">Índice RS</p>
             <IndiceBar indice={rs.rs_indice} />
           </div>
-
-          <div className="flex flex-col gap-2 mb-3">
+          <div className="flex flex-col gap-1.5 mb-3">
             {RS_ITEMS.map((item) => {
               const puntaje = rs[item]
               const cfg = PUNTAJE_CONFIG[puntaje] ?? { label: "—", color: "#718096", bg: "#EDF2F7" }
               return (
                 <div key={item} className="flex items-center gap-3 bg-white border border-[#E2E8F0] rounded-lg px-3 py-2">
-                  <span className="text-xs font-bold text-[#6B7280] w-14 shrink-0">
-                    Ítem {item.replace("rs_item_", "")}
-                  </span>
+                  <span className="text-xs font-bold text-[#6B7280] w-14 shrink-0">Ítem {item.replace("rs_item_", "")}</span>
                   <span className="flex-1 text-xs text-[#1F2937] leading-tight">{RS_ITEM_TEXTO[item]}</span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-sm font-bold text-[#1F2937]">{puntaje}</span>
-                    <span
-                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                      style={{ background: cfg.bg, color: cfg.color }}
-                    >
-                      {cfg.label}
-                    </span>
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                      style={{ background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
                   </div>
                 </div>
               )
             })}
           </div>
-
-          <p className="text-xs text-[#6B7280]">
-            <span className="font-medium">Programa:</span> {estudiante.programa}
-          </p>
+          <p className="text-xs text-[#6B7280]"><span className="font-medium">Programa:</span> {usuario.programa}</p>
         </div>
       )}
     </div>
   )
 }
 
-function GrupoCard({ grupo }: { grupo: Grupo }) {
+// ── CarreraCard / FacultadCard ─────────────────────────────────────────────
+
+function CarreraCard({ carrera }: { carrera: Carrera }) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div className="rounded-xl border border-[#E2E8F0] bg-[#FAFAFA] overflow-hidden">
+      <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#F1F5F9] transition-colors"
+        onClick={() => setOpen(!open)}>
+        <div className="flex items-center gap-2">
+          <GraduationCap className="w-4 h-4 text-[#6B7280]" />
+          <span className="text-sm font-semibold text-[#1F2937]">{carrera.carrera || "Sin carrera asignada"}</span>
+          <span className="text-xs text-[#6B7280]">({carrera.total})</span>
+        </div>
+        {open ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />}
+      </button>
+      {open && (
+        <div className="px-3 pb-3 flex flex-col gap-2 border-t border-[#E2E8F0] pt-2">
+          {carrera.usuarios.map((u, i) => <UsuarioRow key={u.encuesta_id ?? i} usuario={u} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function FacultadCard({ facultad }: { facultad: Facultad }) {
   const [open, setOpen] = useState(true)
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
-      <button
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-[#F8FAFC] transition-colors"
-        onClick={() => setOpen(!open)}
-      >
+      <button className="w-full flex items-center justify-between px-5 py-4 hover:bg-[#F8FAFC] transition-colors"
+        onClick={() => setOpen(!open)}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#ECFEFF] flex items-center justify-center">
-            <Users className="w-4 h-4 text-[#0891B2]" />
+            <Building2 className="w-4 h-4 text-[#0891B2]" />
           </div>
           <div className="text-left">
-            <p className="font-semibold text-[#1F2937]">{grupo.programa}</p>
-            <p className="text-xs text-[#6B7280]">{grupo.total} estudiante{grupo.total !== 1 ? "s" : ""}</p>
+            <p className="font-semibold text-[#1F2937]">{facultad.facultad || "Sin facultad asignada"}</p>
+            <p className="text-xs text-[#6B7280]">{facultad.total} usuario{facultad.total !== 1 ? "s" : ""} · {facultad.carreras.length} carrera{facultad.carreras.length !== 1 ? "s" : ""}</p>
           </div>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />}
       </button>
-
       {open && (
-        <div className="px-4 pb-4 border-t border-[#E2E8F0]">
-          <div className="pt-3 flex flex-col gap-2">
-            {grupo.estudiantes.map((est) => (
-              <EstudianteRow key={est.encuesta_id} estudiante={est} />
-            ))}
-          </div>
+        <div className="px-4 pb-4 flex flex-col gap-3 border-t border-[#E2E8F0] pt-3">
+          {facultad.carreras.map((c) => <CarreraCard key={c.carrera} carrera={c} />)}
         </div>
       )}
     </div>
   )
 }
 
-// ── Página principal ──────────────────────────────────────────────────────
+// ── FiltrosBar ─────────────────────────────────────────────────────────────
+
+type Filtros = { facultad: string; carrera: string; tipo_usuario: string }
+
+function FiltrosBar({ filtros, onChange, opciones }: {
+  filtros: Filtros
+  onChange: (f: Filtros) => void
+  opciones: { facultades: string[]; carreras: string[]; tipos_usuario: string[] }
+}) {
+  const sc = "text-sm border border-[#E2E8F0] rounded-lg px-3 py-1.5 bg-white text-[#1F2937] focus:outline-none focus:border-[#0891B2] cursor-pointer disabled:opacity-50"
+  return (
+    <div className="flex flex-wrap items-center gap-3 bg-white border border-[#E2E8F0] rounded-2xl px-4 py-3 shadow-sm">
+      <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Filtrar por</span>
+      <select className={sc} value={filtros.facultad}
+        onChange={(e) => onChange({ ...filtros, facultad: e.target.value, carrera: "" })}>
+        <option value="">Todas las facultades</option>
+        {opciones.facultades.map((f) => <option key={f} value={f}>{f}</option>)}
+      </select>
+      <select className={sc} value={filtros.carrera}
+        onChange={(e) => onChange({ ...filtros, carrera: e.target.value })}
+        disabled={opciones.carreras.length === 0}>
+        <option value="">Todas las carreras</option>
+        {opciones.carreras.map((c) => <option key={c} value={c}>{c}</option>)}
+      </select>
+      <select className={sc} value={filtros.tipo_usuario}
+        onChange={(e) => onChange({ ...filtros, tipo_usuario: e.target.value })}>
+        <option value="">Todos los tipos</option>
+        {opciones.tipos_usuario.map((t) => (
+          <option key={t} value={t}>{TIPO_LABELS[t] ?? t}</option>
+        ))}
+      </select>
+      {(filtros.facultad || filtros.carrera || filtros.tipo_usuario) && (
+        <button className="text-xs text-[#6B7280] hover:text-[#1F2937] underline"
+          onClick={() => onChange({ facultad: "", carrera: "", tipo_usuario: "" })}>
+          Limpiar filtros
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Helpers de opciones ────────────────────────────────────────────────────
+
+function uniq(arr: (string | undefined | null)[]): string[] {
+  return [...new Set(arr.filter(Boolean) as string[])]
+}
+
+function extraerOpciones(facultades: Facultad[]) {
+  return {
+    facultades: uniq(facultades.map((f) => f.facultad)),
+    carreras: uniq(facultades.flatMap((f) => f.carreras.map((c) => c.carrera))),
+    tipos: uniq(facultades.flatMap((f) => f.carreras.flatMap((c) => c.usuarios.map((u) => u.tipo_usuario)))),
+  }
+}
+
+// ── Página principal ───────────────────────────────────────────────────────
 
 export default function RespSaludPage() {
   const router = useRouter()
   const [data, setData] = useState<RespSaludData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [filtros, setFiltros] = useState<Filtros>({ facultad: "", carrera: "", tipo_usuario: "" })
+  const [opcionesFacultades, setOpcionesFacultades] = useState<string[]>([])
+  const [opcionesCarreras, setOpcionesCarreras] = useState<string[]>([])
+  const [opcionesTipos, setOpcionesTipos] = useState<string[]>([])
 
+  const getToken = useCallback(() => {
+    const t = localStorage.getItem("access_token")
+    if (!t) { router.replace("/"); return null }
+    return t
+  }, [router])
+
+  const mergeOpciones = useCallback((facs: string[], cars: string[], tipos: string[]) => {
+    if (facs.length) setOpcionesFacultades((p) => uniq([...p, ...facs]))
+    if (cars.length) setOpcionesCarreras((p) => uniq([...p, ...cars]))
+    if (tipos.length) setOpcionesTipos((p) => uniq([...p, ...tipos]))
+  }, [])
+
+  // 1. Endpoint dedicado de opciones
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
-    if (!token) { router.replace("/"); return }
+    const token = getToken()
+    if (!token) return
+    axios.get(`${API_URL}/encuesta/filtros/opciones`, {
+      headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
+    }).then((res) => {
+      const { facultades = [], carreras = [], tipos_usuario = [] } = res.data
+      mergeOpciones(facultades, carreras, tipos_usuario)
+    }).catch(() => {})
+  }, [getToken, mergeOpciones])
 
-    axios
-      .get(`${API_URL}/encuesta/responsabilidad-salud/resultados`, {
-        headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
+  // 2. Fetch de datos — extrae opciones como fallback
+  const fetchData = useCallback((f: Filtros) => {
+    const token = getToken()
+    if (!token) return
+    setLoading(true)
+    setError("")
+    const params = new URLSearchParams()
+    if (f.facultad)     params.set("facultad", f.facultad)
+    if (f.carrera)      params.set("carrera", f.carrera)
+    if (f.tipo_usuario) params.set("tipo_usuario", f.tipo_usuario)
+    const url = `${API_URL}/encuesta/responsabilidad-salud/resultados${params.toString() ? `?${params}` : ""}`
+    axios.get(url, { headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" } })
+      .then((res) => {
+        const d: RespSaludData = res.data
+        setData(d)
+        const { facultades, carreras, tipos } = extraerOpciones(d.facultades)
+        mergeOpciones(facultades, carreras, tipos)
       })
-      .then((res) => setData(res.data))
       .catch((err) => {
         const status = err.response?.status
-        if (status === 401) {
-          localStorage.removeItem("access_token")
-          localStorage.removeItem("refresh_token")
-          router.replace("/")
-        } else if (status === 403) {
-          router.replace("/dashboard/user")
-        } else {
-          setError("No se pudo cargar la información. Intenta de nuevo más tarde.")
-        }
+        if (status === 401) { localStorage.removeItem("access_token"); localStorage.removeItem("refresh_token"); router.replace("/") }
+        else if (status === 403) { router.replace("/dashboard/user") }
+        else { setError("No se pudo cargar la información. Intenta de nuevo más tarde.") }
       })
       .finally(() => setLoading(false))
-  }, [router])
+  }, [getToken, mergeOpciones, router])
+
+  useEffect(() => { fetchData(filtros) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleFiltrosChange = (f: Filtros) => { setFiltros(f); fetchData(f) }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <DashboardNavbar role="responsabilidad-salud" userName="Prof. Responsabilidad en Salud" />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 flex flex-col gap-6">
-
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#ECFEFF] flex items-center justify-center">
@@ -267,13 +363,13 @@ export default function RespSaludPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold font-heading text-[#1F2937]">Responsabilidad en Salud</h1>
-              <p className="text-sm text-[#6B7280]">Resultados agrupados por programa</p>
+              <p className="text-sm text-[#6B7280]">Resultados agrupados por facultad y carrera</p>
             </div>
           </div>
           {data && (
             <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E2E8F0] shadow-sm self-start sm:self-auto">
               <Users className="w-4 h-4 text-[#0891B2]" />
-              <span className="text-sm font-semibold text-[#1F2937]">{data.total_estudiantes} estudiantes</span>
+              <span className="text-sm font-semibold text-[#1F2937]">{data.total_usuarios} usuarios</span>
             </div>
           )}
         </div>
@@ -283,32 +379,30 @@ export default function RespSaludPage() {
           <NivelesLeyenda />
         </div>
 
+        <FiltrosBar filtros={filtros} onChange={handleFiltrosChange}
+          opciones={{ facultades: opcionesFacultades, carreras: opcionesCarreras, tipos_usuario: opcionesTipos }} />
+
         {loading && (
           <div className="flex flex-col gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 rounded-2xl bg-gray-100 animate-pulse" />
-            ))}
+            {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-2xl bg-gray-100 animate-pulse" />)}
           </div>
         )}
 
         {error && (
           <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <p className="text-sm">{error}</p>
+            <AlertCircle className="w-5 h-5 shrink-0" /><p className="text-sm">{error}</p>
           </div>
         )}
 
         {!loading && !error && data && (
           <div className="flex flex-col gap-4">
-            {data.grupos.length === 0 ? (
+            {data.facultades.length === 0 ? (
               <div className="text-center py-16 text-[#6B7280]">
                 <Stethoscope className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">No hay resultados disponibles aún.</p>
+                <p className="text-sm">No hay resultados para los filtros seleccionados.</p>
               </div>
             ) : (
-              data.grupos.map((grupo) => (
-                <GrupoCard key={grupo.programa} grupo={grupo} />
-              ))
+              data.facultades.map((fac) => <FacultadCard key={fac.facultad} facultad={fac} />)
             )}
           </div>
         )}

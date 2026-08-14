@@ -14,7 +14,12 @@ import type { NextRequest } from "next/server"
  * that the client sets after survey submission.
  */
 // Rutas de dashboard que no requieren encuesta completada (roles sin encuesta)
-const SURVEY_EXEMPT_PATHS = ["/dashboard/capellan", "/dashboard/actividad-fisica", "/dashboard/responsabilidad-salud"]
+const SURVEY_EXEMPT_PATHS = [
+  "/dashboard/admin",
+  "/dashboard/capellan",
+  "/dashboard/actividad-fisica",
+  "/dashboard/responsabilidad-salud",
+]
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
