@@ -1,15 +1,18 @@
-# v0 runtime files
-__v0_runtime_loader.js
-__v0_devtools.tsx
-__v0_jsx-dev-runtime.ts
-
 # Claude Code
 .claude/
 
-# Common ignores
+# Dependencias
 node_modules/
+
+# Build de Next
 .next/
+tsconfig.tsbuildinfo
+# Autogenerado por next dev/build; su contenido cambia según el último comando
+next-env.d.ts
+
+# Entorno
 .env*.local
+
+# Varios
 .DS_Store
 .vercel
-tsconfig.tsbuildinfo
