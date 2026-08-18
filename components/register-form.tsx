@@ -186,8 +186,8 @@ export function RegisterForm() {
           <Info className="w-4.5 h-4.5 text-[#2563EB] mt-0.5 shrink-0" />
           <p className="text-xs text-[#1F2937] leading-relaxed">
             Todas las cuentas nuevas se registran como{" "}
-            <span className="font-semibold text-[#16A34A]">Cliente (Usuario)</span>.
-            Los roles administrativos se asignan internamente.
+            <span className="font-semibold text-[#16A34A]">Estudiante</span>.
+            Los roles profesionales se asignan internamente.
           </p>
         </div>
 

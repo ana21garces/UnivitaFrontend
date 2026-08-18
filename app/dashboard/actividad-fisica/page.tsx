@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
+import { RANGO_POR_NIVEL } from "@/lib/niveles"
 import { ChevronDown, ChevronUp, Users, Dumbbell, AlertCircle, Building2, GraduationCap } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 
@@ -42,10 +43,10 @@ type ActFisicaData = { total_usuarios: number; facultades: Facultad[] }
 // ── Constantes ─────────────────────────────────────────────────────────────
 
 const NIVEL_CONFIG: Record<string, { color: string; bg: string; bar: string; rango: string }> = {
-  Pobre:     { color: "#E53E3E", bg: "#FFF5F5", bar: "#E53E3E", rango: "0 – 33" },
-  Moderado:  { color: "#DD6B20", bg: "#FFFAF0", bar: "#DD6B20", rango: "34 – 55" },
-  Bueno:     { color: "#3182CE", bg: "#EBF8FF", bar: "#3182CE", rango: "56 – 77" },
-  Excelente: { color: "#38A169", bg: "#F0FFF4", bar: "#38A169", rango: "78 – 100" },
+  Pobre:     { color: "#E53E3E", bg: "#FFF5F5", bar: "#E53E3E", rango: RANGO_POR_NIVEL.Pobre },
+  Moderado:  { color: "#DD6B20", bg: "#FFFAF0", bar: "#DD6B20", rango: RANGO_POR_NIVEL.Moderado },
+  Bueno:     { color: "#3182CE", bg: "#EBF8FF", bar: "#3182CE", rango: RANGO_POR_NIVEL.Bueno },
+  Excelente: { color: "#38A169", bg: "#F0FFF4", bar: "#38A169", rango: RANGO_POR_NIVEL.Excelente },
 }
 
 const AF_ITEMS = [
