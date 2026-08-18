@@ -15,8 +15,8 @@ import {
   Shield,
   Award,
   Info,
+  AlertCircle,
 } from "lucide-react"
-import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -31,32 +31,82 @@ export function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [touched, setTouched] = useState({
+    fullName: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  })
+
+  // Validaciones instantáneas del lado del cliente
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const nameParts = fullName.trim().split(/\s+/).filter(Boolean)
+  const nameError =
+    nameParts.length < 2 || nameParts.some((part) => part.length < 2)
+      ? "Ingresa tu nombre y apellido."
+      : ""
+  const emailError = !emailRegex.test(email)
+    ? "Ingresa un correo válido, por ejemplo: nombre@dominio.com"
+    : ""
+  const passwordError =
+    password.length < 8 ? "La contraseña debe tener al menos 8 caracteres." : ""
+  const confirmError =
+    confirmPassword !== password ? "Las contraseñas no coinciden." : ""
+  const isFormValid = !nameError && !emailError && !passwordError && !confirmError
+
+  const markTouched = (field: keyof typeof touched) =>
+    setTouched((prev) => ({ ...prev, [field]: true }))
+
+  // Muestra el error solo cuando el campo ya fue tocado
+  const showNameError = touched.fullName && !!nameError
+  const showEmailError = touched.email && !!emailError
+  const showPasswordError = touched.password && !!passwordError
+  const showConfirmError = touched.confirmPassword && !!confirmError
+
+  // Clases del input: borde rojo cuando hay error, verde por defecto
+  const inputClass = (hasError: boolean, pr: string) =>
+    `w-full h-11 pl-10 ${pr} rounded-lg border bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 transition-colors ${
+      hasError
+        ? "border-[#F87171] focus:ring-[#F87171]/30 focus:border-[#F87171]"
+        : "border-[#E2E8F0] focus:ring-[#16A34A]/30 focus:border-[#16A34A]"
+    }`
+
+  const iconClass = (hasError: boolean) =>
+    `absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 ${
+      hasError ? "text-[#EF4444]" : "text-[#6B7280]"
+    }`
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+
+    // Marca todos los campos como tocados para revelar los errores pendientes
+    setTouched({ fullName: true, email: true, password: true, confirmPassword: true })
+    if (!isFormValid) return
+
     setLoading(true)
 
     try {
-      const { data } = await axios.post(`${API_URL}/auth/register`, {
+      await axios.post(`${API_URL}/auth/register`, {
         full_name: fullName,
         email,
         password,
         confirm_password: confirmPassword,
       })
 
-      // Guardar tokens
-      localStorage.setItem("access_token", data.access_token)
-      localStorage.setItem("refresh_token", data.refresh_token)
-
-      router.push("/")
+      // Registro exitoso: enviamos al login para que inicie sesión
+      router.push("/?registro=exitoso")
     } catch (err: any) {
       const detail = err.response?.data?.detail
+      let msg = "Error al registrarse"
       if (Array.isArray(detail)) {
-        setError(detail[0]?.msg || "Error al registrarse")
-      } else {
-        setError(detail || "Error al registrarse")
+        msg = detail[0]?.msg ?? msg
+      } else if (typeof detail === "string") {
+        msg = detail
       }
+      // Pydantic antepone "Value error, " a los mensajes de validación; lo quitamos
+      msg = msg.replace(/^Value error,\s*/i, "")
+      setError(msg)
     } finally {
       setLoading(false)
     }
@@ -64,20 +114,15 @@ export function RegisterForm() {
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-lg">
-      {/* XP indicator at top */}
-      <div className="px-1">
-        <XpProgressBar currentXp={0} maxXp={100} level={1} />
-      </div>
-
       {/* Logo & Header */}
       <div className="flex flex-col items-center gap-3">
         <UniVitaLogo size="md" />
         <div className="text-center">
           <h1 className="text-2xl font-bold font-heading text-[#1F2937]">
-            Crear tu cuenta
+            Crea tu cuenta
           </h1>
-          <p className="mt-1 text-sm text-[#6B7280]">
-            Unete a la comunidad UniVita 8
+          <p className="mt-1 text-md text-[#6B7280]">
+            Pequeños hábitos, grandes cambios...
           </p>
         </div>
       </div>
@@ -87,8 +132,9 @@ export function RegisterForm() {
 
         {/* Error message */}
         {error && (
-          <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
-            {error}
+          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-[#DC2626]">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -98,17 +144,24 @@ export function RegisterForm() {
             Nombre completo
           </label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
+            <User className={iconClass(showNameError)} />
             <input
               id="register-name"
               type="text"
               placeholder="Juan Perez Garcia"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
+              onBlur={() => markTouched("fullName")}
               required
-              className="w-full h-11 pl-10 pr-4 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
+              className={inputClass(showNameError, "pr-4")}
             />
           </div>
+          {showNameError && (
+            <p className="flex items-center gap-1.5 text-sm text-[#DC2626]">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {nameError}
+            </p>
+          )}
         </div>
 
         {/* Email */}
@@ -117,17 +170,24 @@ export function RegisterForm() {
             Correo institucional
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
+            <Mail className={iconClass(showEmailError)} />
             <input
               id="register-email"
               type="email"
               placeholder="tu.nombre@universidad.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => markTouched("email")}
               required
-              className="w-full h-11 pl-10 pr-4 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
+              className={inputClass(showEmailError, "pr-4")}
             />
           </div>
+          {showEmailError && (
+            <p className="flex items-center gap-1.5 text-sm text-[#DC2626]">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {emailError}
+            </p>
+          )}
         </div>
 
         {/* Passwords row */}
@@ -138,15 +198,16 @@ export function RegisterForm() {
               Contraseña
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
+              <Lock className={iconClass(showPasswordError)} />
               <input
                 id="register-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Min. 8 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => markTouched("password")}
                 required
-                className="w-full h-11 pl-10 pr-11 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
+                className={inputClass(showPasswordError, "pr-11")}
               />
               <button
                 type="button"
@@ -156,6 +217,12 @@ export function RegisterForm() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {showPasswordError && (
+              <p className="flex items-center gap-1.5 text-sm text-[#DC2626]">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {passwordError}
+              </p>
+            )}
           </div>
 
           {/* Confirm password */}
@@ -164,15 +231,16 @@ export function RegisterForm() {
               Confirmar contraseña
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
+              <Lock className={iconClass(showConfirmError)} />
               <input
                 id="register-confirm"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Repite tu contraseña"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                onBlur={() => markTouched("confirmPassword")}
                 required
-                className="w-full h-11 pl-10 pr-11 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
+                className={inputClass(showConfirmError, "pr-11")}
               />
               <button
                 type="button"
@@ -182,6 +250,12 @@ export function RegisterForm() {
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {showConfirmError && (
+              <p className="flex items-center gap-1.5 text-sm text-[#DC2626]">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                {confirmError}
+              </p>
+            )}
           </div>
         </div>
 
@@ -189,9 +263,9 @@ export function RegisterForm() {
         <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE]">
           <Info className="w-4.5 h-4.5 text-[#2563EB] mt-0.5 shrink-0" />
           <p className="text-xs text-[#1F2937] leading-relaxed">
-            Todas las cuentas nuevas se registran como{" "}
-            <span className="font-semibold text-[#16A34A]">Cliente (Usuario)</span>.
-            Los roles administrativos se asignan internamente.
+            Con tu registro empiezas tu camino saludable: encuesta, puntos y{" "}
+            <span className="font-semibold text-[#16A34A]">niveles</span>.
+            Los roles se asignan internamente.
           </p>
         </div>
 
@@ -220,7 +294,7 @@ export function RegisterForm() {
         {/* Submit button */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !isFormValid}
           className="w-full h-11 rounded-lg text-[#FFFFFF] text-sm font-semibold transition-all shadow-md shadow-[#16A34A]/20 hover:shadow-lg hover:shadow-[#16A34A]/25 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
         >
@@ -230,9 +304,9 @@ export function RegisterForm() {
 
       {/* Login link */}
       <p className="text-center text-sm text-[#6B7280]">
-        Ya tienes cuenta?{" "}
+        ¿Ya tienes cuenta?{" "}
         <Link href="/" className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors">
-          Inicia sesion
+          Inicia sesión
         </Link>
       </p>
     </div>

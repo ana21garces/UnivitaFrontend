@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import axios from "axios"
-import { Eye, EyeOff, Mail, Lock } from "lucide-react"
-import { XpProgressBar } from "@/components/xp-progress-bar"
+import { Eye, EyeOff, Mail, Lock, CheckCircle } from "lucide-react"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, getRoleFromToken, setSurveyDone } from "@/lib/auth"
 
@@ -27,6 +26,18 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [justRegistered, setJustRegistered] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("registro") === "exitoso") {
+      setJustRegistered(true)
+      // Limpiamos la marca de la URL para que el mensaje no reaparezca al recargar
+      params.delete("registro")
+      const query = params.toString()
+      window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""))
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,11 +97,6 @@ export function LoginForm() {
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-md">
-      {/* XP indicator at top */}
-      <div className="px-1">
-        <XpProgressBar currentXp={0} maxXp={100} level={1} />
-      </div>
-
       {/* Logo & Header */}
       <div className="flex flex-col items-center gap-3">
         <UniVitaLogo size="md" />
@@ -99,13 +105,21 @@ export function LoginForm() {
             UnacHealth
           </h1>
           <p className="mt-1 text-md text-[#6B7280]">
-            Plataforma gamificada de estilo de vida saludable para estudiantes universitarios
+            Pequeños hábitos, grandes cambios...
           </p>
         </div>
       </div>
 
       {/* Form */}
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+
+        {/* Success message after registration */}
+        {justRegistered && (
+          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-sm text-[#15803D]">
+            <CheckCircle className="w-4 h-4 shrink-0" />
+            <span>Cuenta creada. Ahora inicia sesión.</span>
+          </div>
+        )}
 
         {/* Error message */}
         {error && (
@@ -169,7 +183,7 @@ export function LoginForm() {
             after:bg-[#16A34A] after:transition-all after:duration-300
             hover:after:w-full"
           >
-            Olvidaste tu contraseña?
+            ¿Olvidaste tu contraseña?
           </Link>
         </div>
 
@@ -180,13 +194,13 @@ export function LoginForm() {
           className="w-full h-11 rounded-lg text-[#FFFFFF] text-sm font-semibold transition-all shadow-md shadow-[#16A34A]/20 hover:shadow-lg hover:shadow-[#16A34A]/25 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
         >
-          {loading ? "Iniciando sesión..." : "Iniciar Sesion"}
+          {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </button>
       </form>
 
       {/* Register link */}
       <p className="text-center text-sm text-[#6B7280]">
-        No tienes cuenta?{" "}
+        ¿No tienes cuenta?{" "}
         <Link
           href="/register"
           className="relative font-semibold text-[#16A34A] transition-colors
@@ -194,7 +208,7 @@ export function LoginForm() {
           after:bg-[#16A34A] after:transition-all after:duration-300
           hover:after:w-full pb-1"
         >
-          Registrate aqui
+          Regístrate aquí
         </Link>
       </p>
     </div>
