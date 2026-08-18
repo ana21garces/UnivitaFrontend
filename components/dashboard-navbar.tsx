@@ -12,10 +12,11 @@ import {
   Dumbbell,
   Stethoscope,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { clearSession } from "@/lib/auth"
+import { api } from "@/lib/api"
 
 interface NavItem {
   label: string
@@ -50,7 +51,20 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
 }
 
-export function DashboardNavbar({ role, userName = "Estudiante", xp = 0, maxXp = 100, level = 1 }: DashboardNavbarProps) {
+export function DashboardNavbar({ role, userName, xp = 0, maxXp = 100, level = 1 }: DashboardNavbarProps) {
+  // El nombre se pide una vez aqui, en vez de en cada pantalla: el JWT solo
+  // lleva el id, el correo y el rol. Antes cada vista ponia una cadena fija
+  // --"Estudiante", "Prof. Actividad Fisica"-- y todos los estudiantes veian
+  // la misma "E" en el avatar.
+  const [nombre, setNombre] = useState(userName ?? "")
+
+  useEffect(() => {
+    if (userName) return
+    api
+      .get("/users/me")
+      .then((res) => setNombre(res.data.full_name))
+      .catch(() => { /* el nombre es adorno: si falla, no se estorba a la pantalla */ })
+  }, [userName])
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -109,10 +123,10 @@ export function DashboardNavbar({ role, userName = "Estudiante", xp = 0, maxXp =
 
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A]">
-              {userName.charAt(0).toUpperCase()}
+              {nombre.charAt(0).toUpperCase()}
             </div>
             <span className="hidden sm:inline text-sm font-medium text-[#1F2937]">
-              {userName}
+              {nombre}
             </span>
           </div>
 

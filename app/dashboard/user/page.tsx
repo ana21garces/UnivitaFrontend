@@ -268,7 +268,6 @@ export default function UserDashboard() {
     <>
       <DashboardNavbar
         role="user"
-        userName="Estudiante"
         xp={xpTotal}
         maxXp={xpTarget}
         level={levelInfo.numero}

@@ -349,7 +349,7 @@ export default function RespSaludPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <DashboardNavbar role="responsabilidad-salud" userName="Prof. Responsabilidad en Salud" />
+      <DashboardNavbar role="responsabilidad-salud" />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
