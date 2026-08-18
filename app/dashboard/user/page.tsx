@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, estadoDeError, redirigirPorError } from "@/lib/api"
+import { infoDeNivel } from "@/lib/niveles"
 import Link from "next/link"
 import { Zap, Activity, Timer, Star, Lock } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
@@ -68,29 +69,6 @@ const PUNTAJE_RANGES: Record<string, string> = {
 }
 
 const XP_TARGETS: Record<number, number> = { 1: 100, 2: 400, 3: 800, 4: 1000 }
-
-// Escala del PEPS II. El nombre del nivel NO se calcula aqui: llega en
-// nivel_global, para que la pantalla no pueda volver a contradecir a la API.
-// Los cortes por indice (25 / 50 / 75) son los de _nivel_por_indice en
-// app/services/encuesta_hplp_service.py y solo alimentan la barra de avance.
-const NIVELES = [
-  { numero: 1, nivel: "Pobre", corte: 25 },
-  { numero: 2, nivel: "Moderado", corte: 50 },
-  { numero: 3, nivel: "Bueno", corte: 75 },
-  { numero: 4, nivel: "Excelente", corte: null },
-] as const
-
-function getLevelInfo(nivelGlobal: string) {
-  const i = Math.max(0, NIVELES.findIndex((n) => n.nivel === nivelGlobal))
-  const actual = NIVELES[i]
-  const siguiente = i + 1 < NIVELES.length ? NIVELES[i + 1] : null
-  return {
-    numero: actual.numero,
-    nivel: actual.nivel,
-    nextThreshold: actual.corte,
-    nextNivel: siguiente ? siguiente.nivel : null,
-  }
-}
 
 function getNivelColor(nivel: string) {
   switch (nivel) {
@@ -263,7 +241,7 @@ export default function UserDashboard() {
   if (!resultado) return null
 
   const { resultados } = resultado
-  const levelInfo = getLevelInfo(resultados.nivel_global)
+  const levelInfo = infoDeNivel(resultados.nivel_global)
   const xpTotal = Math.round(100 + resultados.indice_global * 1.9)
   const xpTarget = XP_TARGETS[levelInfo.numero] ?? 1000
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
+import { RANGO_POR_NIVEL } from "@/lib/niveles"
 import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 
@@ -55,10 +56,10 @@ type CapellanData = {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 const NIVEL_CONFIG: Record<string, { color: string; bg: string; rango: string }> = {
-  Pobre:     { color: "text-red-700",    bg: "bg-red-100",    rango: "0 – 25" },
-  Moderado:  { color: "text-orange-700", bg: "bg-orange-100", rango: "26 – 50" },
-  Bueno:     { color: "text-yellow-700", bg: "bg-yellow-100", rango: "51 – 75" },
-  Excelente: { color: "text-green-700",  bg: "bg-green-100",  rango: "76 – 100" },
+  Pobre:     { color: "text-red-700",    bg: "bg-red-100",    rango: RANGO_POR_NIVEL.Pobre },
+  Moderado:  { color: "text-orange-700", bg: "bg-orange-100", rango: RANGO_POR_NIVEL.Moderado },
+  Bueno:     { color: "text-yellow-700", bg: "bg-yellow-100", rango: RANGO_POR_NIVEL.Bueno },
+  Excelente: { color: "text-green-700",  bg: "bg-green-100",  rango: RANGO_POR_NIVEL.Excelente },
 }
 
 const PP_ITEMS = [
