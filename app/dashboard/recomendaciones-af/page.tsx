@@ -119,7 +119,7 @@ export default function RecomendacionesAFPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <DashboardNavbar role="user" userName={data?.nombre ?? "Estudiante"} />
+      <DashboardNavbar role="user" />
 
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 flex flex-col gap-6">
 

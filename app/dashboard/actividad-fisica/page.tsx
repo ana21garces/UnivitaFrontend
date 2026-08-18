@@ -353,7 +353,7 @@ export default function ActividadFisicaPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <DashboardNavbar role="actividad-fisica" userName="Prof. Actividad Física" />
+      <DashboardNavbar role="actividad-fisica" />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 flex flex-col gap-6">
         {/* Encabezado */}
