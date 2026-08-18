@@ -13,7 +13,6 @@ import {
   Stethoscope,
 } from "lucide-react"
 import { useEffect, useState } from "react"
-import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { clearSession } from "@/lib/auth"
 import { api } from "@/lib/api"
@@ -27,9 +26,16 @@ interface NavItem {
 interface DashboardNavbarProps {
   role: "user" | "admin" | "capellan" | "actividad-fisica" | "responsabilidad-salud"
   userName?: string
-  xp?: number
-  maxXp?: number
-  level?: number
+}
+
+// Etiqueta visible del tipo de usuario que se marcó en la encuesta. El
+// backend guarda el valor en minúscula ("estudiante", "docente",
+// "administrativo"); las cuentas profesionales no lo tienen y no muestran
+// esta segunda línea.
+const TIPO_USUARIO_LABEL: Record<string, string> = {
+  estudiante: "Estudiante",
+  docente: "Docente",
+  administrativo: "Administrativo",
 }
 
 const navItemsByRole: Record<string, NavItem[]> = {
@@ -51,18 +57,22 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
 }
 
-export function DashboardNavbar({ role, userName, xp = 0, maxXp = 100, level = 1 }: DashboardNavbarProps) {
+export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
   // El nombre se pide una vez aqui, en vez de en cada pantalla: el JWT solo
   // lleva el id, el correo y el rol. Antes cada vista ponia una cadena fija
   // --"Estudiante", "Prof. Actividad Fisica"-- y todos los estudiantes veian
   // la misma "E" en el avatar.
   const [nombre, setNombre] = useState(userName ?? "")
+  const [tipoUsuario, setTipoUsuario] = useState<string | null>(null)
 
   useEffect(() => {
     if (userName) return
     api
       .get("/users/me")
-      .then((res) => setNombre(res.data.full_name))
+      .then((res) => {
+        setNombre(res.data.full_name)
+        setTipoUsuario(res.data.tipo_usuario ?? null)
+      })
       .catch(() => { /* el nombre es adorno: si falla, no se estorba a la pantalla */ })
   }, [userName])
   const pathname = usePathname()
@@ -115,19 +125,20 @@ export function DashboardNavbar({ role, userName, xp = 0, maxXp = 100, level = 1
           })}
         </nav>
 
-        {/* Right: XP + User + Mobile menu */}
+        {/* Right: User + Mobile menu */}
         <div className="flex items-center gap-4">
-          <div className="hidden sm:block w-40">
-            <XpProgressBar currentXp={xp} maxXp={maxXp} level={level} />
-          </div>
-
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A]">
               {nombre.charAt(0).toUpperCase()}
             </div>
-            <span className="hidden sm:inline text-sm font-medium text-[#1F2937]">
-              {nombre}
-            </span>
+            <div className="hidden sm:flex flex-col leading-tight">
+              <span className="text-sm font-medium text-[#1F2937]">{nombre}</span>
+              {tipoUsuario && (
+                <span className="text-[10px] text-[#6B7280]">
+                  {TIPO_USUARIO_LABEL[tipoUsuario] ?? tipoUsuario}
+                </span>
+              )}
+            </div>
           </div>
 
           <button
@@ -153,9 +164,11 @@ export function DashboardNavbar({ role, userName, xp = 0, maxXp = 100, level = 1
       {/* Mobile nav */}
       {mobileOpen && (
         <div className="md:hidden border-t border-[#E2E8F0] bg-[#FFFFFF] px-4 py-3">
-          <div className="mb-3 sm:hidden">
-            <XpProgressBar currentXp={xp} maxXp={maxXp} level={level} />
-          </div>
+          {tipoUsuario && (
+            <p className="mb-3 text-xs text-[#6B7280]">
+              {nombre} · {TIPO_USUARIO_LABEL[tipoUsuario] ?? tipoUsuario}
+            </p>
+          )}
           <nav className="flex flex-col gap-1" aria-label="Mobile navigation">
             {navItems.map((item) => {
               const isActive = pathname === item.href
