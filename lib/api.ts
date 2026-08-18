@@ -44,6 +44,15 @@ type PeticionReintentable = InternalAxiosRequestConfig & { _reintentada?: boolea
  */
 let renovacionEnCurso: Promise<string | null> | null = null
 
+/**
+ * Rutas donde un 401 significa «credenciales incorrectas», no «sesión
+ * caducada». Sin esta lista, un intento de acceso con la contraseña mal
+ * escrita renovaría la sesión anterior que quedara en el navegador y
+ * reintentaría el acceso: el usuario vería el error correcto, pero se habría
+ * llevado un token nuevo de la cuenta previa sin autenticarse.
+ */
+const RUTAS_SIN_RENOVACION = ["/auth/login", "/auth/register", "/auth/refresh"]
+
 async function renovarSesion(): Promise<string | null> {
   const refresh = getRefreshToken()
   if (!refresh) return null
@@ -69,8 +78,14 @@ api.interceptors.response.use(
   (respuesta) => respuesta,
   async (error: AxiosError) => {
     const original = error.config as PeticionReintentable | undefined
+    const ruta = original?.url ?? ""
 
-    if (error.response?.status !== 401 || !original || original._reintentada) {
+    if (
+      error.response?.status !== 401 ||
+      !original ||
+      original._reintentada ||
+      RUTAS_SIN_RENOVACION.some((sinRenovar) => ruta.startsWith(sinRenovar))
+    ) {
       return Promise.reject(error)
     }
     original._reintentada = true
