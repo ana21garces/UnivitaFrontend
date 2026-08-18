@@ -5,8 +5,13 @@ import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
-import { ChevronDown, ChevronUp, Users, Stethoscope, AlertCircle, Building2, GraduationCap } from "lucide-react"
+import { ChevronDown, ChevronUp, Users, Stethoscope, AlertCircle, Building2, GraduationCap, Bell, Check } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { NotificarModal } from "@/components/notificar-modal"
+import {
+  EstadisticasSection,
+  type EstadisticasDimension,
+} from "@/components/estadisticas-dimension"
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -75,13 +80,6 @@ const TIPO_LABELS: Record<string, string> = {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function getNivelFromIndice(i: number) {
-  if (i <= 33) return "Pobre"
-  if (i <= 55) return "Moderado"
-  if (i <= 77) return "Bueno"
-  return "Excelente"
-}
-
 function NivelBadge({ nivel }: { nivel: string }) {
   const cfg = NIVEL_CONFIG[nivel] ?? { color: "#718096", bg: "#EDF2F7" }
   return (
@@ -90,9 +88,11 @@ function NivelBadge({ nivel }: { nivel: string }) {
   )
 }
 
-function IndiceBar({ indice }: { indice: number }) {
-  const nivel = getNivelFromIndice(indice)
-  const cfg = NIVEL_CONFIG[nivel]
+// El nivel llega de rs_nivel, calculado por el backend con los cortes reales
+// del PEPS II (≤25/≤50/≤75). Antes se recalculaba aquí con ≤33/≤55/≤77 -otra
+// escala inventada, la misma que tenía actividad-fisica antes de corregirla.
+function IndiceBar({ indice, nivel }: { indice: number; nivel: string }) {
+  const cfg = NIVEL_CONFIG[nivel] ?? { color: "#718096", bg: "#EDF2F7", bar: "#718096" }
   return (
     <div className="flex items-center gap-2">
       <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
@@ -119,41 +119,78 @@ function NivelesLeyenda() {
 
 // ── UsuarioRow ─────────────────────────────────────────────────────────────
 
-function UsuarioRow({ usuario }: { usuario: Usuario }) {
+function UsuarioRow({
+  usuario,
+  notificado,
+  onNotificar,
+}: {
+  usuario: Usuario
+  notificado: boolean
+  onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+}) {
   const [open, setOpen] = useState(false)
   const rs = usuario.responsabilidad_salud
+  const requiereAtencion = rs.rs_nivel === "Pobre"
   const fecha = usuario.fecha
     ? new Date(usuario.fecha).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" })
     : null
 
   return (
-    <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
-      <button
-        className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-[#F8FAFC] transition-colors text-left"
+    <div className={`border rounded-xl overflow-hidden ${requiereAtencion ? "border-red-200" : "border-[#E2E8F0]"}`}>
+      {/* div en vez de button: el boton de Notificar de adentro quedaria
+          anidado en otro boton, invalido en HTML. */}
+      <div
+        role="button"
+        tabIndex={0}
+        className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-[#F8FAFC] transition-colors text-left cursor-pointer"
         onClick={() => setOpen(!open)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpen(!open) }}
       >
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="font-semibold text-[#1F2937] truncate">{usuario.nombre}</p>
             {usuario.tipo_usuario && (
               <span className="hidden sm:inline text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[#6B7280]">
                 {TIPO_LABELS[usuario.tipo_usuario] ?? usuario.tipo_usuario}
               </span>
             )}
+            {requiereAtencion && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                <AlertCircle className="w-3 h-3" />
+                Atención inmediata
+              </span>
+            )}
           </div>
           <p className="text-xs text-[#6B7280] truncate">{fecha}</p>
         </div>
         <div className="flex items-center gap-3 ml-4">
-          <div className="hidden sm:flex items-center gap-2 w-52"><IndiceBar indice={rs.rs_indice} /></div>
+          <div className="hidden sm:flex items-center gap-2 w-52"><IndiceBar indice={rs.rs_indice} nivel={rs.rs_nivel} /></div>
+          {requiereAtencion && usuario.usuario_id && (
+            notificado ? (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A] shrink-0">
+                <Check className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Notificado</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onNotificar({ nombre: usuario.nombre, usuarioId: usuario.usuario_id! }) }}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shrink-0"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Notificar</span>
+              </button>
+            )
+          )}
           {open ? <ChevronUp className="w-4 h-4 text-[#6B7280] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#6B7280] shrink-0" />}
         </div>
-      </button>
+      </div>
 
       {open && (
         <div className="px-4 pb-4 pt-2 bg-[#F8FAFC] border-t border-[#E2E8F0]">
           <div className="sm:hidden mb-3">
             <p className="text-xs font-medium text-[#6B7280] mb-1">Índice RS</p>
-            <IndiceBar indice={rs.rs_indice} />
+            <IndiceBar indice={rs.rs_indice} nivel={rs.rs_nivel} />
           </div>
           <div className="flex flex-col gap-1.5 mb-3">
             {RS_ITEMS.map((item) => {
@@ -181,7 +218,15 @@ function UsuarioRow({ usuario }: { usuario: Usuario }) {
 
 // ── CarreraCard / FacultadCard ─────────────────────────────────────────────
 
-function CarreraCard({ carrera }: { carrera: Carrera }) {
+function CarreraCard({
+  carrera,
+  notificados,
+  onNotificar,
+}: {
+  carrera: Carrera
+  notificados: Set<string>
+  onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+}) {
   const [open, setOpen] = useState(true)
   return (
     <div className="rounded-xl border border-[#E2E8F0] bg-[#FAFAFA] overflow-hidden">
@@ -196,14 +241,29 @@ function CarreraCard({ carrera }: { carrera: Carrera }) {
       </button>
       {open && (
         <div className="px-3 pb-3 flex flex-col gap-2 border-t border-[#E2E8F0] pt-2">
-          {carrera.usuarios.map((u, i) => <UsuarioRow key={u.encuesta_id ?? i} usuario={u} />)}
+          {carrera.usuarios.map((u, i) => (
+            <UsuarioRow
+              key={u.encuesta_id ?? i}
+              usuario={u}
+              notificado={!!u.usuario_id && notificados.has(u.usuario_id)}
+              onNotificar={onNotificar}
+            />
+          ))}
         </div>
       )}
     </div>
   )
 }
 
-function FacultadCard({ facultad }: { facultad: Facultad }) {
+function FacultadCard({
+  facultad,
+  notificados,
+  onNotificar,
+}: {
+  facultad: Facultad
+  notificados: Set<string>
+  onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+}) {
   const [open, setOpen] = useState(true)
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
@@ -222,7 +282,9 @@ function FacultadCard({ facultad }: { facultad: Facultad }) {
       </button>
       {open && (
         <div className="px-4 pb-4 flex flex-col gap-3 border-t border-[#E2E8F0] pt-3">
-          {facultad.carreras.map((c) => <CarreraCard key={c.carrera} carrera={c} />)}
+          {facultad.carreras.map((c) => (
+            <CarreraCard key={c.carrera} carrera={c} notificados={notificados} onNotificar={onNotificar} />
+          ))}
         </div>
       )}
     </div>
@@ -296,6 +358,10 @@ export default function RespSaludPage() {
   const [opcionesCarreras, setOpcionesCarreras] = useState<string[]>([])
   const [opcionesTipos, setOpcionesTipos] = useState<string[]>([])
 
+  const [stats, setStats] = useState<EstadisticasDimension | null>(null)
+  const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
+  const [notificados, setNotificados] = useState<Set<string>>(new Set())
+
   const getToken = useCallback(() => {
     const t = getAccessToken()
     if (!t) { router.replace("/"); return null }
@@ -318,7 +384,17 @@ export default function RespSaludPage() {
     }).catch(() => {})
   }, [getToken, mergeOpciones])
 
-  // 2. Fetch de datos — extrae opciones como fallback
+  // 2. Estadísticas para los gráficos — sin filtros, es la foto completa.
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    api
+      .get("/encuesta/responsabilidad-salud/resultados/estadisticas")
+      .then((res) => setStats(res.data))
+      .catch(() => {})
+  }, [getToken])
+
+  // 3. Fetch de datos — extrae opciones como fallback
   const fetchData = useCallback((f: Filtros) => {
     const token = getToken()
     if (!token) return
@@ -370,6 +446,9 @@ export default function RespSaludPage() {
           )}
         </div>
 
+        {/* Panorama general: gráficos */}
+        {stats && <EstadisticasSection stats={stats} tituloDimension="Responsabilidad en salud" />}
+
         <div className="bg-white border border-[#E2E8F0] rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-3">Referencia de niveles</p>
           <NivelesLeyenda />
@@ -398,11 +477,28 @@ export default function RespSaludPage() {
                 <p className="text-sm">No hay resultados para los filtros seleccionados.</p>
               </div>
             ) : (
-              data.facultades.map((fac) => <FacultadCard key={fac.facultad} facultad={fac} />)
+              data.facultades.map((fac) => (
+                <FacultadCard
+                  key={fac.facultad}
+                  facultad={fac}
+                  notificados={notificados}
+                  onNotificar={setNotifObjetivo}
+                />
+              ))
             )}
           </div>
         )}
       </main>
+
+      {notifObjetivo && (
+        <NotificarModal
+          nombre={notifObjetivo.nombre}
+          usuarioId={notifObjetivo.usuarioId}
+          mensajeSugerido="Te invitamos a agendar una cita con responsabilidad en salud para hablar de tus resultados."
+          onClose={() => setNotifObjetivo(null)}
+          onEnviado={(id) => setNotificados((prev) => new Set(prev).add(id))}
+        />
+      )}
     </div>
   )
 }
