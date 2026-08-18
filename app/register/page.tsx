@@ -3,9 +3,9 @@ import { WellnessPanel } from "@/components/wellness-panel"
 
 export default function RegisterPage() {
   return (
-    <main className="min-h-screen grid lg:grid-cols-2">
+    <main className="min-h-screen grid lg:grid-cols-2 bg-gradient-to-br from-[#FFFFFF] to-[#F0FDF4]">
       {/* Form side */}
-      <div className="flex items-center justify-center px-6 py-10 bg-[#F8FAFC]">
+      <div className="flex items-start justify-center lg:items-center px-6 py-10">
         <RegisterForm />
       </div>
 

@@ -1,41 +1,47 @@
 import Image from "next/image"
+import { Star } from "lucide-react"
+import { UsuariosRegistradosBadge } from "@/components/usuarios-registrados-badge"
+
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH || ""
 
 export function WellnessPanel() {
   return (
-    <div className="hidden lg:flex flex-col items-center justify-center relative bg-gradient-to-br from-[#F0FDF4] to-[#EFF6FF] p-12 overflow-hidden">
-      {/* Decorative circles */}
-      <div className="absolute top-10 right-10 w-32 h-32 rounded-full bg-[#16A34A]/8" />
-      <div className="absolute bottom-20 left-10 w-24 h-24 rounded-full bg-[#2563EB]/10" />
-      <div className="absolute top-1/3 left-1/4 w-16 h-16 rounded-full bg-[#6D28D9]/6" />
+    <div className="hidden lg:flex items-center relative overflow-hidden bg-[#F0FDF4] px-14 py-10 lg:self-start lg:sticky lg:top-0 lg:h-screen">
+      {/* Óvalo decorativo verde */}
+      <div className="pointer-events-none absolute right-[-5%] bottom-[-1%] w-[48%] aspect-square rounded-full bg-[#C7F0D6]" />
 
-      <div className="relative z-10 flex flex-col items-center gap-8 max-w-md">
-        <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-lg">
-          <Image
-            src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/images/wellness-illustration.jpg`}
-            alt="Healthy lifestyle illustration showing people practicing wellness activities"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
+      {/* Bowl + vaso + manzana */}
+      <div className="pointer-events-none absolute right-[2%] top-1/2 -translate-y-1/2 w-[42%]">
+        <Image src={`${BASE}/images/ensalada.png`} alt="Plato saludable" width={826} height={832} className="w-full h-auto" priority />
+      </div>
+      <div className="pointer-events-none absolute right-[8%] top-[15%] w-[12%]">
+        <Image src={`${BASE}/images/vaso.png`} alt="" width={422} height={415} className="w-full h-auto" />
+      </div>
 
-        <div className="text-center">
-          <h2 className="text-2xl font-bold font-heading text-[#1F2937] text-balance">
-            Tu bienestar, tu mejor logro
+      {/* Contenido a la izquierda */}
+      <div className="relative z-10 flex flex-col gap-7 max-w-xs">
+        <div>
+          <h2 className="text-4xl font-bold font-heading text-[#1F2937] leading-tight">
+            Tu bienestar,
+            <br />
+            <span className="text-[#16A34A]">tu mejor logro</span>
           </h2>
-          <p className="mt-3 text-[#6B7280] leading-relaxed text-pretty">
-            Descubre habitos saludables, completa desafios y gana recompensas mientras cuidas tu salud con inteligencia artificial.
+          <p className="mt-4 text-sm text-[#6B7280] leading-relaxed">
+            Descubre hábitos saludables, completa desafíos y gana recompensas
+            mientras cuidas tu salud en sus seis dimensiones.
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFFFFF] shadow-sm border border-[#E2E8F0]">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
-            <span className="text-sm font-medium text-[#1F2937]">+2,500 usuarios activos</span>
-          </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFFFFF] shadow-sm border border-[#E2E8F0]">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#549d87]" />
-            <span className="text-sm font-medium text-[#1F2937]">8 Remedios</span>
+        <div className="flex flex-col gap-3">
+          <UsuariosRegistradosBadge />
+          <div className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#EAF3DE] text-[#3B6D11] shrink-0">
+              <Star className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[#1F2937] leading-none">6</p>
+              <p className="text-sm text-[#6B7280] mt-1">dimensiones de bienestar</p>
+            </div>
           </div>
         </div>
       </div>

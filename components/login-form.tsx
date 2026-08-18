@@ -1,11 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api } from "@/lib/api"
-import { Eye, EyeOff, Mail, Lock } from "lucide-react"
-import { XpProgressBar } from "@/components/xp-progress-bar"
+import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, getRoleFromToken, setSurveyDone } from "@/lib/auth"
 
@@ -25,6 +24,18 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [justRegistered, setJustRegistered] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("registro") === "exitoso") {
+      setJustRegistered(true)
+      // Limpiamos la marca de la URL para que el mensaje no reaparezca al recargar
+      params.delete("registro")
+      const query = params.toString()
+      window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""))
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -79,31 +90,45 @@ export function LoginForm() {
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-md">
-      {/* XP indicator at top */}
-      <div className="px-1">
-        <XpProgressBar currentXp={0} maxXp={100} level={1} />
-      </div>
-
       {/* Logo & Header */}
       <div className="flex flex-col items-center gap-3">
         <UniVitaLogo size="md" />
         <div className="text-center">
-          <h1 className="text-2xl font-bold font-heading text-[#1F2937]">
-            UnacHealth
+          <h1 className="text-[26px] font-bold font-heading text-[#1F2937]">
+            Unac<span className="text-[#16A34A]">Health</span>
           </h1>
           <p className="mt-1 text-md text-[#6B7280]">
-            Plataforma gamificada de estilo de vida saludable para estudiantes universitarios
+            Pequeños hábitos, grandes cambios.
           </p>
         </div>
+      </div>
+
+      {/* Bienvenida */}
+      <div className="text-center">
+        <h2 className="text-2xl font-bold font-heading text-[#1F2937]">
+          Bienvenido de nuevo
+        </h2>
+        <p className="mt-1 text-md text-[#6B7280]">
+          Inicia sesión para continuar cuidando de ti.
+        </p>
       </div>
 
       {/* Form */}
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 
+        {/* Success message after registration */}
+        {justRegistered && (
+          <div className="flex items-center gap-1.5 text-sm text-[#15803D]">
+            <CheckCircle className="w-4 h-4 shrink-0" />
+            <span>Cuenta creada. Ahora inicia sesión.</span>
+          </div>
+        )}
+
         {/* Error message */}
         {error && (
-          <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
-            {error}
+          <div className="flex items-center gap-1.5 text-sm text-[#DC2626]">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -113,7 +138,9 @@ export function LoginForm() {
             Correo institucional
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-lg bg-[#EAF3DE]">
+              <Mail className="w-4 h-4 text-[#16A34A]" />
+            </div>
             <input
               id="login-email"
               type="email"
@@ -121,7 +148,7 @@ export function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full h-11 pl-10 pr-4 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
+              className="w-full h-11 pl-12 pr-4 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
             />
           </div>
         </div>
@@ -132,7 +159,9 @@ export function LoginForm() {
             Contraseña
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-lg bg-[#EAF3DE]">
+              <Lock className="w-4 h-4 text-[#16A34A]" />
+            </div>
             <input
               id="login-password"
               type={showPassword ? "text" : "password"}
@@ -140,7 +169,7 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full h-11 pl-10 pr-11 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
+              className="w-full h-11 pl-12 pr-11 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
             />
             <button
               type="button"
@@ -162,7 +191,7 @@ export function LoginForm() {
             after:bg-[#16A34A] after:transition-all after:duration-300
             hover:after:w-full"
           >
-            Olvidaste tu contraseña?
+            ¿Olvidaste tu contraseña?
           </Link>
         </div>
 
@@ -173,13 +202,13 @@ export function LoginForm() {
           className="w-full h-11 rounded-lg text-[#FFFFFF] text-sm font-semibold transition-all shadow-md shadow-[#16A34A]/20 hover:shadow-lg hover:shadow-[#16A34A]/25 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
         >
-          {loading ? "Iniciando sesión..." : "Iniciar Sesion"}
+          {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </button>
       </form>
 
       {/* Register link */}
       <p className="text-center text-sm text-[#6B7280]">
-        No tienes cuenta?{" "}
+        ¿No tienes cuenta?{" "}
         <Link
           href="/register"
           className="relative font-semibold text-[#16A34A] transition-colors
@@ -187,7 +216,7 @@ export function LoginForm() {
           after:bg-[#16A34A] after:transition-all after:duration-300
           hover:after:w-full pb-1"
         >
-          Registrate aqui
+          Regístrate aquí
         </Link>
       </p>
     </div>
