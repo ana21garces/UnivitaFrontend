@@ -6,16 +6,17 @@ interface LevelBadgeProps {
   size?: "sm" | "md"
 }
 
+// Misma escala que el resto de la aplicacion y que el backend: cuatro
+// niveles del PEPS II. Antes habia aqui cinco nombres sin relacion con ella.
 const levelTitles: Record<number, string> = {
-  1: "Principiante",
-  2: "Explorer",
-  3: "Apprentice",
-  4: "Practitioner",
-  5: "Champion",
+  1: "Pobre",
+  2: "Moderado",
+  3: "Bueno",
+  4: "Excelente",
 }
 
 export function LevelBadge({ level, title, size = "md" }: LevelBadgeProps) {
-  const displayTitle = title || levelTitles[level] || "Principiante"
+  const displayTitle = title || levelTitles[level] || "Pobre"
 
   if (size === "sm") {
     return (

@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import axios from "axios"
+import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import Link from "next/link"
 import { Zap, Activity, Timer, Star, Lock } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
-import { setSurveyDone } from "@/lib/auth"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+import { getAccessToken, setSurveyDone } from "@/lib/auth"
 
 type DimensionResult = { indice: number; nivel: string }
 type EncuestaResultado = {
@@ -71,11 +69,27 @@ const PUNTAJE_RANGES: Record<string, string> = {
 
 const XP_TARGETS: Record<number, number> = { 1: 100, 2: 400, 3: 800, 4: 1000 }
 
-function getLevelInfo(indice: number) {
-  if (indice >= 84) return { numero: 4, nivel: "Excelente", nextThreshold: null, nextNivel: null }
-  if (indice >= 67) return { numero: 3, nivel: "Bueno", nextThreshold: 84, nextNivel: "Excelente" }
-  if (indice >= 34) return { numero: 2, nivel: "Moderado", nextThreshold: 67, nextNivel: "Bueno" }
-  return { numero: 1, nivel: "Pobre", nextThreshold: 34, nextNivel: "Moderado" }
+// Escala del PEPS II. El nombre del nivel NO se calcula aqui: llega en
+// nivel_global, para que la pantalla no pueda volver a contradecir a la API.
+// Los cortes por indice (25 / 50 / 75) son los de _nivel_por_indice en
+// app/services/encuesta_hplp_service.py y solo alimentan la barra de avance.
+const NIVELES = [
+  { numero: 1, nivel: "Pobre", corte: 25 },
+  { numero: 2, nivel: "Moderado", corte: 50 },
+  { numero: 3, nivel: "Bueno", corte: 75 },
+  { numero: 4, nivel: "Excelente", corte: null },
+] as const
+
+function getLevelInfo(nivelGlobal: string) {
+  const i = Math.max(0, NIVELES.findIndex((n) => n.nivel === nivelGlobal))
+  const actual = NIVELES[i]
+  const siguiente = i + 1 < NIVELES.length ? NIVELES[i + 1] : null
+  return {
+    numero: actual.numero,
+    nivel: actual.nivel,
+    nextThreshold: actual.corte,
+    nextNivel: siguiente ? siguiente.nivel : null,
+  }
 }
 
 function getNivelColor(nivel: string) {
@@ -221,18 +235,14 @@ export default function UserDashboard() {
 
   useEffect(() => {
     const fetchResultado = async () => {
-      const token = localStorage.getItem("access_token")
-      if (!token) { router.push("/"); return }
+      if (!getAccessToken()) { router.push("/"); return }
       try {
-        const { data } = await axios.get(`${API_URL}/encuesta/resultado`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "ngrok-skip-browser-warning": "true",
-          },
-        })
+        const { data } = await api.get("/encuesta/resultado")
         setResultado(data)
-      } catch (err: any) {
-        if (err.response?.status === 404) {
+      } catch (err) {
+        // Sin esto, una sesion caducada dejaba la pantalla cargando para siempre.
+        if (redirigirPorError(err, router)) return
+        if (estadoDeError(err) === 404) {
           setSurveyDone(false)
           router.push("/onboarding/survey")
         }
@@ -253,7 +263,7 @@ export default function UserDashboard() {
   if (!resultado) return null
 
   const { resultados } = resultado
-  const levelInfo = getLevelInfo(resultados.indice_global)
+  const levelInfo = getLevelInfo(resultados.nivel_global)
   const xpTotal = Math.round(100 + resultados.indice_global * 1.9)
   const xpTarget = XP_TARGETS[levelInfo.numero] ?? 1000
 
@@ -503,7 +513,7 @@ export default function UserDashboard() {
             {levelInfo.nextThreshold ? (
               <>
                 <p className="text-xs text-[#6B7280] mb-4">
-                  Para subir a Nivel {levelInfo.numero + 1} ({levelInfo.nextNivel}) necesitas mejorar tu índice global a {levelInfo.nextThreshold}+
+                  Para subir a Nivel {levelInfo.numero + 1} ({levelInfo.nextNivel}) necesitas superar un índice global de {levelInfo.nextThreshold}
                 </p>
                 <p className="text-xs text-[#6B7280] mb-1">XP acumulado</p>
                 <div className="flex items-center justify-between mb-1">

@@ -3,13 +3,11 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import axios from "axios"
+import { api } from "@/lib/api"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, getRoleFromToken, setSurveyDone } from "@/lib/auth"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Roles que no pasan por la encuesta: entran directo a su vista.
 // Las claves son el `role` del JWT que emite el backend.
@@ -34,7 +32,7 @@ export function LoginForm() {
     setLoading(true)
 
     try {
-      const { data } = await axios.post(`${API_URL}/auth/login`, {
+      const { data } = await api.post("/auth/login", {
         email,
         password,
       })
@@ -55,12 +53,7 @@ export function LoginForm() {
 
       // Verificar si el usuario ya completó la encuesta
       try {
-        const { data: estado } = await axios.get(`${API_URL}/encuesta/estado`, {
-          headers: {
-            Authorization: `Bearer ${data.access_token}`,
-            "ngrok-skip-browser-warning": "true",
-          },
-        })
+        const { data: estado } = await api.get("/encuesta/estado")
         if (estado.completada) {
           setSurveyDone(true)
           router.push("/dashboard/user")
