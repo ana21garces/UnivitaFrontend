@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import axios from "axios"
+import { api } from "@/lib/api"
 import {
   Eye,
   EyeOff,
@@ -18,8 +18,6 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { UniVitaLogo } from "@/components/univita-logo"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export function RegisterForm() {
   const router = useRouter()
@@ -91,14 +89,15 @@ export function RegisterForm() {
     setLoading(true)
 
     try {
-      await axios.post(`${API_URL}/auth/register`, {
+      await api.post("/auth/register", {
         full_name: fullName,
         email,
         password,
         confirm_password: confirmPassword,
       })
 
-      // Registro exitoso: enviamos al login para que inicie sesión
+      // El registro devuelve el usuario, no tokens. Enviamos al login con la
+      // marca para mostrar el aviso "Cuenta creada. Ahora inicia sesión".
       router.push("/?registro=exitoso")
     } catch (err: any) {
       const detail = err.response?.data?.detail

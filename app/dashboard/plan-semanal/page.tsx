@@ -3,11 +3,10 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import axios from "axios"
+import { api, redirigirPorError } from "@/lib/api"
+import { getAccessToken } from "@/lib/auth"
 import { ArrowLeft, ChevronDown, ChevronUp, Printer, AlertCircle, BookOpen } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -471,28 +470,14 @@ export default function PlanSemanalPage() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
-    if (!token) { router.replace("/"); return }
+    if (!getAccessToken()) { router.replace("/"); return }
 
-    axios
-      .get(`${API_URL}/encuesta/recomendaciones/psicologia-positiva`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": "true",
-        },
-      })
+    api
+      .get("/encuesta/recomendaciones/psicologia-positiva")
       .then((res) => setData(res.data))
       .catch((err) => {
-        const status = err.response?.status
-        if (status === 401) {
-          localStorage.removeItem("access_token")
-          localStorage.removeItem("refresh_token")
-          router.replace("/")
-        } else if (status === 403) {
-          router.replace("/dashboard/user")
-        } else {
-          setError("No se pudo cargar el plan. Intenta de nuevo más tarde.")
-        }
+        if (redirigirPorError(err, router)) return
+        setError("No se pudo cargar el plan. Intenta de nuevo más tarde.")
       })
       .finally(() => setLoading(false))
   }, [router])

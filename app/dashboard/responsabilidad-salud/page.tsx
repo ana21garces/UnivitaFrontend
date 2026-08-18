@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import axios from "axios"
+import { api, redirigirPorError } from "@/lib/api"
+import { getAccessToken } from "@/lib/auth"
+import { RANGO_POR_NIVEL } from "@/lib/niveles"
 import { ChevronDown, ChevronUp, Users, Stethoscope, AlertCircle, Building2, GraduationCap } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -41,10 +41,10 @@ type RespSaludData = { total_usuarios: number; facultades: Facultad[] }
 // ── Constantes ─────────────────────────────────────────────────────────────
 
 const NIVEL_CONFIG: Record<string, { color: string; bg: string; bar: string; rango: string }> = {
-  Pobre:     { color: "#E53E3E", bg: "#FFF5F5", bar: "#E53E3E", rango: "0 – 33" },
-  Moderado:  { color: "#DD6B20", bg: "#FFFAF0", bar: "#DD6B20", rango: "34 – 55" },
-  Bueno:     { color: "#3182CE", bg: "#EBF8FF", bar: "#3182CE", rango: "56 – 77" },
-  Excelente: { color: "#38A169", bg: "#F0FFF4", bar: "#38A169", rango: "78 – 100" },
+  Pobre:     { color: "#E53E3E", bg: "#FFF5F5", bar: "#E53E3E", rango: RANGO_POR_NIVEL.Pobre },
+  Moderado:  { color: "#DD6B20", bg: "#FFFAF0", bar: "#DD6B20", rango: RANGO_POR_NIVEL.Moderado },
+  Bueno:     { color: "#3182CE", bg: "#EBF8FF", bar: "#3182CE", rango: RANGO_POR_NIVEL.Bueno },
+  Excelente: { color: "#38A169", bg: "#F0FFF4", bar: "#38A169", rango: RANGO_POR_NIVEL.Excelente },
 }
 
 const RS_ITEMS = [
@@ -297,7 +297,7 @@ export default function RespSaludPage() {
   const [opcionesTipos, setOpcionesTipos] = useState<string[]>([])
 
   const getToken = useCallback(() => {
-    const t = localStorage.getItem("access_token")
+    const t = getAccessToken()
     if (!t) { router.replace("/"); return null }
     return t
   }, [router])
@@ -312,9 +312,7 @@ export default function RespSaludPage() {
   useEffect(() => {
     const token = getToken()
     if (!token) return
-    axios.get(`${API_URL}/encuesta/filtros/opciones`, {
-      headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
-    }).then((res) => {
+    api.get("/encuesta/filtros/opciones").then((res) => {
       const { facultades = [], carreras = [], tipos_usuario = [] } = res.data
       mergeOpciones(facultades, carreras, tipos_usuario)
     }).catch(() => {})
@@ -330,8 +328,8 @@ export default function RespSaludPage() {
     if (f.facultad)     params.set("facultad", f.facultad)
     if (f.carrera)      params.set("carrera", f.carrera)
     if (f.tipo_usuario) params.set("tipo_usuario", f.tipo_usuario)
-    const url = `${API_URL}/encuesta/responsabilidad-salud/resultados${params.toString() ? `?${params}` : ""}`
-    axios.get(url, { headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" } })
+    const url = `/encuesta/responsabilidad-salud/resultados${params.toString() ? `?${params}` : ""}`
+    api.get(url)
       .then((res) => {
         const d: RespSaludData = res.data
         setData(d)
@@ -339,10 +337,8 @@ export default function RespSaludPage() {
         mergeOpciones(facultades, carreras, tipos)
       })
       .catch((err) => {
-        const status = err.response?.status
-        if (status === 401) { localStorage.removeItem("access_token"); localStorage.removeItem("refresh_token"); router.replace("/") }
-        else if (status === 403) { router.replace("/dashboard/user") }
-        else { setError("No se pudo cargar la información. Intenta de nuevo más tarde.") }
+        if (redirigirPorError(err, router)) return
+        setError("No se pudo cargar la información. Intenta de nuevo más tarde.")
       })
       .finally(() => setLoading(false))
   }, [getToken, mergeOpciones, router])

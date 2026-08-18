@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertCircle, ChevronUp, Send } from "lucide-react";
 import { UniVitaLogo } from "@/components/univita-logo";
-import axios from "axios";
+import { api, estadoDeError } from "@/lib/api";
 import {
   QUESTIONS,
   LIKERT_LABELS,
@@ -169,8 +169,6 @@ export default function OnboardingSurveyPage() {
     }
   };
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
   const handleSubmit = async () => {
     if (!canSubmit) {
       setShowErrors(true);
@@ -186,20 +184,13 @@ export default function OnboardingSurveyPage() {
         ...buildSurveyPayload(answers),
       };
 
-      const token = localStorage.getItem("access_token");
-
-      await axios.post(`${API_URL}/encuesta`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": "true",
-        },
-      });
+      await api.post("/encuesta", payload);
 
       setSurveyDone(true);
       router.push("/dashboard/user");
-    } catch (error: any) {
+    } catch (error) {
       // Si ya completó la encuesta, redirige al dashboard directamente
-      if (error?.response?.status === 409) {
+      if (estadoDeError(error) === 409) {
         setSurveyDone(true);
         router.push("/dashboard/user");
       } else {
