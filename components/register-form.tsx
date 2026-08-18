@@ -65,16 +65,20 @@ export function RegisterForm() {
 
   // Clases del input: borde rojo cuando hay error, verde por defecto
   const inputClass = (hasError: boolean, pr: string) =>
-    `w-full h-11 pl-10 ${pr} rounded-lg border bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 transition-colors ${
+    `w-full h-11 pl-12 ${pr} rounded-lg border bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 transition-colors ${
       hasError
         ? "border-[#F87171] focus:ring-[#F87171]/30 focus:border-[#F87171]"
         : "border-[#E2E8F0] focus:ring-[#16A34A]/30 focus:border-[#16A34A]"
     }`
 
-  const iconClass = (hasError: boolean) =>
-    `absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 ${
-      hasError ? "text-[#EF4444]" : "text-[#6B7280]"
+  // Cajita del ícono: verde por defecto, roja cuando hay error
+  const iconBoxClass = (hasError: boolean) =>
+    `absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-lg ${
+      hasError ? "bg-[#FEE2E2]" : "bg-[#EAF3DE]"
     }`
+
+  const iconInnerClass = (hasError: boolean) =>
+    `w-4 h-4 ${hasError ? "text-[#EF4444]" : "text-[#16A34A]"}`
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -144,7 +148,9 @@ export function RegisterForm() {
             Nombre completo
           </label>
           <div className="relative">
-            <User className={iconClass(showNameError)} />
+            <div className={iconBoxClass(showNameError)}>
+              <User className={iconInnerClass(showNameError)} />
+            </div>
             <input
               id="register-name"
               type="text"
@@ -170,7 +176,9 @@ export function RegisterForm() {
             Correo institucional
           </label>
           <div className="relative">
-            <Mail className={iconClass(showEmailError)} />
+            <div className={iconBoxClass(showEmailError)}>
+              <Mail className={iconInnerClass(showEmailError)} />
+            </div>
             <input
               id="register-email"
               type="email"
@@ -198,7 +206,9 @@ export function RegisterForm() {
               Contraseña
             </label>
             <div className="relative">
-              <Lock className={iconClass(showPasswordError)} />
+              <div className={iconBoxClass(showPasswordError)}>
+                <Lock className={iconInnerClass(showPasswordError)} />
+              </div>
               <input
                 id="register-password"
                 type={showPassword ? "text" : "password"}
@@ -231,7 +241,9 @@ export function RegisterForm() {
               Confirmar contraseña
             </label>
             <div className="relative">
-              <Lock className={iconClass(showConfirmError)} />
+              <div className={iconBoxClass(showConfirmError)}>
+                <Lock className={iconInnerClass(showConfirmError)} />
+              </div>
               <input
                 id="register-confirm"
                 type={showConfirmPassword ? "text" : "password"}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import axios from "axios"
-import { Eye, EyeOff, Mail, Lock, CheckCircle } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, getRoleFromToken, setSurveyDone } from "@/lib/auth"
 
@@ -102,7 +102,7 @@ export function LoginForm() {
         <UniVitaLogo size="md" />
         <div className="text-center">
           <h1 className="text-[26px] font-bold font-heading text-[#1F2937]">
-            UnacHealth
+            Unac<span className="text-[#16A34A]">Health</span>
           </h1>
           <p className="mt-1 text-md text-[#6B7280]">
             Pequeños hábitos, grandes cambios.
@@ -125,7 +125,7 @@ export function LoginForm() {
 
         {/* Success message after registration */}
         {justRegistered && (
-          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-sm text-[#15803D]">
+          <div className="flex items-center gap-1.5 text-sm text-[#15803D]">
             <CheckCircle className="w-4 h-4 shrink-0" />
             <span>Cuenta creada. Ahora inicia sesión.</span>
           </div>
@@ -133,8 +133,9 @@ export function LoginForm() {
 
         {/* Error message */}
         {error && (
-          <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
-            {error}
+          <div className="flex items-center gap-1.5 text-sm text-[#DC2626]">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -144,7 +145,9 @@ export function LoginForm() {
             Correo institucional
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-lg bg-[#EAF3DE]">
+              <Mail className="w-4 h-4 text-[#16A34A]" />
+            </div>
             <input
               id="login-email"
               type="email"
@@ -152,7 +155,7 @@ export function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full h-11 pl-10 pr-4 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
+              className="w-full h-11 pl-12 pr-4 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
             />
           </div>
         </div>
@@ -163,7 +166,9 @@ export function LoginForm() {
             Contraseña
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#6B7280]" />
+            <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-7 h-7 rounded-lg bg-[#EAF3DE]">
+              <Lock className="w-4 h-4 text-[#16A34A]" />
+            </div>
             <input
               id="login-password"
               type={showPassword ? "text" : "password"}
@@ -171,7 +176,7 @@ export function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full h-11 pl-10 pr-11 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
+              className="w-full h-11 pl-12 pr-11 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
             />
             <button
               type="button"
