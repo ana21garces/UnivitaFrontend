@@ -5,8 +5,13 @@ import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
-import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap, Bell, Send, X, Check } from "lucide-react"
+import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap, Bell, Check } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { NotificarModal } from "@/components/notificar-modal"
+import {
+  EstadisticasSection,
+  type EstadisticasDimension,
+} from "@/components/estadisticas-dimension"
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -51,25 +56,6 @@ type Facultad = {
 type CapellanData = {
   total_usuarios: number
   facultades: Facultad[]
-}
-
-type ConteoNiveles = {
-  pobre: number
-  moderado: number
-  bueno: number
-  excelente: number
-  total: number
-  promedio_indice: number
-}
-
-type FacultadEstadistica = {
-  facultad: string | null
-  conteo: ConteoNiveles
-}
-
-type EstadisticasCapellan = {
-  poblacion_general: ConteoNiveles
-  por_facultad: FacultadEstadistica[]
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -146,7 +132,7 @@ function UsuarioRow({
 }: {
   usuario: Usuario
   notificado: boolean
-  onNotificar: (usuario: Usuario) => void
+  onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
 }) {
   const [open, setOpen] = useState(false)
   const pp = usuario.psicologia_positiva
@@ -199,7 +185,7 @@ function UsuarioRow({
             ) : (
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onNotificar(usuario) }}
+                onClick={(e) => { e.stopPropagation(); onNotificar({ nombre: usuario.nombre, usuarioId: usuario.usuario_id! }) }}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shrink-0"
               >
                 <Bell className="w-3.5 h-3.5" />
@@ -259,7 +245,7 @@ function CarreraCard({
 }: {
   carrera: Carrera
   notificados: Set<string>
-  onNotificar: (usuario: Usuario) => void
+  onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
 }) {
   const [open, setOpen] = useState(true)
   return (
@@ -303,7 +289,7 @@ function FacultadCard({
 }: {
   facultad: Facultad
   notificados: Set<string>
-  onNotificar: (usuario: Usuario) => void
+  onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
 }) {
   const [open, setOpen] = useState(true)
   return (
@@ -435,170 +421,6 @@ function FiltrosBar({
 
 // ── Notificar a un estudiante ──────────────────────────────────────────────
 
-const MENSAJE_SUGERIDO = "Te invitamos a agendar una cita con capellanía para hablar de tus resultados."
-
-function NotificarModal({
-  usuario,
-  onClose,
-  onEnviado,
-}: {
-  usuario: Usuario
-  onClose: () => void
-  onEnviado: (usuarioId: string) => void
-}) {
-  const [mensaje, setMensaje] = useState(MENSAJE_SUGERIDO)
-  const [enviando, setEnviando] = useState(false)
-  const [error, setError] = useState("")
-
-  const enviar = async () => {
-    if (!usuario.usuario_id || !mensaje.trim()) return
-    setEnviando(true)
-    setError("")
-    try {
-      await api.post("/notificaciones", { destinatario_id: usuario.usuario_id, mensaje: mensaje.trim() })
-      onEnviado(usuario.usuario_id)
-      onClose()
-    } catch {
-      setError("No se pudo enviar la notificación. Intenta de nuevo.")
-    } finally {
-      setEnviando(false)
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="font-bold text-[#1F2937]">Notificar a {usuario.nombre}</h3>
-          <button type="button" onClick={onClose} className="text-[#6B7280] hover:text-[#1F2937]">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <p className="text-xs text-[#6B7280] mb-3">El estudiante verá este mensaje en su panel.</p>
-
-        <textarea
-          className="w-full text-sm border border-[#E2E8F0] rounded-lg p-3 focus:outline-none focus:border-[#16A34A] resize-none"
-          rows={4}
-          value={mensaje}
-          onChange={(e) => setMensaje(e.target.value)}
-        />
-        {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
-
-        <div className="flex justify-end gap-2 mt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={enviar}
-            disabled={enviando || !mensaje.trim()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-50 transition-colors"
-          >
-            <Send className="w-4 h-4" />
-            {enviando ? "Enviando..." : "Enviar"}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Gráficos: panorama general ─────────────────────────────────────────────
-
-function nivelDeIndice(indice: number): string {
-  return indice <= 25 ? "Pobre" : indice <= 50 ? "Moderado" : indice <= 75 ? "Bueno" : "Excelente"
-}
-
-function BarraSegmentada({ conteo }: { conteo: ConteoNiveles }) {
-  const { pobre, moderado, bueno, excelente, total } = conteo
-  if (total === 0) return <div className="h-3 rounded-full bg-[#F1F5F9]" />
-  const pct = (n: number) => (n / total) * 100
-  return (
-    <div className="flex h-3 rounded-full overflow-hidden bg-[#F1F5F9]">
-      {pobre > 0 && <div className="bg-red-500" style={{ width: `${pct(pobre)}%` }} title={`Pobre: ${pobre}`} />}
-      {moderado > 0 && <div className="bg-orange-400" style={{ width: `${pct(moderado)}%` }} title={`Moderado: ${moderado}`} />}
-      {bueno > 0 && <div className="bg-yellow-400" style={{ width: `${pct(bueno)}%` }} title={`Bueno: ${bueno}`} />}
-      {excelente > 0 && <div className="bg-green-500" style={{ width: `${pct(excelente)}%` }} title={`Excelente: ${excelente}`} />}
-    </div>
-  )
-}
-
-function LeyendaConteo({ conteo }: { conteo: ConteoNiveles }) {
-  const items: Array<[keyof ConteoNiveles, string]> = [
-    ["pobre", "bg-red-500"],
-    ["moderado", "bg-orange-400"],
-    ["bueno", "bg-yellow-400"],
-    ["excelente", "bg-green-500"],
-  ]
-  return (
-    <div className="flex flex-wrap gap-3 mt-3">
-      {items.map(([clave, color]) => (
-        <div key={clave} className="flex items-center gap-1.5">
-          <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
-          <span className="text-xs text-[#6B7280] capitalize">{clave}: {conteo[clave]}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function EstadisticasSection({ stats }: { stats: EstadisticasCapellan }) {
-  const g = stats.poblacion_general
-  return (
-    <div className="grid md:grid-cols-2 gap-4">
-      {/* Población general */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm">
-        <h3 className="text-sm font-bold text-[#1F2937] mb-1">Población general</h3>
-        <p className="text-xs text-[#6B7280] mb-3">Psicología positiva en toda la universidad</p>
-        <div className="flex items-baseline gap-2 mb-3">
-          <span className={`text-3xl font-bold ${NIVEL_CONFIG[nivelDeIndice(g.promedio_indice)]?.color ?? "text-[#1F2937]"}`}>
-            {g.promedio_indice.toFixed(1)}
-          </span>
-          <span className="text-xs text-[#6B7280]">índice promedio · {g.total} persona{g.total !== 1 ? "s" : ""}</span>
-        </div>
-        <BarraSegmentada conteo={g} />
-        <LeyendaConteo conteo={g} />
-      </div>
-
-      {/* Por facultad */}
-      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm">
-        <h3 className="text-sm font-bold text-[#1F2937] mb-1">Facultades que más necesitan atención</h3>
-        <p className="text-xs text-[#6B7280] mb-3">Ordenadas de menor a mayor índice promedio</p>
-        {stats.por_facultad.length === 0 ? (
-          <p className="text-xs text-[#6B7280] py-4 text-center">Sin datos suficientes todavía.</p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {stats.por_facultad.map((f) => (
-              <div key={f.facultad ?? "sin-facultad"}>
-                <div className="flex items-center justify-between mb-1 gap-2">
-                  <span className="text-xs font-medium text-[#1F2937] truncate">
-                    {f.facultad || "Sin facultad asignada"}{" "}
-                    <span className="text-[#9CA3AF] font-normal">({f.conteo.total})</span>
-                  </span>
-                  <span className={`text-xs font-bold shrink-0 ${NIVEL_CONFIG[nivelDeIndice(f.conteo.promedio_indice)]?.color ?? "text-[#1F2937]"}`}>
-                    {f.conteo.promedio_indice.toFixed(1)}
-                  </span>
-                </div>
-                <BarraSegmentada conteo={f.conteo} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 // ── Helpers de opciones ────────────────────────────────────────────────────
 
 function uniq(arr: (string | undefined | null)[]): string[] {
@@ -626,8 +448,8 @@ export default function CapellanPage() {
   const [opcionesCarreras, setOpcionesCarreras] = useState<string[]>([])
   const [opcionesTipos, setOpcionesTipos] = useState<string[]>([])
 
-  const [stats, setStats] = useState<EstadisticasCapellan | null>(null)
-  const [notifUsuario, setNotifUsuario] = useState<Usuario | null>(null)
+  const [stats, setStats] = useState<EstadisticasDimension | null>(null)
+  const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
   const [notificados, setNotificados] = useState<Set<string>>(new Set())
 
   const getToken = useCallback(() => {
@@ -747,7 +569,7 @@ export default function CapellanPage() {
         </div>
 
         {/* Panorama general: gráficos */}
-        {stats && <EstadisticasSection stats={stats} />}
+        {stats && <EstadisticasSection stats={stats} tituloDimension="Psicología positiva" />}
 
         {/* Leyenda */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl px-5 py-4 shadow-sm">
@@ -792,7 +614,7 @@ export default function CapellanPage() {
                   key={fac.facultad}
                   facultad={fac}
                   notificados={notificados}
-                  onNotificar={setNotifUsuario}
+                  onNotificar={setNotifObjetivo}
                 />
               ))
             )}
@@ -800,10 +622,12 @@ export default function CapellanPage() {
         )}
       </main>
 
-      {notifUsuario && (
+      {notifObjetivo && (
         <NotificarModal
-          usuario={notifUsuario}
-          onClose={() => setNotifUsuario(null)}
+          nombre={notifObjetivo.nombre}
+          usuarioId={notifObjetivo.usuarioId}
+          mensajeSugerido="Te invitamos a agendar una cita con capellanía para hablar de tus resultados."
+          onClose={() => setNotifObjetivo(null)}
           onEnviado={(id) => setNotificados((prev) => new Set(prev).add(id))}
         />
       )}
