@@ -4,6 +4,9 @@
 # Dependencias
 node_modules/
 
+# Aprobación local de builds de pnpm (sharp); cada quien la genera con `pnpm approve-builds`
+pnpm-workspace.yaml
+
 # Build de Next
 .next/
 tsconfig.tsbuildinfo
