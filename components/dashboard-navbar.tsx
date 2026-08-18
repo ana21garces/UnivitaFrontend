@@ -11,6 +11,7 @@ import {
   BookHeart,
   Dumbbell,
   Stethoscope,
+  Bell,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { UniVitaLogo } from "@/components/univita-logo"
@@ -26,6 +27,14 @@ interface NavItem {
 interface DashboardNavbarProps {
   role: "user" | "admin" | "capellan" | "actividad-fisica" | "responsabilidad-salud"
   userName?: string
+}
+
+type Notificacion = {
+  id: number
+  remitente_nombre: string
+  mensaje: string
+  leida: boolean
+  created_at: string
 }
 
 // Etiqueta visible del tipo de usuario que se marcó en la encuesta. El
@@ -75,6 +84,27 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
       })
       .catch(() => { /* el nombre es adorno: si falla, no se estorba a la pantalla */ })
   }, [userName])
+
+  // Notificaciones que le hayan enviado (hoy solo el capellan las manda, a
+  // estudiantes). Se piden aqui, no en cada pantalla, igual que el nombre.
+  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([])
+  const [panelAbierto, setPanelAbierto] = useState(false)
+
+  useEffect(() => {
+    api.get("/notificaciones").then((res) => setNotificaciones(res.data)).catch(() => {})
+  }, [])
+
+  const marcarLeida = async (id: number) => {
+    setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)))
+    try {
+      await api.patch(`/notificaciones/${id}/leida`)
+    } catch {
+      // Se reintentara en la siguiente carga de la pagina.
+    }
+  }
+
+  const noLeidas = notificaciones.filter((n) => !n.leida).length
+
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -125,8 +155,60 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
           })}
         </nav>
 
-        {/* Right: User + Mobile menu */}
+        {/* Right: Notificaciones + User + Mobile menu */}
         <div className="flex items-center gap-4">
+          <div className="relative">
+            {panelAbierto && (
+              <div className="fixed inset-0 z-40" onClick={() => setPanelAbierto(false)} />
+            )}
+            <button
+              type="button"
+              onClick={() => setPanelAbierto((p) => !p)}
+              className="relative p-2 rounded-lg text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
+              aria-label="Notificaciones"
+            >
+              <Bell className="w-5 h-5" />
+              {noLeidas > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-600 text-white text-[10px] font-bold">
+                  {noLeidas}
+                </span>
+              )}
+            </button>
+
+            {panelAbierto && (
+              <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white border border-[#E2E8F0] rounded-xl shadow-lg z-50">
+                <div className="px-4 py-3 border-b border-[#E2E8F0]">
+                  <p className="text-sm font-bold text-[#1F2937]">Notificaciones</p>
+                </div>
+                {notificaciones.length === 0 ? (
+                  <p className="px-4 py-6 text-xs text-[#6B7280] text-center">No tienes notificaciones.</p>
+                ) : (
+                  <div className="flex flex-col divide-y divide-[#F1F5F9]">
+                    {notificaciones.map((n) => (
+                      <div key={n.id} className={`px-4 py-3 ${n.leida ? "" : "bg-[#F0FDF4]"}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-[#1F2937]">{n.remitente_nombre}</p>
+                            <p className="text-xs text-[#6B7280] mt-0.5">{n.mensaje}</p>
+                          </div>
+                          {!n.leida && (
+                            <button
+                              type="button"
+                              onClick={() => marcarLeida(n.id)}
+                              className="text-[10px] font-semibold text-[#16A34A] hover:underline shrink-0 cursor-pointer"
+                            >
+                              Descartar
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A]">
               {nombre.charAt(0).toUpperCase()}

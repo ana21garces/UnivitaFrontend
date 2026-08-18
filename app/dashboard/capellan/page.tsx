@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
-import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap } from "lucide-react"
+import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap, Bell, Send, X, Check } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
@@ -51,6 +51,25 @@ type Facultad = {
 type CapellanData = {
   total_usuarios: number
   facultades: Facultad[]
+}
+
+type ConteoNiveles = {
+  pobre: number
+  moderado: number
+  bueno: number
+  excelente: number
+  total: number
+  promedio_indice: number
+}
+
+type FacultadEstadistica = {
+  facultad: string | null
+  conteo: ConteoNiveles
+}
+
+type EstadisticasCapellan = {
+  poblacion_general: ConteoNiveles
+  por_facultad: FacultadEstadistica[]
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -120,25 +139,46 @@ function IndiceBar({ indice }: { indice: number }) {
 
 // ── Fila de usuario ────────────────────────────────────────────────────────
 
-function UsuarioRow({ usuario }: { usuario: Usuario }) {
+function UsuarioRow({
+  usuario,
+  notificado,
+  onNotificar,
+}: {
+  usuario: Usuario
+  notificado: boolean
+  onNotificar: (usuario: Usuario) => void
+}) {
   const [open, setOpen] = useState(false)
   const pp = usuario.psicologia_positiva
+  const requiereAtencion = pp.pp_nivel === "Pobre"
   const fecha = usuario.fecha
     ? new Date(usuario.fecha).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" })
     : null
 
   return (
-    <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
-      <button
-        className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-[#F8FAFC] transition-colors text-left"
+    <div className={`border rounded-xl overflow-hidden ${requiereAtencion ? "border-red-200" : "border-[#E2E8F0]"}`}>
+      {/* Antes era un <button>: con el botón de Notificar dentro, quedaba un
+          botón anidado en otro botón, invalido en HTML. Por eso es un div
+          con el mismo comportamiento de teclado. */}
+      <div
+        role="button"
+        tabIndex={0}
+        className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-[#F8FAFC] transition-colors text-left cursor-pointer"
         onClick={() => setOpen(!open)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpen(!open) }}
       >
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <p className="font-semibold text-[#1F2937] truncate">{usuario.nombre}</p>
             {usuario.tipo_usuario && (
               <span className="hidden sm:inline text-[10px] font-medium px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[#6B7280]">
                 {TIPO_USUARIO_LABELS[usuario.tipo_usuario] ?? usuario.tipo_usuario}
+              </span>
+            )}
+            {requiereAtencion && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                <AlertCircle className="w-3 h-3" />
+                Atención inmediata
               </span>
             )}
           </div>
@@ -150,9 +190,26 @@ function UsuarioRow({ usuario }: { usuario: Usuario }) {
           <div className="hidden sm:flex items-center gap-2 w-52">
             <IndiceBar indice={pp.pp_indice} />
           </div>
+          {requiereAtencion && usuario.usuario_id && (
+            notificado ? (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A] shrink-0">
+                <Check className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Notificado</span>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onNotificar(usuario) }}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shrink-0"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Notificar</span>
+              </button>
+            )
+          )}
           {open ? <ChevronUp className="w-4 h-4 text-[#6B7280] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#6B7280] shrink-0" />}
         </div>
-      </button>
+      </div>
 
       {open && (
         <div className="px-4 pb-4 pt-2 bg-[#F8FAFC] border-t border-[#E2E8F0]">
@@ -195,7 +252,15 @@ function UsuarioRow({ usuario }: { usuario: Usuario }) {
 
 // ── Tarjeta de carrera ─────────────────────────────────────────────────────
 
-function CarreraCard({ carrera }: { carrera: Carrera }) {
+function CarreraCard({
+  carrera,
+  notificados,
+  onNotificar,
+}: {
+  carrera: Carrera
+  notificados: Set<string>
+  onNotificar: (usuario: Usuario) => void
+}) {
   const [open, setOpen] = useState(true)
   return (
     <div className="rounded-xl border border-[#E2E8F0] bg-[#FAFAFA] overflow-hidden">
@@ -215,7 +280,12 @@ function CarreraCard({ carrera }: { carrera: Carrera }) {
         <div className="px-3 pb-3 flex flex-col gap-2 border-t border-[#E2E8F0]">
           <div className="pt-2 flex flex-col gap-2">
             {carrera.usuarios.map((u, i) => (
-              <UsuarioRow key={u.encuesta_id ?? i} usuario={u} />
+              <UsuarioRow
+                key={u.encuesta_id ?? i}
+                usuario={u}
+                notificado={!!u.usuario_id && notificados.has(u.usuario_id)}
+                onNotificar={onNotificar}
+              />
             ))}
           </div>
         </div>
@@ -226,7 +296,15 @@ function CarreraCard({ carrera }: { carrera: Carrera }) {
 
 // ── Tarjeta de facultad ────────────────────────────────────────────────────
 
-function FacultadCard({ facultad }: { facultad: Facultad }) {
+function FacultadCard({
+  facultad,
+  notificados,
+  onNotificar,
+}: {
+  facultad: Facultad
+  notificados: Set<string>
+  onNotificar: (usuario: Usuario) => void
+}) {
   const [open, setOpen] = useState(true)
   return (
     <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
@@ -252,7 +330,7 @@ function FacultadCard({ facultad }: { facultad: Facultad }) {
       {open && (
         <div className="px-4 pb-4 flex flex-col gap-3 border-t border-[#E2E8F0] pt-3">
           {facultad.carreras.map((c) => (
-            <CarreraCard key={c.carrera} carrera={c} />
+            <CarreraCard key={c.carrera} carrera={c} notificados={notificados} onNotificar={onNotificar} />
           ))}
         </div>
       )}
@@ -355,6 +433,172 @@ function FiltrosBar({
   )
 }
 
+// ── Notificar a un estudiante ──────────────────────────────────────────────
+
+const MENSAJE_SUGERIDO = "Te invitamos a agendar una cita con capellanía para hablar de tus resultados."
+
+function NotificarModal({
+  usuario,
+  onClose,
+  onEnviado,
+}: {
+  usuario: Usuario
+  onClose: () => void
+  onEnviado: (usuarioId: string) => void
+}) {
+  const [mensaje, setMensaje] = useState(MENSAJE_SUGERIDO)
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState("")
+
+  const enviar = async () => {
+    if (!usuario.usuario_id || !mensaje.trim()) return
+    setEnviando(true)
+    setError("")
+    try {
+      await api.post("/notificaciones", { destinatario_id: usuario.usuario_id, mensaje: mensaje.trim() })
+      onEnviado(usuario.usuario_id)
+      onClose()
+    } catch {
+      setError("No se pudo enviar la notificación. Intenta de nuevo.")
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-xl w-full max-w-md p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-bold text-[#1F2937]">Notificar a {usuario.nombre}</h3>
+          <button type="button" onClick={onClose} className="text-[#6B7280] hover:text-[#1F2937]">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <p className="text-xs text-[#6B7280] mb-3">El estudiante verá este mensaje en su panel.</p>
+
+        <textarea
+          className="w-full text-sm border border-[#E2E8F0] rounded-lg p-3 focus:outline-none focus:border-[#16A34A] resize-none"
+          rows={4}
+          value={mensaje}
+          onChange={(e) => setMensaje(e.target.value)}
+        />
+        {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
+
+        <div className="flex justify-end gap-2 mt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={enviar}
+            disabled={enviando || !mensaje.trim()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-50 transition-colors"
+          >
+            <Send className="w-4 h-4" />
+            {enviando ? "Enviando..." : "Enviar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Gráficos: panorama general ─────────────────────────────────────────────
+
+function nivelDeIndice(indice: number): string {
+  return indice <= 25 ? "Pobre" : indice <= 50 ? "Moderado" : indice <= 75 ? "Bueno" : "Excelente"
+}
+
+function BarraSegmentada({ conteo }: { conteo: ConteoNiveles }) {
+  const { pobre, moderado, bueno, excelente, total } = conteo
+  if (total === 0) return <div className="h-3 rounded-full bg-[#F1F5F9]" />
+  const pct = (n: number) => (n / total) * 100
+  return (
+    <div className="flex h-3 rounded-full overflow-hidden bg-[#F1F5F9]">
+      {pobre > 0 && <div className="bg-red-500" style={{ width: `${pct(pobre)}%` }} title={`Pobre: ${pobre}`} />}
+      {moderado > 0 && <div className="bg-orange-400" style={{ width: `${pct(moderado)}%` }} title={`Moderado: ${moderado}`} />}
+      {bueno > 0 && <div className="bg-yellow-400" style={{ width: `${pct(bueno)}%` }} title={`Bueno: ${bueno}`} />}
+      {excelente > 0 && <div className="bg-green-500" style={{ width: `${pct(excelente)}%` }} title={`Excelente: ${excelente}`} />}
+    </div>
+  )
+}
+
+function LeyendaConteo({ conteo }: { conteo: ConteoNiveles }) {
+  const items: Array<[keyof ConteoNiveles, string]> = [
+    ["pobre", "bg-red-500"],
+    ["moderado", "bg-orange-400"],
+    ["bueno", "bg-yellow-400"],
+    ["excelente", "bg-green-500"],
+  ]
+  return (
+    <div className="flex flex-wrap gap-3 mt-3">
+      {items.map(([clave, color]) => (
+        <div key={clave} className="flex items-center gap-1.5">
+          <span className={`w-2.5 h-2.5 rounded-full ${color}`} />
+          <span className="text-xs text-[#6B7280] capitalize">{clave}: {conteo[clave]}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function EstadisticasSection({ stats }: { stats: EstadisticasCapellan }) {
+  const g = stats.poblacion_general
+  return (
+    <div className="grid md:grid-cols-2 gap-4">
+      {/* Población general */}
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm">
+        <h3 className="text-sm font-bold text-[#1F2937] mb-1">Población general</h3>
+        <p className="text-xs text-[#6B7280] mb-3">Psicología positiva en toda la universidad</p>
+        <div className="flex items-baseline gap-2 mb-3">
+          <span className={`text-3xl font-bold ${NIVEL_CONFIG[nivelDeIndice(g.promedio_indice)]?.color ?? "text-[#1F2937]"}`}>
+            {g.promedio_indice.toFixed(1)}
+          </span>
+          <span className="text-xs text-[#6B7280]">índice promedio · {g.total} persona{g.total !== 1 ? "s" : ""}</span>
+        </div>
+        <BarraSegmentada conteo={g} />
+        <LeyendaConteo conteo={g} />
+      </div>
+
+      {/* Por facultad */}
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm">
+        <h3 className="text-sm font-bold text-[#1F2937] mb-1">Facultades que más necesitan atención</h3>
+        <p className="text-xs text-[#6B7280] mb-3">Ordenadas de menor a mayor índice promedio</p>
+        {stats.por_facultad.length === 0 ? (
+          <p className="text-xs text-[#6B7280] py-4 text-center">Sin datos suficientes todavía.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {stats.por_facultad.map((f) => (
+              <div key={f.facultad ?? "sin-facultad"}>
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="text-xs font-medium text-[#1F2937] truncate">
+                    {f.facultad || "Sin facultad asignada"}{" "}
+                    <span className="text-[#9CA3AF] font-normal">({f.conteo.total})</span>
+                  </span>
+                  <span className={`text-xs font-bold shrink-0 ${NIVEL_CONFIG[nivelDeIndice(f.conteo.promedio_indice)]?.color ?? "text-[#1F2937]"}`}>
+                    {f.conteo.promedio_indice.toFixed(1)}
+                  </span>
+                </div>
+                <BarraSegmentada conteo={f.conteo} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Helpers de opciones ────────────────────────────────────────────────────
 
 function uniq(arr: (string | undefined | null)[]): string[] {
@@ -382,6 +626,10 @@ export default function CapellanPage() {
   const [opcionesCarreras, setOpcionesCarreras] = useState<string[]>([])
   const [opcionesTipos, setOpcionesTipos] = useState<string[]>([])
 
+  const [stats, setStats] = useState<EstadisticasCapellan | null>(null)
+  const [notifUsuario, setNotifUsuario] = useState<Usuario | null>(null)
+  const [notificados, setNotificados] = useState<Set<string>>(new Set())
+
   const getToken = useCallback(() => {
     const t = getAccessToken()
     if (!t) { router.replace("/"); return null }
@@ -408,7 +656,19 @@ export default function CapellanPage() {
       .catch(() => { /* fallback: se extraen de los datos principales */ })
   }, [getToken, mergeOpciones])
 
-  // 2. Carga inicial de datos (sin filtros) — también extrae opciones como fallback
+  // 2. Estadísticas para los gráficos — sin filtros, es la foto completa.
+  // Si falla, el listado por persona sigue funcionando igual: los gráficos
+  // son un complemento, no un requisito.
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    api
+      .get("/encuesta/capellan/psicologia-positiva/estadisticas")
+      .then((res) => setStats(res.data))
+      .catch(() => {})
+  }, [getToken])
+
+  // 3. Carga inicial de datos (sin filtros) — también extrae opciones como fallback
   useEffect(() => {
     const token = getToken()
     if (!token) return
@@ -486,6 +746,9 @@ export default function CapellanPage() {
           )}
         </div>
 
+        {/* Panorama general: gráficos */}
+        {stats && <EstadisticasSection stats={stats} />}
+
         {/* Leyenda */}
         <div className="bg-white border border-[#E2E8F0] rounded-2xl px-5 py-4 shadow-sm">
           <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-3">Referencia de niveles</p>
@@ -525,12 +788,25 @@ export default function CapellanPage() {
               </div>
             ) : (
               data.facultades.map((fac) => (
-                <FacultadCard key={fac.facultad} facultad={fac} />
+                <FacultadCard
+                  key={fac.facultad}
+                  facultad={fac}
+                  notificados={notificados}
+                  onNotificar={setNotifUsuario}
+                />
               ))
             )}
           </div>
         )}
       </main>
+
+      {notifUsuario && (
+        <NotificarModal
+          usuario={notifUsuario}
+          onClose={() => setNotifUsuario(null)}
+          onEnviado={(id) => setNotificados((prev) => new Set(prev).add(id))}
+        />
+      )}
     </div>
   )
 }
