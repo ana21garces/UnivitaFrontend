@@ -2,11 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import axios from "axios"
+import { api, redirigirPorError } from "@/lib/api"
+import { getAccessToken } from "@/lib/auth"
 import { ChevronDown, ChevronUp, Users, Stethoscope, AlertCircle, Building2, GraduationCap } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -297,7 +296,7 @@ export default function RespSaludPage() {
   const [opcionesTipos, setOpcionesTipos] = useState<string[]>([])
 
   const getToken = useCallback(() => {
-    const t = localStorage.getItem("access_token")
+    const t = getAccessToken()
     if (!t) { router.replace("/"); return null }
     return t
   }, [router])
@@ -312,9 +311,7 @@ export default function RespSaludPage() {
   useEffect(() => {
     const token = getToken()
     if (!token) return
-    axios.get(`${API_URL}/encuesta/filtros/opciones`, {
-      headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
-    }).then((res) => {
+    api.get("/encuesta/filtros/opciones").then((res) => {
       const { facultades = [], carreras = [], tipos_usuario = [] } = res.data
       mergeOpciones(facultades, carreras, tipos_usuario)
     }).catch(() => {})
@@ -330,8 +327,8 @@ export default function RespSaludPage() {
     if (f.facultad)     params.set("facultad", f.facultad)
     if (f.carrera)      params.set("carrera", f.carrera)
     if (f.tipo_usuario) params.set("tipo_usuario", f.tipo_usuario)
-    const url = `${API_URL}/encuesta/responsabilidad-salud/resultados${params.toString() ? `?${params}` : ""}`
-    axios.get(url, { headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" } })
+    const url = `/encuesta/responsabilidad-salud/resultados${params.toString() ? `?${params}` : ""}`
+    api.get(url)
       .then((res) => {
         const d: RespSaludData = res.data
         setData(d)
@@ -339,10 +336,8 @@ export default function RespSaludPage() {
         mergeOpciones(facultades, carreras, tipos)
       })
       .catch((err) => {
-        const status = err.response?.status
-        if (status === 401) { localStorage.removeItem("access_token"); localStorage.removeItem("refresh_token"); router.replace("/") }
-        else if (status === 403) { router.replace("/dashboard/user") }
-        else { setError("No se pudo cargar la información. Intenta de nuevo más tarde.") }
+        if (redirigirPorError(err, router)) return
+        setError("No se pudo cargar la información. Intenta de nuevo más tarde.")
       })
       .finally(() => setLoading(false))
   }, [getToken, mergeOpciones, router])

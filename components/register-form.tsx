@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import axios from "axios"
+import { api } from "@/lib/api"
 import {
   Eye,
   EyeOff,
@@ -18,8 +18,6 @@ import {
 } from "lucide-react"
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import { UniVitaLogo } from "@/components/univita-logo"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export function RegisterForm() {
   const router = useRouter()
@@ -38,17 +36,15 @@ export function RegisterForm() {
     setLoading(true)
 
     try {
-      const { data } = await axios.post(`${API_URL}/auth/register`, {
+      await api.post("/auth/register", {
         full_name: fullName,
         email,
         password,
         confirm_password: confirmPassword,
       })
 
-      // Guardar tokens
-      localStorage.setItem("access_token", data.access_token)
-      localStorage.setItem("refresh_token", data.refresh_token)
-
+      // El registro devuelve el usuario creado, no tokens: la sesion se abre
+      // al iniciar sesion. Antes se guardaban dos undefined en localStorage.
       router.push("/")
     } catch (err: any) {
       const detail = err.response?.data?.detail

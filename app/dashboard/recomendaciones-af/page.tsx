@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import axios from "axios"
+import { api, estadoDeError, redirigirPorError } from "@/lib/api"
+import { getAccessToken } from "@/lib/auth"
 import { ArrowLeft, ChevronDown, ChevronUp, AlertCircle, Dumbbell } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -105,30 +104,15 @@ export default function RecomendacionesAFPage() {
   const [noEncuesta, setNoEncuesta] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
-    if (!token) { router.replace("/"); return }
+    if (!getAccessToken()) { router.replace("/"); return }
 
-    axios
-      .get(`${API_URL}/encuesta/recomendaciones/actividad-fisica`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "ngrok-skip-browser-warning": "true",
-        },
-      })
+    api
+      .get("/encuesta/recomendaciones/actividad-fisica")
       .then((res) => setData(res.data))
       .catch((err) => {
-        const status = err.response?.status
-        if (status === 401) {
-          localStorage.removeItem("access_token")
-          localStorage.removeItem("refresh_token")
-          router.replace("/")
-        } else if (status === 403) {
-          router.replace("/dashboard/user")
-        } else if (status === 404) {
-          setNoEncuesta(true)
-        } else {
-          setError("No se pudo cargar el plan. Intenta de nuevo más tarde.")
-        }
+        if (redirigirPorError(err, router)) return
+        if (estadoDeError(err) === 404) { setNoEncuesta(true); return }
+        setError("No se pudo cargar el plan. Intenta de nuevo más tarde.")
       })
       .finally(() => setLoading(false))
   }, [router])

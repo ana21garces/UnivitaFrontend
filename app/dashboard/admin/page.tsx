@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import axios from "axios"
+import { api, redirigirPorError } from "@/lib/api"
+import { getAccessToken } from "@/lib/auth"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import {
   Users,
@@ -10,8 +11,6 @@ import {
   TrendingUp,
   UserX,
 } from "lucide-react"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 type Resumen = {
   total_usuarios: number
@@ -25,20 +24,11 @@ export default function AdminDashboard() {
   const [resumen, setResumen] = useState<Resumen | null>(null)
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token")
-    if (!token) { router.replace("/"); return }
-    axios
-      .get(`${API_URL}/encuesta/admin/resumen`, {
-        headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
-      })
+    if (!getAccessToken()) { router.replace("/"); return }
+    api
+      .get("/encuesta/admin/resumen")
       .then((res) => setResumen(res.data))
-      .catch((err) => {
-        if (err.response?.status === 401) {
-          localStorage.removeItem("access_token")
-          localStorage.removeItem("refresh_token")
-          router.replace("/")
-        }
-      })
+      .catch((err) => redirigirPorError(err, router))
   }, [router])
 
   const stats = [
