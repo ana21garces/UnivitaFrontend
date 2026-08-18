@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { Users } from "lucide-react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -21,15 +22,18 @@ export function UsuariosRegistradosBadge() {
   }, [])
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFFFFF] shadow-sm border border-[#E2E8F0]">
-      <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A]" />
-      <span className="text-sm font-medium text-[#1F2937]">
-        {total === null
-          ? "…"
-          : `${total.toLocaleString("es-CO")} ${
-              total === 1 ? "usuario registrado" : "usuarios registrados"
-            }`}
-      </span>
+    <div className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
+      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[#EAF3DE] text-[#3B6D11] shrink-0">
+        <Users className="w-5 h-5" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-[#1F2937] leading-none">
+          {total === null ? "…" : total.toLocaleString("es-CO")}
+        </p>
+        <p className="text-sm text-[#6B7280] mt-1">
+          {total === 1 ? "usuario registrado" : "usuarios registrados"}
+        </p>
+      </div>
     </div>
   )
 }
