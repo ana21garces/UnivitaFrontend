@@ -101,13 +101,23 @@ export function LoginForm() {
       <div className="flex flex-col items-center gap-3">
         <UniVitaLogo size="md" />
         <div className="text-center">
-          <h1 className="text-2xl font-bold font-heading text-[#1F2937]">
+          <h1 className="text-[26px] font-bold font-heading text-[#1F2937]">
             UnacHealth
           </h1>
           <p className="mt-1 text-md text-[#6B7280]">
-            Pequeños hábitos, grandes cambios...
+            Pequeños hábitos, grandes cambios.
           </p>
         </div>
+      </div>
+
+      {/* Bienvenida */}
+      <div className="text-center">
+        <h2 className="text-2xl font-bold font-heading text-[#1F2937]">
+          Bienvenido de nuevo
+        </h2>
+        <p className="mt-1 text-md text-[#6B7280]">
+          Inicia sesión para continuar cuidando de ti.
+        </p>
       </div>
 
       {/* Form */}

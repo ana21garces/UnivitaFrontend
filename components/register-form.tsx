@@ -122,7 +122,7 @@ export function RegisterForm() {
             Crea tu cuenta
           </h1>
           <p className="mt-1 text-md text-[#6B7280]">
-            Pequeños hábitos, grandes cambios...
+            Pequeños hábitos, grandes cambios.
           </p>
         </div>
       </div>
