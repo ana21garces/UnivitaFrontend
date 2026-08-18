@@ -1,5 +1,10 @@
-import axios from "axios"
-import { clearSession, getAccessToken } from "@/lib/auth"
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios"
+import {
+  clearSession,
+  getAccessToken,
+  getRefreshToken,
+  setAccessToken,
+} from "@/lib/auth"
 
 /**
  * Cliente único de la API.
@@ -22,13 +27,75 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Renovación de sesión
+//
+// El access token dura 30 minutos. Sin esto, la sesión se caía a mitad de la
+// encuesta de 52 ítems y había que escribir la contraseña otra vez.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Marca de que una petición ya se reintentó, para no entrar en bucle. */
+type PeticionReintentable = InternalAxiosRequestConfig & { _reintentada?: boolean }
+
+/**
+ * Una sola renovación en vuelo. Las vistas de rol lanzan dos y tres peticiones
+ * a la vez; si todas fallan con 401, comparten esta promesa en vez de pedir
+ * tres tokens distintos y pisarse unas a otras.
+ */
+let renovacionEnCurso: Promise<string | null> | null = null
+
+async function renovarSesion(): Promise<string | null> {
+  const refresh = getRefreshToken()
+  if (!refresh) return null
+
+  try {
+    // Cliente aparte, a propósito: si esta llamada respondiera 401, no debe
+    // pasar por el interceptor e intentar renovarse a sí misma.
+    const { data } = await axios.post(
+      `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+      { refresh_token: refresh },
+      { headers: { "ngrok-skip-browser-warning": "true" } },
+    )
+    setAccessToken(data.access_token)
+    return data.access_token
+  } catch {
+    // El refresh también caducó, o la cuenta se desactivó. Quien llamó
+    // recibirá el 401 original y redirigirá al acceso.
+    return null
+  }
+}
+
+api.interceptors.response.use(
+  (respuesta) => respuesta,
+  async (error: AxiosError) => {
+    const original = error.config as PeticionReintentable | undefined
+
+    if (error.response?.status !== 401 || !original || original._reintentada) {
+      return Promise.reject(error)
+    }
+    original._reintentada = true
+
+    if (!renovacionEnCurso) {
+      renovacionEnCurso = renovarSesion().finally(() => {
+        renovacionEnCurso = null
+      })
+    }
+
+    const nuevoToken = await renovacionEnCurso
+    if (!nuevoToken) return Promise.reject(error)
+
+    return api(original)
+  },
+)
+
 /** Lo mínimo que se necesita del router. Evita depender de tipos internos de Next. */
 type Navegable = { replace: (href: string) => void }
 
 /**
  * Traduce un fallo de la API a la navegación que corresponde:
  *
- * - **401** — la sesión ya no vale: se limpia y se vuelve al acceso.
+ * - **401** — la sesión ya no vale, y renovarla tampoco funcionó: se limpia y
+ *   se vuelve al acceso.
  * - **403** — el rol no puede ver esa vista: se le manda a la suya.
  *
  * Devuelve `true` si ya redirigió, para que la pantalla no siga procesando el
