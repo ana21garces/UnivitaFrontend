@@ -15,6 +15,7 @@ const ROLE_HOME: Record<string, string> = {
   capellan: "/dashboard/capellan",
   actividad_fisica: "/dashboard/actividad-fisica",
   responsabilidad_salud: "/dashboard/responsabilidad-salud",
+  manejo_estres: "/dashboard/manejo-estres",
 };
 
 export function LoginForm() {
