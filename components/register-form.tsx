@@ -7,13 +7,9 @@ import { api } from "@/lib/api"
 import {
   Eye,
   EyeOff,
-  Leaf,
   Mail,
   Lock,
   User,
-  HeartPulse,
-  Shield,
-  Award,
   Info,
   AlertCircle,
 } from "lucide-react"
@@ -278,28 +274,6 @@ export function RegisterForm() {
             <span className="font-semibold text-[#16A34A]">niveles</span>.
             Los roles se asignan internamente.
           </p>
-        </div>
-
-        {/* Gamification badges preview */}
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0]">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#FACC15]/20">
-            <Award className="w-5 h-5 text-[#FACC15]" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-[#1F2937]">Nivel 1 - Principiante</p>
-            <p className="text-xs text-[#6B7280]">Completa tu registro para ganar tu primera insignia</p>
-          </div>
-          <div className="flex -space-x-1">
-            <div className="w-7 h-7 rounded-full bg-[#E2E8F0] border-2 border-[#FFFFFF] flex items-center justify-center">
-              <Leaf className="w-3.5 h-3.5 text-[#6B7280]" />
-            </div>
-            <div className="w-7 h-7 rounded-full bg-[#E2E8F0] border-2 border-[#FFFFFF] flex items-center justify-center">
-              <HeartPulse className="w-3.5 h-3.5 text-[#6B7280]" />
-            </div>
-            <div className="w-7 h-7 rounded-full bg-[#E2E8F0] border-2 border-[#FFFFFF] flex items-center justify-center">
-              <Shield className="w-3.5 h-3.5 text-[#6B7280]" />
-            </div>
-          </div>
         </div>
 
         {/* Submit button */}
