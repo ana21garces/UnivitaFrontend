@@ -49,6 +49,7 @@ const DIMENSION_PLAN_ROUTE: Record<string, string> = {
   actividad_fisica:      "/dashboard/recomendaciones-af",
   responsabilidad_salud: "/dashboard/recomendaciones/responsabilidad-salud",
   relaciones_interpersonales: "/dashboard/recomendaciones-ri",
+  nutricion: "/dashboard/recomendaciones-n",
 }
 
 const PUNTAJE_RANGES: Record<string, string> = {
