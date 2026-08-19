@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, AlertCircle, ChevronUp, Send } from "lucide-react";
+import { CheckCircle2, AlertCircle, ChevronUp, Send, ShieldCheck, Phone } from "lucide-react";
 import { UniVitaLogo } from "@/components/univita-logo";
 import { api, estadoDeError } from "@/lib/api";
 import {
@@ -208,11 +208,14 @@ export default function OnboardingSurveyPage() {
       {showConsentModal && (
         <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white max-w-lg w-full rounded-2xl shadow-xl border border-slate-200 p-6">
-            <h2 className="text-center text-xl font-bold text-slate-800 mb-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#EAF3DE] text-[#16A34A] mx-auto mb-3">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h2 className="text-center text-xl font-bold text-[#1F2937] mb-4">
               Consentimiento informado
             </h2>
 
-            <div className="text-sm text-slate-600 leading-relaxed space-y-3 max-h-[55vh] overflow-y-auto pr-2">
+            <div className="text-sm text-[#6B7280] leading-relaxed space-y-3 max-h-[55vh] overflow-y-auto pr-2">
               <p>
                 Reciba un cordial saludo. Esta encuesta tiene como objetivo
                 analizar el grado en que los estudiantes, docentes y personal
@@ -234,12 +237,15 @@ export default function OnboardingSurveyPage() {
               </p>
 
               <p>
-                Puede retirarse del estudio en cualquier momento. Para dudas o
-                consultas puede comunicarse al{" "}
-                <span className="font-semibold text-green-600 text-base">
-                  317 7745079
-                </span>
+                Puede retirarse del estudio en cualquier momento.
               </p>
+            </div>
+
+            {/* Dudas o consultas */}
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mt-4 px-3 py-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-center">
+              <Phone className="w-4 h-4 text-[#16A34A] shrink-0" />
+              <span className="text-sm text-[#166534]">Dudas o consultas:</span>
+              <span className="text-sm font-bold text-[#16A34A]">317 7745079</span>
             </div>
 
             {/* Checkbox */}
@@ -248,9 +254,9 @@ export default function OnboardingSurveyPage() {
                 type="checkbox"
                 checked={consentChecked}
                 onChange={(e) => setConsentChecked(e.target.checked)}
-                className="mt-1 w-4 h-4 accent-green-600"
+                className="mt-1 w-4 h-4 accent-[#16A34A]"
               />
-              <span className="text-sm text-slate-700">
+              <span className="text-sm text-[#374151]">
                 He leído y acepto participar voluntariamente en esta encuesta.
               </span>
             </label>
@@ -263,7 +269,7 @@ export default function OnboardingSurveyPage() {
                   setShowConsentModal(false);
                   setShowIntro(true);
                 }}
-                className="px-10 py-2.5 rounded-lg text-white font-semibold disabled:opacity-40"
+                className="px-10 py-2.5 rounded-lg text-white text-sm font-semibold disabled:opacity-40"
                 style={{
                   background: "linear-gradient(135deg,#16A34A,#22C55E)",
                 }}
