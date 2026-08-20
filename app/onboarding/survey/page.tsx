@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertCircle, ChevronUp, Send, ShieldCheck, Phone } from "lucide-react";
 import { UniVitaLogo } from "@/components/univita-logo";
-import { api, estadoDeError } from "@/lib/api";
+import { api, estadoDeError, redirigirPorError } from "@/lib/api";
 import {
   QUESTIONS,
   LIKERT_LABELS,
@@ -107,6 +107,7 @@ export default function OnboardingSurveyPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [showErrors, setShowErrors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // Consentimiento informado
   const [showConsentModal, setShowConsentModal] = useState(true);
@@ -179,6 +180,7 @@ export default function OnboardingSurveyPage() {
       return;
     }
     setSubmitting(true);
+    setSubmitError("");
 
     try {
       const payload = {
@@ -197,9 +199,17 @@ export default function OnboardingSurveyPage() {
       if (estadoDeError(error) === 409) {
         setSurveyDone(true);
         router.push("/dashboard/user");
-      } else {
-        console.error(error);
+        return;
       }
+      // Sesión vencida (401): limpia la sesión y lleva al login sin dejar
+      // la pantalla pegada. redirigirPorError devuelve true si ya redirigió.
+      if (redirigirPorError(error, router)) {
+        return;
+      }
+      // Cualquier otro fallo (conexión, servidor): avisar en pantalla.
+      setSubmitError(
+        "No pudimos enviar la encuesta. Revisa tu conexión e inténtalo de nuevo."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -617,6 +627,14 @@ export default function OnboardingSurveyPage() {
               </span>
             </div>
           )}
+
+        {/* Error de envío (conexión o servidor) */}
+        {submitError && (
+          <div className="mt-6 flex items-center gap-1.5 text-sm text-[#DC2626]">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{submitError}</span>
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8 pb-8">
