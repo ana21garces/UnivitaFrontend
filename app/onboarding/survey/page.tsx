@@ -2,9 +2,9 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, AlertCircle, ChevronUp, Send } from "lucide-react";
+import { CheckCircle2, AlertCircle, ChevronUp, Send, ShieldCheck, Phone } from "lucide-react";
 import { UniVitaLogo } from "@/components/univita-logo";
-import { api, estadoDeError } from "@/lib/api";
+import { api, estadoDeError, redirigirPorError } from "@/lib/api";
 import {
   QUESTIONS,
   LIKERT_LABELS,
@@ -107,6 +107,7 @@ export default function OnboardingSurveyPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [showErrors, setShowErrors] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // Consentimiento informado
   const [showConsentModal, setShowConsentModal] = useState(true);
@@ -130,8 +131,12 @@ export default function OnboardingSurveyPage() {
   // Validation
   const answeredCount = Object.keys(answers).length;
   const progressPct = Math.round((answeredCount / TOTAL_QUESTIONS) * 100);
+  // El administrativo no necesariamente pertenece a una facultad/programa
+  const esAdministrativo = tipoUsuario === "Administrativo";
   const allDemographicsFilled =
-    sexo !== null && facultad !== "" && programa !== "" && tipoUsuario !== "";
+    sexo !== null &&
+    tipoUsuario !== "" &&
+    (esAdministrativo || (facultad !== "" && programa !== ""));
   const allQuestionsFilled = answeredCount === TOTAL_QUESTIONS;
   const canSubmit = allDemographicsFilled && allQuestionsFilled;
 
@@ -175,6 +180,7 @@ export default function OnboardingSurveyPage() {
       return;
     }
     setSubmitting(true);
+    setSubmitError("");
 
     try {
       const payload = {
@@ -193,9 +199,17 @@ export default function OnboardingSurveyPage() {
       if (estadoDeError(error) === 409) {
         setSurveyDone(true);
         router.push("/dashboard/user");
-      } else {
-        console.error(error);
+        return;
       }
+      // Sesión vencida (401): limpia la sesión y lleva al login sin dejar
+      // la pantalla pegada. redirigirPorError devuelve true si ya redirigió.
+      if (redirigirPorError(error, router)) {
+        return;
+      }
+      // Cualquier otro fallo (conexión, servidor): avisar en pantalla.
+      setSubmitError(
+        "No pudimos enviar la encuesta. Revisa tu conexión e inténtalo de nuevo."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -208,11 +222,14 @@ export default function OnboardingSurveyPage() {
       {showConsentModal && (
         <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white max-w-lg w-full rounded-2xl shadow-xl border border-slate-200 p-6">
-            <h2 className="text-center text-xl font-bold text-slate-800 mb-4">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#EAF3DE] text-[#16A34A] mx-auto mb-3">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <h2 className="text-center text-xl font-bold text-[#1F2937] mb-4">
               Consentimiento informado
             </h2>
 
-            <div className="text-sm text-slate-600 leading-relaxed space-y-3 max-h-[55vh] overflow-y-auto pr-2">
+            <div className="text-sm text-[#6B7280] leading-relaxed space-y-3 max-h-[55vh] overflow-y-auto pr-2">
               <p>
                 Reciba un cordial saludo. Esta encuesta tiene como objetivo
                 analizar el grado en que los estudiantes, docentes y personal
@@ -234,12 +251,15 @@ export default function OnboardingSurveyPage() {
               </p>
 
               <p>
-                Puede retirarse del estudio en cualquier momento. Para dudas o
-                consultas puede comunicarse al{" "}
-                <span className="font-semibold text-green-600 text-base">
-                  317 7745079
-                </span>
+                Puede retirarse del estudio en cualquier momento.
               </p>
+            </div>
+
+            {/* Dudas o consultas */}
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mt-4 px-3 py-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-center">
+              <Phone className="w-4 h-4 text-[#16A34A] shrink-0" />
+              <span className="text-sm text-[#166534]">Dudas o consultas:</span>
+              <span className="text-sm font-bold text-[#16A34A]">317 7745079</span>
             </div>
 
             {/* Checkbox */}
@@ -248,9 +268,9 @@ export default function OnboardingSurveyPage() {
                 type="checkbox"
                 checked={consentChecked}
                 onChange={(e) => setConsentChecked(e.target.checked)}
-                className="mt-1 w-4 h-4 accent-green-600"
+                className="mt-1 w-4 h-4 accent-[#16A34A]"
               />
-              <span className="text-sm text-slate-700">
+              <span className="text-sm text-[#374151]">
                 He leído y acepto participar voluntariamente en esta encuesta.
               </span>
             </label>
@@ -263,7 +283,7 @@ export default function OnboardingSurveyPage() {
                   setShowConsentModal(false);
                   setShowIntro(true);
                 }}
-                className="px-10 py-2.5 rounded-lg text-white font-semibold disabled:opacity-40"
+                className="px-10 py-2.5 rounded-lg text-white text-sm font-semibold disabled:opacity-40"
                 style={{
                   background: "linear-gradient(135deg,#16A34A,#22C55E)",
                 }}
@@ -278,7 +298,7 @@ export default function OnboardingSurveyPage() {
       <header className="sticky top-0 z-50 bg-[#FFFFFF] border-b border-[#E2E8F0] shadow-sm">
         <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6">
           {/* Top row: brand + progress */}
-          <div className="flex items-center justify-between mb-2.5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <div className="sm:hidden"><UniVitaLogo size="xs" /></div>
               <div className="hidden sm:block"><UniVitaLogo size="sm" /></div>
@@ -286,16 +306,16 @@ export default function OnboardingSurveyPage() {
                 <h1 className="text-base sm:text-2xl font-bold font-heading text-[#1F2937] leading-tight">
                   Encuesta de Estilo de Vida
                 </h1>
-                <p className="text-[10px] text-[#6B7280] leading-none mt-0.5">
-                  UnacHealth -- Health Profile
+                <p className="text-xs text-[#6B7280] leading-none mt-0.5">
+                  UnacHealth
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-xs font-semibold text-[#16A34A]">
                 {answeredCount}/{TOTAL_QUESTIONS}
               </span>
-              <div className="w-20 sm:w-28 h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
+              <div className="flex-1 sm:flex-none sm:w-28 h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-300"
                   style={{
@@ -311,14 +331,14 @@ export default function OnboardingSurveyPage() {
           </div>
 
           {/* Scale legend */}
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             {Object.entries(LIKERT_LABELS).map(([val, label]) => (
               <div
                 key={val}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F1F5F9] text-[10px] sm:text-xs"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#F1F5F9] text-[10px] sm:text-xs"
               >
                 <span className="font-bold text-[#16A34A]">{val}</span>
-                <span className="text-[#6B7280]">= {label}</span>
+                <span className="font-semibold text-[#374151]">= {label}</span>
               </div>
             ))}
           </div>
@@ -385,6 +405,11 @@ export default function OnboardingSurveyPage() {
               <div>
                 <label className="text-sm font-medium text-[#1F2937] block mb-2">
                   Facultad
+                  {esAdministrativo && (
+                    <span className="ml-2 text-xs font-normal text-[#6B7280]">
+                      (opcional)
+                    </span>
+                  )}
                 </label>
 
                 <Select
@@ -401,7 +426,7 @@ export default function OnboardingSurveyPage() {
                   styles={customStyles}
                   isSearchable={false}
                 />
-                {showErrors && !facultad && (
+                {showErrors && !facultad && !esAdministrativo && (
                   <p className="text-xs text-[#EF4444] mt-1 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> Requerido
                   </p>
@@ -411,6 +436,11 @@ export default function OnboardingSurveyPage() {
               <div>
                 <label className="text-sm font-medium text-[#1F2937] block mb-2">
                   Programa
+                  {esAdministrativo && (
+                    <span className="ml-2 text-xs font-normal text-[#6B7280]">
+                      (opcional)
+                    </span>
+                  )}
                 </label>
 
                 <Select
@@ -425,7 +455,7 @@ export default function OnboardingSurveyPage() {
                   styles={customStyles}
                   isSearchable={false}
                 />
-                {showErrors && !programa && (
+                {showErrors && !programa && !esAdministrativo && (
                   <p className="text-xs text-[#EF4444] mt-1 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> Requerido
                   </p>
@@ -580,23 +610,29 @@ export default function OnboardingSurveyPage() {
           })}
         </div>
 
-        {/* Validation summary on last page */}
-        {isLastPage && showErrors && !canSubmit && (
-          <div className="mt-6 p-4 rounded-xl bg-[#FEF2F2] border border-[#EF4444]/20">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4.5 h-4.5 text-[#EF4444] mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-[#EF4444]">
-                  Formulario incompleto
-                </p>
-                <p className="text-xs text-[#6B7280] mt-1">
-                  {!allDemographicsFilled &&
-                    "Faltan datos demográficos (sexo, facultad, programa o tipo de usuario)."}
-                  {!allQuestionsFilled &&
-                    `Faltan ${TOTAL_QUESTIONS - answeredCount} pregunta(s) por responder.`}
-                </p>
-              </div>
+        {/* Aviso de validación: por qué no puede continuar (en cualquier página) */}
+        {showErrors &&
+          (isLastPage
+            ? !canSubmit
+            : (currentPage === 0 && !allDemographicsFilled) ||
+              unansweredOnPage.length > 0) && (
+            <div className="mt-6 flex items-center gap-1.5 text-sm text-[#DC2626]">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>
+                {currentPage === 0 && !allDemographicsFilled
+                  ? "Completa los datos demográficos requeridos para continuar."
+                  : unansweredOnPage.length > 0
+                    ? `Te faltan ${unansweredOnPage.length} pregunta(s) por responder en esta página.`
+                    : `Faltan ${TOTAL_QUESTIONS - answeredCount} pregunta(s) por responder en total.`}
+              </span>
             </div>
+          )}
+
+        {/* Error de envío (conexión o servidor) */}
+        {submitError && (
+          <div className="mt-6 flex items-center gap-1.5 text-sm text-[#DC2626]">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{submitError}</span>
           </div>
         )}
 

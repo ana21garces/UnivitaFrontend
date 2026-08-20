@@ -187,7 +187,7 @@ export function LoginForm() {
         {/* Forgot password */}
         <div className="flex justify-end">
           <Link
-            href="#"
+            href="/recuperar"
             className="relative text-sm font-medium text-[#16A34A] transition-colors
             after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0 
             after:bg-[#16A34A] after:transition-all after:duration-300
