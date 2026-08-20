@@ -130,8 +130,12 @@ export default function OnboardingSurveyPage() {
   // Validation
   const answeredCount = Object.keys(answers).length;
   const progressPct = Math.round((answeredCount / TOTAL_QUESTIONS) * 100);
+  // El administrativo no necesariamente pertenece a una facultad/programa
+  const esAdministrativo = tipoUsuario === "Administrativo";
   const allDemographicsFilled =
-    sexo !== null && facultad !== "" && programa !== "" && tipoUsuario !== "";
+    sexo !== null &&
+    tipoUsuario !== "" &&
+    (esAdministrativo || (facultad !== "" && programa !== ""));
   const allQuestionsFilled = answeredCount === TOTAL_QUESTIONS;
   const canSubmit = allDemographicsFilled && allQuestionsFilled;
 
@@ -284,7 +288,7 @@ export default function OnboardingSurveyPage() {
       <header className="sticky top-0 z-50 bg-[#FFFFFF] border-b border-[#E2E8F0] shadow-sm">
         <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6">
           {/* Top row: brand + progress */}
-          <div className="flex items-center justify-between mb-2.5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <div className="sm:hidden"><UniVitaLogo size="xs" /></div>
               <div className="hidden sm:block"><UniVitaLogo size="sm" /></div>
@@ -292,16 +296,16 @@ export default function OnboardingSurveyPage() {
                 <h1 className="text-base sm:text-2xl font-bold font-heading text-[#1F2937] leading-tight">
                   Encuesta de Estilo de Vida
                 </h1>
-                <p className="text-[10px] text-[#6B7280] leading-none mt-0.5">
-                  UnacHealth -- Health Profile
+                <p className="text-xs text-[#6B7280] leading-none mt-0.5">
+                  UnacHealth
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-xs font-semibold text-[#16A34A]">
                 {answeredCount}/{TOTAL_QUESTIONS}
               </span>
-              <div className="w-20 sm:w-28 h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
+              <div className="flex-1 sm:flex-none sm:w-28 h-2 rounded-full bg-[#E2E8F0] overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-300"
                   style={{
@@ -317,14 +321,14 @@ export default function OnboardingSurveyPage() {
           </div>
 
           {/* Scale legend */}
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             {Object.entries(LIKERT_LABELS).map(([val, label]) => (
               <div
                 key={val}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F1F5F9] text-[10px] sm:text-xs"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#F1F5F9] text-[10px] sm:text-xs"
               >
                 <span className="font-bold text-[#16A34A]">{val}</span>
-                <span className="text-[#6B7280]">= {label}</span>
+                <span className="font-semibold text-[#374151]">= {label}</span>
               </div>
             ))}
           </div>
@@ -391,6 +395,11 @@ export default function OnboardingSurveyPage() {
               <div>
                 <label className="text-sm font-medium text-[#1F2937] block mb-2">
                   Facultad
+                  {esAdministrativo && (
+                    <span className="ml-2 text-xs font-normal text-[#6B7280]">
+                      (opcional)
+                    </span>
+                  )}
                 </label>
 
                 <Select
@@ -407,7 +416,7 @@ export default function OnboardingSurveyPage() {
                   styles={customStyles}
                   isSearchable={false}
                 />
-                {showErrors && !facultad && (
+                {showErrors && !facultad && !esAdministrativo && (
                   <p className="text-xs text-[#EF4444] mt-1 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> Requerido
                   </p>
@@ -417,6 +426,11 @@ export default function OnboardingSurveyPage() {
               <div>
                 <label className="text-sm font-medium text-[#1F2937] block mb-2">
                   Programa
+                  {esAdministrativo && (
+                    <span className="ml-2 text-xs font-normal text-[#6B7280]">
+                      (opcional)
+                    </span>
+                  )}
                 </label>
 
                 <Select
@@ -431,7 +445,7 @@ export default function OnboardingSurveyPage() {
                   styles={customStyles}
                   isSearchable={false}
                 />
-                {showErrors && !programa && (
+                {showErrors && !programa && !esAdministrativo && (
                   <p className="text-xs text-[#EF4444] mt-1 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> Requerido
                   </p>
@@ -586,25 +600,23 @@ export default function OnboardingSurveyPage() {
           })}
         </div>
 
-        {/* Validation summary on last page */}
-        {isLastPage && showErrors && !canSubmit && (
-          <div className="mt-6 p-4 rounded-xl bg-[#FEF2F2] border border-[#EF4444]/20">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4.5 h-4.5 text-[#EF4444] mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-[#EF4444]">
-                  Formulario incompleto
-                </p>
-                <p className="text-xs text-[#6B7280] mt-1">
-                  {!allDemographicsFilled &&
-                    "Faltan datos demográficos (sexo, facultad, programa o tipo de usuario)."}
-                  {!allQuestionsFilled &&
-                    `Faltan ${TOTAL_QUESTIONS - answeredCount} pregunta(s) por responder.`}
-                </p>
-              </div>
+        {/* Aviso de validación: por qué no puede continuar (en cualquier página) */}
+        {showErrors &&
+          (isLastPage
+            ? !canSubmit
+            : (currentPage === 0 && !allDemographicsFilled) ||
+              unansweredOnPage.length > 0) && (
+            <div className="mt-6 flex items-center gap-1.5 text-sm text-[#DC2626]">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>
+                {currentPage === 0 && !allDemographicsFilled
+                  ? "Completa los datos demográficos requeridos para continuar."
+                  : unansweredOnPage.length > 0
+                    ? `Te faltan ${unansweredOnPage.length} pregunta(s) por responder en esta página.`
+                    : `Faltan ${TOTAL_QUESTIONS - answeredCount} pregunta(s) por responder en total.`}
+              </span>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8 pb-8">
