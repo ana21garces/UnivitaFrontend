@@ -11,6 +11,7 @@ import {
   BookHeart,
   Dumbbell,
   Stethoscope,
+  HeartHandshake,
   Brain,
   Bell,
 } from "lucide-react"
@@ -26,7 +27,7 @@ interface NavItem {
 }
 
 interface DashboardNavbarProps {
-  role: "user" | "admin" | "capellan" | "actividad-fisica" | "responsabilidad-salud" | "manejo-estres"
+  role: "user" | "admin" | "capellan" | "actividad-fisica" | "responsabilidad-salud" | "relaciones-interpersonales" | "manejo-estres"
   userName?: string
 }
 
@@ -64,6 +65,9 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
   "responsabilidad-salud": [
     { label: "Responsabilidad en Salud", href: "/dashboard/responsabilidad-salud", icon: <Stethoscope className="w-4 h-4" /> },
+  ],
+  "relaciones-interpersonales": [
+    { label: "Relaciones Interpersonales", href: "/dashboard/relaciones-interpersonales", icon: <HeartHandshake className="w-4 h-4" /> },
   ],
   "manejo-estres": [
     { label: "Manejo del Estrés", href: "/dashboard/manejo-estres", icon: <Brain className="w-4 h-4" /> },
