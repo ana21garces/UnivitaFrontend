@@ -50,6 +50,7 @@ const DIMENSION_PLAN_ROUTE: Record<string, string> = {
   responsabilidad_salud: "/dashboard/recomendaciones/responsabilidad-salud",
   relaciones_interpersonales: "/dashboard/recomendaciones-ri",
   manejo_estres:         "/dashboard/recomendaciones-me",
+  nutricion: "/dashboard/recomendaciones-n",
 }
 
 const PUNTAJE_RANGES: Record<string, string> = {

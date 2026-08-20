@@ -13,6 +13,7 @@ import {
   Stethoscope,
   HeartHandshake,
   Brain,
+  Salad,
   Bell,
 } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -27,7 +28,7 @@ interface NavItem {
 }
 
 interface DashboardNavbarProps {
-  role: "user" | "admin" | "capellan" | "actividad-fisica" | "responsabilidad-salud" | "relaciones-interpersonales" | "manejo-estres"
+  role: "user" | "admin" | "capellan" | "actividad-fisica" | "responsabilidad-salud" | "relaciones-interpersonales" | "manejo-estres" | "nutricion"
   userName?: string
 }
 
@@ -71,6 +72,9 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
   "manejo-estres": [
     { label: "Manejo del Estrés", href: "/dashboard/manejo-estres", icon: <Brain className="w-4 h-4" /> },
+  ],
+  nutricion: [
+    { label: "Nutrición", href: "/dashboard/nutricion", icon: <Salad className="w-4 h-4" /> },
   ],
 }
 
