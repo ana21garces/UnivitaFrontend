@@ -17,6 +17,10 @@ import {
   AlertTriangle,
   Repeat,
   ShieldCheck,
+  EyeOff,
+  Copy,
+  Wand2,
+  UserPlus,
 } from "lucide-react"
 
 interface ApiUser {
@@ -97,6 +101,11 @@ export default function UserManagementPage() {
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState("")
   const [nuevo, setNuevo] = useState({ full_name: "", email: "", password: "", role: "student" })
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPass, setShowPass] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [copiado, setCopiado] = useState(false)
+  const [touched, setTouched] = useState({ full_name: false, email: false, password: false, confirmPassword: false })
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -223,19 +232,89 @@ export default function UserManagementPage() {
     }
   }
 
+  function generarContrasena(): string {
+    // Se omiten caracteres confusos (I, O, l, 0, 1) para que sea fácil de leer
+    // y dictar. Va con crypto para que sea aleatoria de verdad.
+    const may = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+    const min = "abcdefghijkmnopqrstuvwxyz"
+    const num = "23456789"
+    const sim = "!@#$%&*?-_"
+    const todos = may + min + num + sim
+    const azar = (n: number) =>
+      Math.floor((crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32) * n)
+    const tomar = (set: string) => set[azar(set.length)]
+    // Garantiza al menos uno de cada grupo, completa hasta 14 y baraja.
+    const chars = [tomar(may), tomar(min), tomar(num), tomar(sim)]
+    while (chars.length < 14) chars.push(tomar(todos))
+    for (let i = chars.length - 1; i > 0; i--) {
+      const j = azar(i + 1)
+      ;[chars[i], chars[j]] = [chars[j], chars[i]]
+    }
+    return chars.join("")
+  }
+
+  function generar() {
+    const p = generarContrasena()
+    setNuevo((s) => ({ ...s, password: p }))
+    setConfirmPassword(p) // el confirmar se llena solo al generar
+    setShowPass(true) // se revela para poder verla y copiarla
+    setShowConfirm(true)
+    setCreateError("")
+  }
+
+  async function copiarContrasena() {
+    if (!nuevo.password) return
+    try {
+      await navigator.clipboard.writeText(nuevo.password)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 1800)
+    } catch {
+      setCreateError("No pudimos copiar la contraseña. Cópiala a mano.")
+    }
+  }
+
+  function cerrarCrear() {
+    // Cancelar descarta el formulario: la contraseña solo debe existir si se
+    // llega a crear el usuario. Se limpia todo para que al reabrir esté en blanco.
+    setShowCreate(false)
+    setNuevo({ full_name: "", email: "", password: "", role: "student" })
+    setConfirmPassword("")
+    setShowPass(false)
+    setShowConfirm(false)
+    setCopiado(false)
+    setTouched({ full_name: false, email: false, password: false, confirmPassword: false })
+    setCreateError("")
+  }
+
+  function fuerzaContrasena(pw: string) {
+    let score = 0
+    if (pw.length >= 8) score++
+    if (pw.length >= 12) score++
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++
+    if (/\d/.test(pw)) score++
+    if (/[^A-Za-z0-9]/.test(pw)) score++
+    const nivel = pw.length === 0 ? 0 : score <= 1 ? 1 : score === 2 ? 2 : score === 3 ? 3 : 4
+    const label = ["", "Débil", "Aceptable", "Buena", "Segura"][nivel]
+    const color = ["#94A3B8", "#DC2626", "#D97706", "#639922", "#16A34A"][nivel]
+    return { nivel, label, color }
+  }
+
   async function crearUsuario(e: React.FormEvent) {
     e.preventDefault()
     setCreateError("")
-    if (nuevo.full_name.trim().length < 2) return setCreateError("Ingresa el nombre completo.")
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevo.email))
-      return setCreateError("Ingresa un correo válido, por ejemplo: nombre@dominio.com")
-    if (nuevo.password.length < 8) return setCreateError("La contraseña debe tener al menos 8 caracteres.")
+    setTouched({ full_name: true, email: true, password: true, confirmPassword: true })
+    if (!formValido) return
     setCreating(true)
     try {
       const { data } = await api.post("/users", nuevo)
       setUsers((prev) => [data, ...prev])
       setShowCreate(false)
       setNuevo({ full_name: "", email: "", password: "", role: "student" })
+      setConfirmPassword("")
+      setShowPass(false)
+      setShowConfirm(false)
+      setCopiado(false)
+      setTouched({ full_name: false, email: false, password: false, confirmPassword: false })
     } catch (err) {
       if (!redirigirPorError(err, router)) {
         const detail = (err as any).response?.data?.detail
@@ -258,6 +337,37 @@ export default function UserManagementPage() {
     "flex items-center justify-center w-8 h-8 rounded-lg border transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
   const btnVer = `${btnBase} bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0] hover:bg-[#DCFCE7]`
   const btnRol = `${btnBase} bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE] hover:bg-[#DBEAFE]`
+
+  // Mismas validaciones que el registro público (register-form.tsx): nombre y
+  // apellido, correo con formato, contraseña de 8+ y confirmación que coincide.
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const nombrePartes = nuevo.full_name.trim().split(/\s+/).filter(Boolean)
+  const nameError =
+    nombrePartes.length < 2 || nombrePartes.some((p) => p.length < 2)
+      ? "Ingresa el nombre y el apellido."
+      : ""
+  const emailError = !emailRegex.test(nuevo.email)
+    ? "Ingresa un correo válido, por ejemplo: nombre@dominio.com"
+    : ""
+  const passwordError = nuevo.password.length < 8 ? "La contraseña debe tener al menos 8 caracteres." : ""
+  const confirmError = confirmPassword !== nuevo.password ? "Las contraseñas no coinciden." : ""
+  const formValido = !nameError && !emailError && !passwordError && !confirmError
+  const pwFuerza = fuerzaContrasena(nuevo.password)
+
+  const markTouched = (campo: keyof typeof touched) =>
+    setTouched((prev) => ({ ...prev, [campo]: true }))
+  const showNameError = touched.full_name && !!nameError
+  const showEmailError = touched.email && !!emailError
+  const showPasswordError = touched.password && !!passwordError
+  const showConfirmError = touched.confirmPassword && !!confirmError
+
+  // Igual que el input del registro: borde rojo cuando el campo tocado tiene error.
+  const campoCls = (hasError: boolean) =>
+    `w-full h-10 px-3 rounded-lg border bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 transition-colors ${
+      hasError
+        ? "border-[#F87171] focus:ring-[#F87171]/30 focus:border-[#F87171]"
+        : "border-[#E2E8F0] focus:ring-[#16A34A]/30 focus:border-[#16A34A]"
+    }`
   const btnEstado = `${btnBase} bg-[#FFFBEB] text-[#D97706] border-[#FDE68A] hover:bg-[#FEF3C7]`
   const btnDel = `${btnBase} bg-[#FEF2F2] text-[#EF4444] border-[#FECACA] hover:bg-[#FEE2E2]`
 
@@ -368,6 +478,11 @@ export default function UserManagementPage() {
           <button
             onClick={() => {
               setCreateError("")
+              setConfirmPassword("")
+              setShowPass(false)
+              setShowConfirm(false)
+              setCopiado(false)
+              setTouched({ full_name: false, email: false, password: false, confirmPassword: false })
               setShowCreate(true)
             }}
             className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold text-[#FFFFFF] shadow-md shadow-[#16A34A]/20 hover:shadow-lg transition-all cursor-pointer shrink-0"
@@ -725,13 +840,21 @@ export default function UserManagementPage() {
       {/* Modal: nuevo usuario */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-[#1F2937]/50 backdrop-blur-sm" onClick={() => !creating && setShowCreate(false)} />
+          <div className="absolute inset-0 bg-[#1F2937]/50 backdrop-blur-sm" onClick={() => !creating && cerrarCrear()} />
           <div className="relative bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md mx-4 p-6">
-            <button onClick={() => setShowCreate(false)} disabled={creating} className="absolute top-4 right-4 p-1 rounded-lg text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50" aria-label="Cerrar">
+            <button onClick={cerrarCrear} disabled={creating} className="absolute top-4 right-4 p-1 rounded-lg text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50" aria-label="Cerrar">
               <X className="w-4 h-4" />
             </button>
-            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Nuevo usuario</h3>
-            <p className="text-sm text-[#6B7280] mb-5">Crea una cuenta y asígnale un rol.</p>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#EAF3DE] text-[#16A34A] shrink-0">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold font-heading text-[#1F2937]">Nuevo usuario</h3>
+                <p className="text-sm text-[#6B7280]">Crea una cuenta y asígnale un rol.</p>
+              </div>
+            </div>
+            <div className="h-px bg-[#F1F5F9] mb-5" />
             <form className="flex flex-col gap-4" onSubmit={crearUsuario}>
               {createError && (
                 <div className="flex items-center gap-1.5 text-sm text-[#DC2626]">
@@ -741,15 +864,74 @@ export default function UserManagementPage() {
               )}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-[#1F2937]">Nombre completo</label>
-                <input type="text" value={nuevo.full_name} onChange={(e) => setNuevo({ ...nuevo, full_name: e.target.value })} placeholder="Juan Pérez García" className={inputCls} />
+                <input type="text" value={nuevo.full_name} onChange={(e) => setNuevo({ ...nuevo, full_name: e.target.value })} onBlur={() => markTouched("full_name")} placeholder="Juan Pérez García" className={campoCls(showNameError)} />
+                {showNameError && <p className="text-[11px] text-[#DC2626]">{nameError}</p>}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-[#1F2937]">Correo</label>
-                <input type="email" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} placeholder="nombre@dominio.com" className={inputCls} />
+                <input type="email" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} onBlur={() => markTouched("email")} placeholder="nombre@dominio.com" className={campoCls(showEmailError)} />
+                {showEmailError && <p className="text-[11px] text-[#DC2626]">{emailError}</p>}
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-[#1F2937]">Contraseña</label>
-                <input type="password" value={nuevo.password} onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })} placeholder="Mín. 8 caracteres" className={inputCls} />
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-[#1F2937]">Contraseña</label>
+                  <button type="button" onClick={generar} className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A] hover:text-[#15803D] cursor-pointer">
+                    <Wand2 className="w-3.5 h-3.5" />
+                    Generar
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPass ? "text" : "password"}
+                    value={nuevo.password}
+                    onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })}
+                    onBlur={() => markTouched("password")}
+                    placeholder="Mín. 8 caracteres"
+                    className={`${campoCls(showPasswordError)} pr-16 ${nuevo.password ? "font-mono" : ""}`}
+                  />
+                  <div className="absolute inset-y-0 right-1.5 flex items-center gap-0.5">
+                    <button type="button" onClick={() => setShowPass((v) => !v)} className="p-1 rounded text-[#94A3B8] hover:text-[#475569] cursor-pointer" aria-label={showPass ? "Ocultar contraseña" : "Mostrar contraseña"}>
+                      {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                    <button type="button" onClick={copiarContrasena} disabled={!nuevo.password} className="p-1 rounded text-[#94A3B8] hover:text-[#16A34A] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Copiar contraseña">
+                      {copiado ? <Check className="w-4 h-4 text-[#16A34A]" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                {nuevo.password ? (
+                  <div className="mt-0.5">
+                    <div className="flex gap-1">
+                      {[0, 1, 2, 3].map((i) => (
+                        <span key={i} className="h-1 flex-1 rounded-full transition-colors" style={{ background: i < pwFuerza.nivel ? pwFuerza.color : "#E2E8F0" }} />
+                      ))}
+                    </div>
+                    <p className="text-[11px] mt-1" style={{ color: pwFuerza.color }}>
+                      {pwFuerza.label} · mayúsculas, minúsculas, números y símbolos.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-[#94A3B8]">Escríbela o pulsa «Generar»: mayúsculas, minúsculas, números y símbolos.</p>
+                )}
+                {showPasswordError && <p className="text-[11px] text-[#DC2626] mt-1">{passwordError}</p>}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-[#1F2937]">Confirmar contraseña</label>
+                <div className="relative">
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onBlur={() => markTouched("confirmPassword")}
+                    placeholder="Repite la contraseña"
+                    className={`${campoCls(showConfirmError)} pr-10 ${confirmPassword ? "font-mono" : ""}`}
+                  />
+                  <button type="button" onClick={() => setShowConfirm((v) => !v)} className="absolute inset-y-0 right-2 flex items-center text-[#94A3B8] hover:text-[#475569] cursor-pointer" aria-label={showConfirm ? "Ocultar contraseña" : "Mostrar contraseña"}>
+                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {showConfirmError && (
+                  <p className="text-[11px] text-[#DC2626]">{confirmError}</p>
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-[#1F2937]">Rol</label>
@@ -762,10 +944,10 @@ export default function UserManagementPage() {
                 </select>
               </div>
               <div className="flex items-center gap-3 mt-1">
-                <button type="button" onClick={() => setShowCreate(false)} disabled={creating} className="flex-1 h-10 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50">
+                <button type="button" onClick={cerrarCrear} disabled={creating} className="flex-1 h-10 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50">
                   Cancelar
                 </button>
-                <button type="submit" disabled={creating} className="flex-1 h-10 rounded-lg text-sm font-semibold text-[#FFFFFF] cursor-pointer disabled:opacity-60" style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}>
+                <button type="submit" disabled={creating || !formValido} className="flex-1 h-10 rounded-lg text-sm font-semibold text-[#FFFFFF] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}>
                   {creating ? "Creando..." : "Crear usuario"}
                 </button>
               </div>
