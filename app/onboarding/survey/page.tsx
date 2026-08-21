@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertCircle, ChevronUp, Send, ShieldCheck, Phone } from "lucide-react";
 import { UniVitaLogo } from "@/components/univita-logo";
@@ -25,6 +25,7 @@ export default function OnboardingSurveyPage() {
 
   // Demographics
   const [sexo, setSexo] = useState<Sexo>(null);
+  const [esSeguimiento, setEsSeguimiento] = useState(false);
 
   const facultades = {
     "Ciencias de la Salud": [
@@ -120,6 +121,23 @@ export default function OnboardingSurveyPage() {
     setAnswers((prev) => ({ ...prev, [qIndex]: value }));
   }, []);
 
+  // En un seguimiento no volvemos a pedir los datos demográficos: los tomamos
+  // del perfil (facultad, programa, tipo de usuario) y ocultamos la sección.
+  useEffect(() => {
+    const seg = new URLSearchParams(window.location.search).get("seguimiento") === "1";
+    setEsSeguimiento(seg);
+    if (!seg) return;
+    api
+      .get("/users/me")
+      .then((res) => {
+        setFacultad(res.data.facultad ?? "");
+        setPrograma(res.data.program ?? "");
+        const t: string | null = res.data.tipo_usuario;
+        if (t) setTipoUsuario(t.charAt(0).toUpperCase() + t.slice(1));
+      })
+      .catch(() => {});
+  }, []);
+
   // Which questions are on the current page
   const pageStart = currentPage * QUESTIONS_PER_PAGE;
   const pageEnd = Math.min(pageStart + QUESTIONS_PER_PAGE, TOTAL_QUESTIONS);
@@ -134,9 +152,10 @@ export default function OnboardingSurveyPage() {
   // El administrativo no necesariamente pertenece a una facultad/programa
   const esAdministrativo = tipoUsuario === "Administrativo";
   const allDemographicsFilled =
-    sexo !== null &&
-    tipoUsuario !== "" &&
-    (esAdministrativo || (facultad !== "" && programa !== ""));
+    esSeguimiento ||
+    (sexo !== null &&
+      tipoUsuario !== "" &&
+      (esAdministrativo || (facultad !== "" && programa !== "")));
   const allQuestionsFilled = answeredCount === TOTAL_QUESTIONS;
   const canSubmit = allDemographicsFilled && allQuestionsFilled;
 
@@ -362,8 +381,9 @@ export default function OnboardingSurveyPage() {
             </p>
           </section>
         )}
-        {/* Demographics section -- only show on first page */}
-        {currentPage === 0 && (
+        {/* Datos demográficos: solo en la primera página y solo si NO es un
+            seguimiento (ahí ya los tenemos del perfil). */}
+        {currentPage === 0 && !esSeguimiento && (
           <section className="mb-8 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm p-5 sm:p-6">
             <h2 className="text-base font-bold font-heading text-[#1F2937] mb-4">
               Datos Demograficos

@@ -6,6 +6,7 @@ import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import Link from "next/link"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { getAccessToken, setSurveyDone } from "@/lib/auth"
+import { TrendingUp } from "lucide-react"
 
 type DimensionResult = { indice: number; nivel: string }
 type EncuestaResultado = {
@@ -139,11 +140,20 @@ export default function UserDashboard() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl sm:text-3xl font-bold font-heading text-[#1F2937]">¡Bienvenido de nuevo!</h2>
-          <p className="mt-1 text-sm text-[#6B7280]">
-            Completaste el cuestionario PEPS II — aquí están tus resultados de estilo de vida.
-          </p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold font-heading text-[#1F2937]">¡Bienvenido de nuevo!</h2>
+            <p className="mt-1 text-sm text-[#6B7280]">
+              Completaste el cuestionario PEPS II — aquí están tus resultados de estilo de vida.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/mi-evolucion"
+            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold text-white shadow-md shadow-[#16A34A]/20 hover:shadow-lg transition-all shrink-0"
+            style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
+          >
+            <TrendingUp className="w-4 h-4" /> Mi evolución
+          </Link>
         </div>
 
         {/* PEPS II global + dimensiones */}

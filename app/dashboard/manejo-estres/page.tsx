@@ -7,6 +7,7 @@ import { getAccessToken } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
 import { ChevronDown, ChevronUp, Users, Brain, AlertCircle, Building2, GraduationCap, Bell, Check } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
 import { NotificarModal } from "@/components/notificar-modal"
 import {
   EstadisticasSection,
@@ -428,6 +429,7 @@ export default function ManejoEstresPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <DashboardNavbar role="manejo-estres" />
+      <VolverAlPanelAdmin />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

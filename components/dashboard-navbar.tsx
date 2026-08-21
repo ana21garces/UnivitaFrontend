@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { UniVitaLogo } from "@/components/univita-logo"
+import { PerfilMenu } from "@/components/perfil-menu"
 import { clearSession } from "@/lib/auth"
 import { api } from "@/lib/api"
 
@@ -106,6 +107,18 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
     api.get("/notificaciones").then((res) => setNotificaciones(res.data)).catch(() => {})
   }, [])
 
+  // Aviso de medición de seguimiento abierta: cuenta como una notificación por
+  // leer en la campana. Solo aplica a los usuarios que responden la encuesta.
+  const [seguimiento, setSeguimiento] = useState<{ nombre: string; fecha_cierre: string | null } | null>(null)
+
+  useEffect(() => {
+    if (role !== "user") return
+    api
+      .get("/encuesta/estado")
+      .then((res) => setSeguimiento(res.data.seguimiento_pendiente ?? null))
+      .catch(() => {})
+  }, [role])
+
   const marcarLeida = async (id: number) => {
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)))
     try {
@@ -115,7 +128,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
     }
   }
 
-  const noLeidas = notificaciones.filter((n) => !n.leida).length
+  const noLeidas = notificaciones.filter((n) => !n.leida).length + (seguimiento ? 1 : 0)
 
   const pathname = usePathname()
   const router = useRouter()
@@ -192,10 +205,25 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
                 <div className="px-4 py-3 border-b border-[#E2E8F0]">
                   <p className="text-sm font-bold text-[#1F2937]">Notificaciones</p>
                 </div>
-                {notificaciones.length === 0 ? (
+                {notificaciones.length === 0 && !seguimiento ? (
                   <p className="px-4 py-6 text-xs text-[#6B7280] text-center">No tienes notificaciones.</p>
                 ) : (
                   <div className="flex flex-col divide-y divide-[#F1F5F9]">
+                    {seguimiento && (
+                      <div className="px-4 py-3 bg-[#F0FDF4]">
+                        <p className="text-xs font-semibold text-[#166534]">Nueva medición disponible</p>
+                        <p className="text-xs text-[#15803D] mt-0.5">
+                          Responde la encuesta para ver cómo cambió tu bienestar.
+                        </p>
+                        <Link
+                          href="/onboarding/survey?seguimiento=1"
+                          onClick={() => setPanelAbierto(false)}
+                          className="inline-block mt-1.5 text-[11px] font-semibold text-[#16A34A] hover:underline"
+                        >
+                          Responder ahora →
+                        </Link>
+                      </div>
+                    )}
                     {notificaciones.map((n) => (
                       <div key={n.id} className={`px-4 py-3 ${n.leida ? "" : "bg-[#F0FDF4]"}`}>
                         <div className="flex items-start justify-between gap-2">
@@ -221,28 +249,10 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A]">
-              {nombre.charAt(0).toUpperCase()}
-            </div>
-            <div className="hidden sm:flex flex-col leading-tight">
-              <span className="text-sm font-medium text-[#1F2937]">{nombre}</span>
-              {tipoUsuario && (
-                <span className="text-[10px] text-[#6B7280]">
-                  {TIPO_USUARIO_LABEL[tipoUsuario] ?? tipoUsuario}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="sr-only sm:not-sr-only">Cerrar Sesión</span>
-          </button>
+          <PerfilMenu
+            nombre={nombre}
+            subtitulo={tipoUsuario ? (TIPO_USUARIO_LABEL[tipoUsuario] ?? tipoUsuario) : undefined}
+          />
 
           {/* Mobile toggle */}
           <button
