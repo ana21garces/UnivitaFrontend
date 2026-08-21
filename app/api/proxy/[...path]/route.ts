@@ -4,37 +4,38 @@ const BACKEND_URL = process.env.BACKEND_URL
 
 async function handler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
-  // La query string se reenvía tal cual: las vistas de rol filtran por facultad/programa
   const targetUrl = `${BACKEND_URL}/${path.join("/")}${req.nextUrl.search}`
 
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     "ngrok-skip-browser-warning": "true",
   }
+
+  const contentType = req.headers.get("content-type")
+  if (contentType) headers["Content-Type"] = contentType
 
   const auth = req.headers.get("authorization")
   if (auth) headers["Authorization"] = auth
 
-  const body = req.method !== "GET" && req.method !== "HEAD"
-    ? await req.text()
-    : undefined
+  const body =
+    req.method !== "GET" && req.method !== "HEAD"
+      ? await req.arrayBuffer()
+      : undefined
 
   try {
     const response = await fetch(targetUrl, {
       method: req.method,
-      headers,
-      body,
+      headers: {
+        ...headers,
+        ...(body && !headers["Content-Type"] ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body && body.byteLength > 0 ? body : undefined,
     })
 
-    // Se reenvía el cuerpo como binario: `response.text()` decodifica como
-    // texto UTF-8 y corrompe descargas como Excel o PDF. `arrayBuffer` sirve
-    // igual para JSON, que el navegador interpreta por su Content-Type.
     const data = await response.arrayBuffer()
 
     const respHeaders: Record<string, string> = {
       "Content-Type": response.headers.get("content-type") ?? "application/json",
     }
-    // Necesario para que el navegador nombre bien el archivo descargado.
     const disposition = response.headers.get("content-disposition")
     if (disposition) respHeaders["Content-Disposition"] = disposition
 
