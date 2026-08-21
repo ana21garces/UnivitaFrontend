@@ -15,12 +15,14 @@ import {
   Brain,
   Salad,
   Bell,
+  UserCircle,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { PerfilMenu } from "@/components/perfil-menu"
 import { clearSession } from "@/lib/auth"
 import { api } from "@/lib/api"
+import type { ProgresoGamificacion, RankTier } from "@/lib/gamificacion"
 
 interface NavItem {
   label: string
@@ -54,6 +56,7 @@ const TIPO_USUARIO_LABEL: Record<string, string> = {
 const navItemsByRole: Record<string, NavItem[]> = {
   user: [
     { label: "Dashboard", href: "/dashboard/user", icon: <LayoutDashboard className="w-4 h-4" /> },
+    { label: "Mi perfil", href: "/dashboard/perfil", icon: <UserCircle className="w-4 h-4" /> },
   ],
   admin: [
     { label: "Dashboard", href: "/dashboard/admin", icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -86,6 +89,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
   // la misma "E" en el avatar.
   const [nombre, setNombre] = useState(userName ?? "")
   const [tipoUsuario, setTipoUsuario] = useState<string | null>(null)
+  const [progreso, setProgreso] = useState<ProgresoGamificacion | null>(null)
 
   useEffect(() => {
     if (userName) return
@@ -94,6 +98,19 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
       .then((res) => {
         setNombre(res.data.full_name)
         setTipoUsuario(res.data.tipo_usuario ?? null)
+        setProgreso({
+          total_xp: res.data.total_xp,
+          current_level: res.data.current_level,
+          rank_tier: (res.data.rank_tier ?? "bronce") as RankTier,
+          streak_days: res.data.streak_days,
+          xp_en_nivel: 0,
+          xp_para_siguiente: 100,
+          avatar_url: res.data.avatar_url,
+        })
+        return api.get("/gamificacion/progreso")
+      })
+      .then((res) => {
+        if (res?.data) setProgreso(res.data)
       })
       .catch(() => { /* el nombre es adorno: si falla, no se estorba a la pantalla */ })
   }, [userName])
@@ -252,6 +269,9 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
           <PerfilMenu
             nombre={nombre}
             subtitulo={tipoUsuario ? (TIPO_USUARIO_LABEL[tipoUsuario] ?? tipoUsuario) : undefined}
+            rankTier={progreso?.rank_tier ?? "bronce"}
+            avatarUrl={progreso?.avatar_url}
+            currentLevel={progreso?.current_level}
           />
 
           {/* Mobile toggle */}
