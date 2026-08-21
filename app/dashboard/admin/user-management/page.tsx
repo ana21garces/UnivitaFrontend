@@ -16,6 +16,7 @@ import {
   Check,
   AlertTriangle,
   Repeat,
+  ShieldCheck,
 } from "lucide-react"
 
 interface ApiUser {
@@ -38,6 +39,7 @@ const ROLE_LABELS: Record<string, string> = {
   responsabilidad_salud: "Responsabilidad en salud",
   relaciones_interpersonales: "Relaciones interpersonales",
   manejo_estres: "Manejo del estrés",
+  nutricion: "Nutrición",
 }
 
 const ASSIGNABLE_ROLES = [
@@ -47,38 +49,45 @@ const ASSIGNABLE_ROLES = [
   "responsabilidad_salud",
   "relaciones_interpersonales",
   "manejo_estres",
+  "nutricion",
   "admin",
 ]
 
-const roleStyle: Record<string, { bg: string; text: string; dot: string }> = {
-  student: { bg: "bg-[#F0FDF4]", text: "text-[#16A34A]", dot: "bg-[#22C55E]" },
-  admin: { bg: "bg-[#EFF6FF]", text: "text-[#2563EB]", dot: "bg-[#2563EB]" },
-  capellan: { bg: "bg-[#FFFBEB]", text: "text-[#B45309]", dot: "bg-[#F59E0B]" },
-  actividad_fisica: { bg: "bg-[#ECFEFF]", text: "text-[#0891B2]", dot: "bg-[#06B6D4]" },
-  responsabilidad_salud: { bg: "bg-[#FFF1F2]", text: "text-[#E11D48]", dot: "bg-[#F43F5E]" },
-  relaciones_interpersonales: { bg: "bg-[#EEF2FF]", text: "text-[#4F46E5]", dot: "bg-[#6366F1]" },
-  manejo_estres: { bg: "bg-[#F5F3FF]", text: "text-[#7C3AED]", dot: "bg-[#7C3AED]" },
-}
-const styleFor = (r: string) =>
-  roleStyle[r] ?? { bg: "bg-[#F1F5F9]", text: "text-[#6B7280]", dot: "bg-[#94A3B8]" }
-const labelFor = (r: string) => ROLE_LABELS[r] ?? r
+// Los roles agrupados para el modal de "Cambiar rol": general arriba, áreas de
+// bienestar abajo. Más ordenado que una lista plana de ocho opciones.
+const ROLE_GROUPS: { label: string; roles: string[] }[] = [
+  { label: "General", roles: ["student", "admin"] },
+  {
+    label: "Áreas de bienestar",
+    roles: [
+      "capellan",
+      "actividad_fisica",
+      "responsabilidad_salud",
+      "relaciones_interpersonales",
+      "manejo_estres",
+      "nutricion",
+    ],
+  },
+]
 
-// Chip neutro (para los modales, donde el color por rol distrae).
-const neutralChip =
-  "inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium text-[#475569] bg-[#F1F5F9] border border-[#E2E8F0]"
+const labelFor = (r: string) => ROLE_LABELS[r] ?? r
 
 export default function UserManagementPage() {
   const router = useRouter()
   const [users, setUsers] = useState<ApiUser[]>([])
+  const [yo, setYo] = useState<ApiUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [filterEstado, setFilterEstado] = useState<"all" | "active" | "suspended">("all")
   const [filterRole, setFilterRole] = useState<string>("all")
-  const [openRoleMenuId, setOpenRoleMenuId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
   const [saving, setSaving] = useState(false)
 
-  const [confirmRol, setConfirmRol] = useState<{ user: ApiUser; toRole: string } | null>(null)
+  const [rolModal, setRolModal] = useState<ApiUser | null>(null)
+  const [rolSel, setRolSel] = useState<string>("")
+  const [rolError, setRolError] = useState("")
+  const [rolOk, setRolOk] = useState<string | null>(null)
   const [detalle, setDetalle] = useState<ApiUser | null>(null)
   const [eliminar, setEliminar] = useState<ApiUser | null>(null)
   const [eliminarOk, setEliminarOk] = useState(false)
@@ -93,14 +102,23 @@ export default function UserManagementPage() {
       router.replace("/")
       return
     }
-    api
-      .get("/users")
-      .then((res) => setUsers(res.data))
+    // Traemos también la cuenta propia: sobre uno mismo no se puede cambiar el
+    // rol, ni suspender, ni eliminar.
+    Promise.all([api.get("/users"), api.get("/users/me")])
+      .then(([lista, propio]) => {
+        setUsers(lista.data)
+        setYo(propio.data)
+      })
       .catch((err) => {
         if (!redirigirPorError(err, router)) setLoadError("No pudimos cargar los usuarios. Inténtalo de nuevo.")
       })
       .finally(() => setLoading(false))
   }, [router])
+
+  // Al cambiar búsqueda o filtros, vuelve a la primera página.
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery, filterEstado, filterRole])
 
   const filteredUsers = users.filter((u) => {
     const q = searchQuery.toLowerCase()
@@ -111,6 +129,14 @@ export default function UserManagementPage() {
     return matchesSearch && matchesEstado && matchesRole
   })
 
+  const esYo = (user: ApiUser) => yo?.id === user.id
+
+  // Si queda un solo administrador no se le puede quitar el rol, ni suspenderlo,
+  // ni eliminarlo: la plataforma quedaría sin quien la administre.
+  const totalAdmins = users.filter((u) => u.role === "admin").length
+  const esUltimoAdmin = (user: ApiUser) => user.role === "admin" && totalAdmins <= 1
+  const rolModalUltimoAdmin = rolModal !== null && esUltimoAdmin(rolModal)
+
   const totalActivos = users.filter((u) => u.is_active).length
   const estadoPills = [
     { key: "all" as const, label: "Todos", count: users.length },
@@ -118,24 +144,43 @@ export default function UserManagementPage() {
     { key: "suspended" as const, label: "Suspendidos", count: users.length - totalActivos },
   ]
 
-  function elegirRol(user: ApiUser, newRole: string) {
-    setOpenRoleMenuId(null)
-    if (user.role === newRole) return
-    setConfirmRol({ user, toRole: newRole })
+  // Paginación (en cliente, ya que traemos todos los usuarios).
+  const pageSize = 10
+  const total = filteredUsers.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const paginaActual = Math.min(page, totalPages)
+  const inicio = (paginaActual - 1) * pageSize
+  const paginados = filteredUsers.slice(inicio, inicio + pageSize)
+  const desde = total === 0 ? 0 : inicio + 1
+  const hasta = Math.min(inicio + pageSize, total)
+
+  function abrirCambioRol(user: ApiUser) {
+    setRolModal(user)
+    setRolSel(user.role)
+    setRolError("")
   }
 
-  async function confirmarRol() {
-    if (!confirmRol) return
-    const { user, toRole } = confirmRol
+  function cerrarCambioRol() {
+    if (saving) return
+    setRolModal(null)
+  }
+
+  async function guardarRol() {
+    if (!rolModal || rolSel === rolModal.role) return
+    const nombre = rolModal.full_name
+    const nuevoRol = rolSel
     setSaving(true)
+    setRolError("")
     try {
-      const { data } = await api.patch(`/users/${user.id}/role`, { role: toRole })
-      setUsers((prev) => prev.map((u) => (u.id === user.id ? data : u)))
-      setConfirmRol(null)
+      const { data } = await api.patch(`/users/${rolModal.id}/role`, { role: rolSel })
+      setUsers((prev) => prev.map((u) => (u.id === rolModal.id ? data : u)))
+      setRolModal(null)
+      setRolOk(`Ahora ${nombre} tiene el rol de ${labelFor(nuevoRol)}.`)
+      setTimeout(() => setRolOk(null), 2200)
     } catch (err) {
       if (!redirigirPorError(err, router)) {
-        setLoadError("No pudimos cambiar el rol. Inténtalo de nuevo.")
-        setConfirmRol(null)
+        const detail = (err as any).response?.data?.detail
+        setRolError(typeof detail === "string" ? detail : "No pudimos cambiar el rol. Inténtalo de nuevo.")
       }
     } finally {
       setSaving(false)
@@ -147,7 +192,12 @@ export default function UserManagementPage() {
       const { data } = await api.patch(`/users/${user.id}/estado`, { is_active: !user.is_active })
       setUsers((prev) => prev.map((u) => (u.id === user.id ? data : u)))
     } catch (err) {
-      if (!redirigirPorError(err, router)) setLoadError("No pudimos cambiar el estado. Inténtalo de nuevo.")
+      if (!redirigirPorError(err, router)) {
+        const detail = (err as any).response?.data?.detail
+        setLoadError(
+          typeof detail === "string" ? detail : "No pudimos cambiar el estado. Inténtalo de nuevo."
+        )
+      }
     }
   }
 
@@ -161,7 +211,10 @@ export default function UserManagementPage() {
       setEliminarOk(false)
     } catch (err) {
       if (!redirigirPorError(err, router)) {
-        setLoadError("No pudimos eliminar el usuario. Inténtalo de nuevo.")
+        const detail = (err as any).response?.data?.detail
+        setLoadError(
+          typeof detail === "string" ? detail : "No pudimos eliminar el usuario. Inténtalo de nuevo."
+        )
         setEliminar(null)
       }
     } finally {
@@ -200,7 +253,8 @@ export default function UserManagementPage() {
 
   const inputCls =
     "w-full h-10 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
-  const btnBase = "flex items-center justify-center w-8 h-8 rounded-lg border transition-colors cursor-pointer"
+  const btnBase =
+    "flex items-center justify-center w-8 h-8 rounded-lg border transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
   const btnVer = `${btnBase} bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0] hover:bg-[#DCFCE7]`
   const btnRol = `${btnBase} bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE] hover:bg-[#DBEAFE]`
   const btnEstado = `${btnBase} bg-[#FFFBEB] text-[#D97706] border-[#FDE68A] hover:bg-[#FEF3C7]`
@@ -210,6 +264,12 @@ export default function UserManagementPage() {
     <div className="w-9 h-9 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A] shrink-0">
       {name.charAt(0).toUpperCase()}
     </div>
+  )
+
+  const ChipTu = () => (
+    <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-[#16A34A] bg-[#F0FDF4] border border-[#BBF7D0]">
+      Tú
+    </span>
   )
 
   const RoleChip = ({ role }: { role: string }) => (
@@ -229,60 +289,71 @@ export default function UserManagementPage() {
     </span>
   )
 
-  const Acciones = ({ user }: { user: ApiUser }) => (
-    <div className="flex items-center justify-center gap-1.5">
-      <button onClick={() => setDetalle(user)} className={btnVer} title="Ver detalles">
-        <Eye className="w-4 h-4" />
-      </button>
-      <div className="relative">
-        <button
-          onClick={() => setOpenRoleMenuId(openRoleMenuId === user.id ? null : user.id)}
-          className={btnRol}
-          title="Cambiar rol"
-        >
+  // En la cuenta propia solo se muestra el detalle: no hay nada que uno pueda
+  // hacer sobre sí mismo. A otro administrador se le puede cambiar el rol o
+  // suspenderlo (es reversible), pero no eliminarlo: primero hay que quitarle el
+  // rol. Al último administrador tampoco se le puede quitar el rol ni suspenderlo.
+  const Acciones = ({ user }: { user: ApiUser }) => {
+    const esAdmin = user.role === "admin"
+    const ultimoAdmin = esUltimoAdmin(user)
+
+    if (esYo(user)) {
+      return (
+        <div className="flex items-center justify-center gap-2">
+          <button onClick={() => setDetalle(user)} className={btnVer} title="Ver detalles">
+            <Eye className="w-4 h-4" />
+          </button>
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE]"
+            title="Es tu cuenta: ya tienes todos los permisos del panel"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Acceso total
+          </span>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex items-center justify-center gap-1.5">
+        <button onClick={() => setDetalle(user)} className={btnVer} title="Ver detalles">
+          <Eye className="w-4 h-4" />
+        </button>
+        <button onClick={() => abrirCambioRol(user)} className={btnRol} title="Cambiar rol">
           <UserCog className="w-4 h-4" />
         </button>
-        {openRoleMenuId === user.id && (
-          <div className="absolute right-0 top-full mt-1 z-20 w-56 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] shadow-lg py-1">
-            {ASSIGNABLE_ROLES.map((option) => {
-              const isCurrent = user.role === option
-              return (
-                <button
-                  key={option}
-                  onClick={() => elegirRol(user, option)}
-                  disabled={isCurrent}
-                  className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left transition-colors ${
-                    isCurrent ? "bg-[#F1F5F9] text-[#94A3B8] cursor-default" : "text-[#1F2937] hover:bg-[#F8FAFC] cursor-pointer"
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${styleFor(option).dot}`} />
-                  {labelFor(option)}
-                  {isCurrent && <span className="ml-auto text-[10px] text-[#94A3B8]">Actual</span>}
-                </button>
-              )
-            })}
-          </div>
-        )}
+        <button
+          onClick={() => toggleEstado(user)}
+          disabled={ultimoAdmin && user.is_active}
+          className={btnEstado}
+          title={
+            ultimoAdmin && user.is_active
+              ? "No puedes suspender al último administrador"
+              : user.is_active
+                ? "Suspender"
+                : "Activar"
+          }
+        >
+          {user.is_active ? <Ban className="w-4 h-4" /> : <CircleCheck className="w-4 h-4" />}
+        </button>
+        <button
+          onClick={() => {
+            setEliminarOk(false)
+            setEliminar(user)
+          }}
+          disabled={esAdmin}
+          className={btnDel}
+          title={
+            esAdmin
+              ? "No puedes eliminar a otro administrador: primero cámbiale el rol"
+              : "Eliminar"
+          }
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
       </div>
-      <button
-        onClick={() => toggleEstado(user)}
-        className={btnEstado}
-        title={user.is_active ? "Suspender" : "Activar"}
-      >
-        {user.is_active ? <Ban className="w-4 h-4" /> : <CircleCheck className="w-4 h-4" />}
-      </button>
-      <button
-        onClick={() => {
-          setEliminarOk(false)
-          setEliminar(user)
-        }}
-        className={btnDel}
-        title="Eliminar"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
-    </div>
-  )
+    )
+  }
 
   return (
     <>
@@ -383,13 +454,16 @@ export default function UserManagementPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredUsers.map((user) => (
+                    {paginados.map((user) => (
                       <tr key={user.id} className="border-b border-[#E2E8F0] last:border-b-0 hover:bg-[#F8FAFC] transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <Avatar name={user.full_name} />
                             <div className="min-w-0">
-                              <p className="font-medium text-[#1F2937] truncate">{user.full_name}</p>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <p className="font-medium text-[#1F2937] truncate">{user.full_name}</p>
+                                {esYo(user) && <ChipTu />}
+                              </div>
                               <p className="text-xs text-[#94A3B8] truncate">{user.email}</p>
                             </div>
                           </div>
@@ -419,12 +493,15 @@ export default function UserManagementPage() {
 
               {/* Mobile */}
               <div className="md:hidden divide-y divide-[#E2E8F0]">
-                {filteredUsers.map((user) => (
+                {paginados.map((user) => (
                   <div key={user.id} className="p-4 flex flex-col gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar name={user.full_name} />
                       <div className="min-w-0">
-                        <p className="font-medium text-[#1F2937] text-sm truncate">{user.full_name}</p>
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <p className="font-medium text-[#1F2937] text-sm truncate">{user.full_name}</p>
+                          {esYo(user) && <ChipTu />}
+                        </div>
                         <p className="text-xs text-[#94A3B8] truncate">{user.email}</p>
                       </div>
                     </div>
@@ -444,10 +521,34 @@ export default function UserManagementPage() {
             </>
           )}
         </div>
-      </main>
 
-      {/* Capa para cerrar el menú de roles */}
-      {openRoleMenuId && <div className="fixed inset-0 z-10" onClick={() => setOpenRoleMenuId(null)} />}
+        {!loading && total > 0 && (
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-[#6B7280]">
+              Mostrando {desde}–{hasta} de {total} usuario{total === 1 ? "" : "s"}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={paginaActual === 1}
+                className="h-9 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm text-[#475569] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-[#6B7280] px-2">
+                Página {paginaActual} de {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={paginaActual === totalPages}
+                className="h-9 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm text-[#475569] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
 
       {/* Modal: ver detalles */}
       {detalle && (
@@ -485,41 +586,102 @@ export default function UserManagementPage() {
         </div>
       )}
 
-      {/* Modal: confirmar cambio de rol */}
-      {confirmRol && (
+      {/* Modal: cambiar rol */}
+      {rolModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-[#1F2937]/50 backdrop-blur-sm" onClick={() => !saving && setConfirmRol(null)} />
+          <div className="absolute inset-0 bg-[#1F2937]/50 backdrop-blur-sm" onClick={cerrarCambioRol} />
           <div className="relative bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md mx-4 p-6">
-            <button onClick={() => setConfirmRol(null)} disabled={saving} className="absolute top-4 right-4 p-1 rounded-lg text-[#94A3B8] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50" aria-label="Cerrar">
+            <button onClick={cerrarCambioRol} disabled={saving} className="absolute top-4 right-4 p-1 rounded-lg text-[#94A3B8] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50" aria-label="Cerrar">
               <X className="w-4 h-4" />
             </button>
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#EAF3DE] text-[#16A34A] mb-4">
               <Repeat className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Confirmar cambio de rol</h3>
+            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Cambiar rol</h3>
             <p className="text-sm text-[#6B7280] mb-5 leading-relaxed">
-              Vas a cambiar el rol de{" "}
-              <span className="font-semibold text-[#1F2937]">{confirmRol.user.full_name}</span> de{" "}
-              <span className="font-semibold text-[#1F2937]">{labelFor(confirmRol.user.role)}</span> a{" "}
-              <span className="font-semibold text-[#1F2937]">{labelFor(confirmRol.toRole)}</span>. Esto
-              actualizará sus accesos y permisos de inmediato.
+              Elige el nuevo rol de{" "}
+              <span className="font-semibold text-[#1F2937]">{rolModal.full_name}</span>. Su rol actual es{" "}
+              <span className="font-semibold text-[#1F2937]">{labelFor(rolModal.role)}</span>. El cambio
+              actualiza sus accesos y permisos de inmediato.
             </p>
-            <div className="flex items-center justify-center gap-3 mb-6 p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
-              <span className={neutralChip}>{labelFor(confirmRol.user.role)}</span>
-              <svg className="w-5 h-5 text-[#94A3B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-              <span className={neutralChip}>{labelFor(confirmRol.toRole)}</span>
+            {rolModalUltimoAdmin && (
+              <div className="flex items-start gap-2 mb-5 p-3 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] text-sm text-[#B45309]">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                  Es el único administrador y debe quedar al menos uno. Para cambiarle el rol, primero
+                  asigna otro administrador.
+                </span>
+              </div>
+            )}
+            <div className="flex flex-col gap-4 mb-6">
+              {ROLE_GROUPS.map((group) => (
+                <div key={group.label}>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">
+                    {group.label}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {group.roles.map((option) => {
+                      const selected = rolSel === option
+                      const bloqueada = rolModalUltimoAdmin && option !== "admin"
+                      return (
+                        <button
+                          key={option}
+                          onClick={() => setRolSel(option)}
+                          disabled={saving || bloqueada}
+                          title={bloqueada ? "Debe quedar al menos un administrador" : undefined}
+                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-[13px] text-left leading-tight transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                            selected
+                              ? "border-[#16A34A] bg-[#F0FDF4] text-[#15803D] font-medium"
+                              : bloqueada
+                                ? "border-[#E2E8F0] bg-[#F8FAFC] text-[#94A3B8]"
+                                : "border-[#E2E8F0] bg-[#FFFFFF] text-[#475569] hover:bg-[#F8FAFC]"
+                          }`}
+                        >
+                          <span className="flex-1">{labelFor(option)}</span>
+                          {selected && <Check className="w-4 h-4 shrink-0 text-[#16A34A]" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
+            {rolError && (
+              <div className="flex items-center gap-1.5 mb-4 text-sm text-[#DC2626]">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{rolError}</span>
+              </div>
+            )}
             <div className="flex items-center gap-3">
-              <button onClick={() => setConfirmRol(null)} disabled={saving} className="flex-1 h-10 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50">
+              <button onClick={cerrarCambioRol} disabled={saving} className="flex-1 h-10 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50">
                 Cancelar
               </button>
-              <button onClick={confirmarRol} disabled={saving} className="flex-1 h-10 rounded-lg text-sm font-semibold text-[#FFFFFF] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60" style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}>
+              <button
+                onClick={guardarRol}
+                disabled={saving || rolSel === rolModal.role}
+                className="flex-1 h-10 rounded-lg text-sm font-semibold text-[#FFFFFF] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
+              >
                 <Check className="w-4 h-4" />
-                {saving ? "Guardando..." : "Confirmar"}
+                {saving ? "Guardando..." : "Guardar cambios"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay de éxito al cambiar el rol */}
+      {rolOk && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[#1F2937]/40 backdrop-blur-sm"
+          onClick={() => setRolOk(null)}
+        >
+          <div className="flex flex-col items-center text-center gap-3 bg-[#FFFFFF] rounded-2xl shadow-2xl px-12 py-10 mx-4 max-w-xs">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-[#16A34A]">
+              <Check className="w-9 h-9 text-[#FFFFFF]" strokeWidth={3} />
+            </div>
+            <p className="text-xl font-bold font-heading text-[#1F2937]">Rol actualizado</p>
+            <p className="text-sm text-[#6B7280]">{rolOk}</p>
           </div>
         </div>
       )}
