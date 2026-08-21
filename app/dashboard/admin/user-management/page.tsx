@@ -29,6 +29,7 @@ interface ApiUser {
   tipo_usuario: string | null
   facultad: string | null
   program: string | null
+  sexo: string | null
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -572,6 +573,7 @@ export default function UserManagementPage() {
                 { k: "Rol", v: labelFor(detalle.role) },
                 { k: "Estado", v: detalle.is_active ? "Activo" : "Suspendido" },
                 { k: "Tipo de usuario", v: detalle.tipo_usuario ? detalle.tipo_usuario : "No especificado" },
+                { k: "Sexo", v: detalle.sexo || "No registrado" },
                 { k: "Facultad", v: detalle.facultad || "No especificada" },
                 { k: "Programa", v: detalle.program || "No especificado" },
                 { k: "Registrado", v: formatFecha(detalle.created_at) },

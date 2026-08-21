@@ -11,6 +11,7 @@ import {
   BarChart3,
   FileSpreadsheet,
   FileText,
+  Table2,
   Check,
   AlertTriangle,
 } from "lucide-react"
@@ -61,7 +62,7 @@ export default function ReportesPage() {
 
   async function descargar(
     tipo: string,
-    formato: "excel" | "pdf",
+    formato: "excel" | "pdf" | "csv",
     params: Record<string, string>,
   ) {
     if (!getAccessToken()) {
@@ -76,7 +77,7 @@ export default function ReportesPage() {
         params: { formato, ...params },
         responseType: "blob",
       })
-      const ext = formato === "excel" ? "xlsx" : "pdf"
+      const ext = formato === "excel" ? "xlsx" : formato
       const nombre = nombreDesdeCabecera(
         res.headers["content-disposition"],
         `reporte_${tipo}.${ext}`,
@@ -107,7 +108,7 @@ export default function ReportesPage() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold font-heading text-[#1F2937]">Reportes</h2>
           <p className="mt-1 text-sm text-[#6B7280]">
-            Genera reportes en Excel o PDF con los datos de la plataforma y de las encuestas.
+            Genera reportes en Excel, PDF o CSV con los datos de la plataforma y de las encuestas. El CSV trae los datos crudos, para analizarlos en SPSS o R.
           </p>
         </div>
 
@@ -135,6 +136,7 @@ export default function ReportesPage() {
             <Botones
               onExcel={() => descargar("usuarios", "excel", { rol: usuariosRol })}
               onPdf={() => descargar("usuarios", "pdf", { rol: usuariosRol })}
+              onCsv={() => descargar("usuarios", "csv", { rol: usuariosRol })}
               descargando={descargando}
               tipo="usuarios"
             />
@@ -159,6 +161,7 @@ export default function ReportesPage() {
             <Botones
               onExcel={() => descargar("participacion", "excel", { segmento })}
               onPdf={() => descargar("participacion", "pdf", { segmento })}
+              onCsv={() => descargar("participacion", "csv", { segmento })}
               descargando={descargando}
               tipo="participacion"
             />
@@ -190,6 +193,7 @@ export default function ReportesPage() {
             <Botones
               onExcel={() => descargar("progresion", "excel", { dimension: progresionDim, ...(progresionNivel ? { nivel: progresionNivel } : {}) })}
               onPdf={() => descargar("progresion", "pdf", { dimension: progresionDim, ...(progresionNivel ? { nivel: progresionNivel } : {}) })}
+              onCsv={() => descargar("progresion", "csv", { dimension: progresionDim, ...(progresionNivel ? { nivel: progresionNivel } : {}) })}
               descargando={descargando}
               tipo="progresion"
             />
@@ -211,6 +215,7 @@ export default function ReportesPage() {
             <Botones
               onExcel={() => descargar("distribucion", "excel", { dimension: distribucionDim })}
               onPdf={() => descargar("distribucion", "pdf", { dimension: distribucionDim })}
+              onCsv={() => descargar("distribucion", "csv", { dimension: distribucionDim })}
               descargando={descargando}
               tipo="distribucion"
             />
@@ -258,17 +263,22 @@ function ReporteCard({
 function Botones({
   onExcel,
   onPdf,
+  onCsv,
   descargando,
   tipo,
 }: {
   onExcel: () => void
   onPdf: () => void
+  onCsv: () => void
   descargando: string | null
   tipo: string
 }) {
   const cargandoExcel = descargando === `${tipo}-excel`
   const cargandoPdf = descargando === `${tipo}-pdf`
+  const cargandoCsv = descargando === `${tipo}-csv`
   const ocupado = descargando !== null
+  const btnSec =
+    "inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] cursor-pointer disabled:opacity-60 transition-colors flex-1"
   return (
     <div className="flex items-center gap-2">
       <button
@@ -280,13 +290,14 @@ function Botones({
         <FileSpreadsheet className="w-4 h-4" />
         {cargandoExcel ? "Generando..." : "Excel"}
       </button>
-      <button
-        onClick={onPdf}
-        disabled={ocupado}
-        className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] cursor-pointer disabled:opacity-60 transition-colors flex-1"
-      >
+      <button onClick={onPdf} disabled={ocupado} className={btnSec}>
         <FileText className="w-4 h-4" />
         {cargandoPdf ? "Generando..." : "PDF"}
+      </button>
+      {/* CSV: datos crudos, sin formato, para llevarlos a SPSS o R. */}
+      <button onClick={onCsv} disabled={ocupado} className={btnSec} title="Datos crudos para análisis estadístico">
+        <Table2 className="w-4 h-4" />
+        {cargandoCsv ? "Generando..." : "CSV"}
       </button>
     </div>
   )

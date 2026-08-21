@@ -26,6 +26,8 @@ export default function OnboardingSurveyPage() {
   // Demographics
   const [sexo, setSexo] = useState<Sexo>(null);
   const [esSeguimiento, setEsSeguimiento] = useState(false);
+  // Seguimiento de alguien cuyo sexo nunca se guardó: hay que pedírselo.
+  const [faltaSexo, setFaltaSexo] = useState(false);
 
   const facultades = {
     "Ciencias de la Salud": [
@@ -134,6 +136,11 @@ export default function OnboardingSurveyPage() {
         setPrograma(res.data.program ?? "");
         const t: string | null = res.data.tipo_usuario;
         if (t) setTipoUsuario(t.charAt(0).toUpperCase() + t.slice(1));
+        // El sexo empezó a guardarse después de las primeras encuestas: quien
+        // lo tenga vacío lo completa aquí, y por eso se le sigue preguntando.
+        const s: string | null = res.data.sexo;
+        if (s === "masculino" || s === "femenino") setSexo(s);
+        else setFaltaSexo(true);
       })
       .catch(() => {});
   }, []);
@@ -151,11 +158,12 @@ export default function OnboardingSurveyPage() {
   const progressPct = Math.round((answeredCount / TOTAL_QUESTIONS) * 100);
   // El administrativo no necesariamente pertenece a una facultad/programa
   const esAdministrativo = tipoUsuario === "Administrativo";
-  const allDemographicsFilled =
-    esSeguimiento ||
-    (sexo !== null &&
+  const allDemographicsFilled = esSeguimiento
+    ? // En un seguimiento lo demás viene del perfil; solo puede faltar el sexo.
+      !faltaSexo || sexo !== null
+    : sexo !== null &&
       tipoUsuario !== "" &&
-      (esAdministrativo || (facultad !== "" && programa !== "")));
+      (esAdministrativo || (facultad !== "" && programa !== ""));
   const allQuestionsFilled = answeredCount === TOTAL_QUESTIONS;
   const canSubmit = allDemographicsFilled && allQuestionsFilled;
 
@@ -206,6 +214,7 @@ export default function OnboardingSurveyPage() {
         facultad,
         program: programa,
         tipo_usuario: tipoUsuario.toLowerCase() as "estudiante" | "docente" | "administrativo",
+        sexo,
         ...buildSurveyPayload(answers),
       };
 
@@ -381,13 +390,20 @@ export default function OnboardingSurveyPage() {
             </p>
           </section>
         )}
-        {/* Datos demográficos: solo en la primera página y solo si NO es un
-            seguimiento (ahí ya los tenemos del perfil). */}
-        {currentPage === 0 && !esSeguimiento && (
+        {/* Datos demográficos: solo en la primera página. En un seguimiento ya
+            los tenemos del perfil, salvo el sexo de quien respondió antes de
+            que se guardara: a esa persona se le pide solo ese campo. */}
+        {currentPage === 0 && (!esSeguimiento || faltaSexo) && (
           <section className="mb-8 rounded-xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm p-5 sm:p-6">
             <h2 className="text-base font-bold font-heading text-[#1F2937] mb-4">
-              Datos Demograficos
+              {esSeguimiento ? "Un dato que nos falta" : "Datos Demograficos"}
             </h2>
+            {esSeguimiento && (
+              <p className="text-sm text-[#6B7280] -mt-2 mb-4">
+                No lo tenemos registrado de tu primera encuesta. Lo usamos solo para los análisis
+                generales.
+              </p>
+            )}
             <div className="grid sm:grid-cols-2 gap-6">
               {/* Sexo */}
               <fieldset>
@@ -422,7 +438,7 @@ export default function OnboardingSurveyPage() {
               </fieldset>
 
               {/* Facultad */}
-              <div>
+              <div className={esSeguimiento ? "hidden" : undefined}>
                 <label className="text-sm font-medium text-[#1F2937] block mb-2">
                   Facultad
                   {esAdministrativo && (
@@ -453,7 +469,7 @@ export default function OnboardingSurveyPage() {
                 )}
               </div>
               {/*Programa*/}
-              <div>
+              <div className={esSeguimiento ? "hidden" : undefined}>
                 <label className="text-sm font-medium text-[#1F2937] block mb-2">
                   Programa
                   {esAdministrativo && (
@@ -482,7 +498,7 @@ export default function OnboardingSurveyPage() {
                 )}
               </div>
               {/*Tipo de usuario*/}
-              <fieldset>
+              <fieldset className={esSeguimiento ? "hidden" : undefined}>
                 <legend className="text-sm font-medium text-[#1F2937] mb-2">
                   Tipo de usuario
                 </legend>
