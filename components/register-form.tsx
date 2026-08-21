@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api } from "@/lib/api"
@@ -25,6 +25,7 @@ export function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [emailTaken, setEmailTaken] = useState(false)
   const [touched, setTouched] = useState({
     fullName: false,
     email: false,
@@ -41,19 +42,36 @@ export function RegisterForm() {
       : ""
   const emailError = !emailRegex.test(email)
     ? "Ingresa un correo válido, por ejemplo: nombre@dominio.com"
-    : ""
+    : emailTaken
+      ? "El correo ya está registrado."
+      : ""
   const passwordError =
     password.length < 8 ? "La contraseña debe tener al menos 8 caracteres." : ""
   const confirmError =
     confirmPassword !== password ? "Las contraseñas no coinciden." : ""
   const isFormValid = !nameError && !emailError && !passwordError && !confirmError
 
+  // Revisa si el correo ya existe mientras se escribe (sin esperar al botón).
+  // Reutiliza el endpoint de la recuperación; con debounce para no consultar
+  // en cada tecla. Si la consulta falla, no bloquea: el registro valida igual.
+  useEffect(() => {
+    setEmailTaken(false)
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return
+    const t = setTimeout(() => {
+      api
+        .post("/auth/verificar-correo", { email })
+        .then(({ data }) => setEmailTaken(!!data.existe))
+        .catch(() => {})
+    }, 450)
+    return () => clearTimeout(t)
+  }, [email])
+
   const markTouched = (field: keyof typeof touched) =>
     setTouched((prev) => ({ ...prev, [field]: true }))
 
   // Muestra el error solo cuando el campo ya fue tocado
   const showNameError = touched.fullName && !!nameError
-  const showEmailError = touched.email && !!emailError
+  const showEmailError = (touched.email || emailTaken) && !!emailError
   const showPasswordError = touched.password && !!passwordError
   const showConfirmError = touched.confirmPassword && !!confirmError
 
