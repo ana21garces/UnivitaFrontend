@@ -26,11 +26,21 @@ async function handler(req: NextRequest, { params }: { params: Promise<{ path: s
       body,
     })
 
-    const data = await response.text()
+    // Se reenvía el cuerpo como binario: `response.text()` decodifica como
+    // texto UTF-8 y corrompe descargas como Excel o PDF. `arrayBuffer` sirve
+    // igual para JSON, que el navegador interpreta por su Content-Type.
+    const data = await response.arrayBuffer()
+
+    const respHeaders: Record<string, string> = {
+      "Content-Type": response.headers.get("content-type") ?? "application/json",
+    }
+    // Necesario para que el navegador nombre bien el archivo descargado.
+    const disposition = response.headers.get("content-disposition")
+    if (disposition) respHeaders["Content-Disposition"] = disposition
 
     return new NextResponse(data, {
       status: response.status,
-      headers: { "Content-Type": "application/json" },
+      headers: respHeaders,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error connecting to backend"
