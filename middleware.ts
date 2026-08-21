@@ -19,6 +19,10 @@ const SURVEY_EXEMPT_PATHS = [
   "/dashboard/capellan",
   "/dashboard/actividad-fisica",
   "/dashboard/responsabilidad-salud",
+  "/dashboard/relaciones-interpersonales",
+  "/dashboard/manejo-estres",
+  "/dashboard/nutricion",
+  "/dashboard/perfil",
 ]
 
 export function middleware(request: NextRequest) {

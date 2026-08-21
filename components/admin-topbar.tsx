@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { Menu, Bell, LogOut } from "lucide-react"
+import { usePathname } from "next/navigation"
+import { Menu, Bell } from "lucide-react"
 import { api } from "@/lib/api"
-import { clearSession } from "@/lib/auth"
+import { PerfilMenu } from "@/components/perfil-menu"
 
 // Título de sección según la ruta, para la miga de pan.
 const SECTION_LABELS: Record<string, string> = {
@@ -29,7 +29,6 @@ type Notificacion = {
 }
 
 export function AdminTopbar({ onMenu }: { onMenu: () => void }) {
-  const router = useRouter()
   const pathname = usePathname()
   const section = SECTION_LABELS[pathname] ?? "Panel"
 
@@ -53,10 +52,6 @@ export function AdminTopbar({ onMenu }: { onMenu: () => void }) {
     }
   }
 
-  const handleLogout = () => {
-    clearSession()
-    router.replace("/")
-  }
 
   return (
     <header className="sticky top-0 z-20 h-16 bg-[#FFFFFF] border-b border-[#E2E8F0] flex items-center justify-between px-4 sm:px-6">
@@ -137,24 +132,7 @@ export function AdminTopbar({ onMenu }: { onMenu: () => void }) {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-[#16A34A] flex items-center justify-center text-sm font-bold text-white">
-            {nombre.charAt(0).toUpperCase() || "A"}
-          </div>
-          <div className="hidden sm:flex flex-col leading-tight">
-            <span className="text-sm font-medium text-[#1F2937]">{nombre || "Administrador"}</span>
-            <span className="text-[10px] text-[#6B7280]">Administrador</span>
-          </div>
-        </div>
-
-        <button
-          onClick={handleLogout}
-          className="p-2 rounded-lg text-[#6B7280] hover:text-[#DC2626] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
-          aria-label="Cerrar sesión"
-          title="Cerrar sesión"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
+        <PerfilMenu nombre={nombre} subtitulo="Administrador" />
       </div>
     </header>
   )

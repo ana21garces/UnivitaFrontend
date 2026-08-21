@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { UniVitaLogo } from "@/components/univita-logo"
+import { PerfilMenu } from "@/components/perfil-menu"
 import { clearSession } from "@/lib/auth"
 import { api } from "@/lib/api"
 
@@ -221,28 +222,10 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A]">
-              {nombre.charAt(0).toUpperCase()}
-            </div>
-            <div className="hidden sm:flex flex-col leading-tight">
-              <span className="text-sm font-medium text-[#1F2937]">{nombre}</span>
-              {tipoUsuario && (
-                <span className="text-[10px] text-[#6B7280]">
-                  {TIPO_USUARIO_LABEL[tipoUsuario] ?? tipoUsuario}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="sr-only sm:not-sr-only">Cerrar Sesión</span>
-          </button>
+          <PerfilMenu
+            nombre={nombre}
+            subtitulo={tipoUsuario ? (TIPO_USUARIO_LABEL[tipoUsuario] ?? tipoUsuario) : undefined}
+          />
 
           {/* Mobile toggle */}
           <button
