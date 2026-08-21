@@ -26,8 +26,16 @@ const SURVEY_EXEMPT_PATHS = [
 ]
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl
   const surveyDone = request.cookies.get("univita8_survey_done")?.value === "true"
+
+  // Responder una medición de seguimiento: quien ya hizo la encuesta puede
+  // volver a entrar con ?seguimiento=1. Sin esto la cookie lo devolvería al
+  // dashboard. No es un permiso real: si no hay medición abierta para esa
+  // persona, el backend rechaza la respuesta.
+  if (pathname.startsWith("/onboarding/survey") && searchParams.has("seguimiento")) {
+    return NextResponse.next()
+  }
 
   // Rutas exentas del requisito de encuesta
   if (SURVEY_EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {

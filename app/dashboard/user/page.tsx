@@ -6,6 +6,7 @@ import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import Link from "next/link"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { getAccessToken, setSurveyDone } from "@/lib/auth"
+import { CalendarClock } from "lucide-react"
 
 type DimensionResult = { indice: number; nivel: string }
 type EncuestaResultado = {
@@ -80,9 +81,16 @@ function getBarColor(nivel: string) {
   }
 }
 
+type SeguimientoPendiente = {
+  ciclo_id: number
+  nombre: string
+  fecha_cierre: string | null
+}
+
 export default function UserDashboard() {
   const router = useRouter()
   const [resultado, setResultado] = useState<EncuestaResultado | null>(null)
+  const [seguimiento, setSeguimiento] = useState<SeguimientoPendiente | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -91,6 +99,14 @@ export default function UserDashboard() {
       try {
         const { data } = await api.get("/encuesta/resultado")
         setResultado(data)
+        // Si hay una medición de seguimiento abierta para esta persona, se le
+        // avisa. Va aparte del resultado: que falle no debe tumbar la pantalla.
+        try {
+          const { data: estado } = await api.get("/encuesta/estado")
+          setSeguimiento(estado.seguimiento_pendiente ?? null)
+        } catch {
+          setSeguimiento(null)
+        }
       } catch (err) {
         // Sin esto, una sesion caducada dejaba la pantalla cargando para siempre.
         if (redirigirPorError(err, router)) return
@@ -145,6 +161,34 @@ export default function UserDashboard() {
             Completaste el cuestionario PEPS II — aquí están tus resultados de estilo de vida.
           </p>
         </div>
+
+        {/* Medición de seguimiento abierta: invita, no bloquea */}
+        {seguimiento && (
+          <section className="mb-6 rounded-xl border border-[#BBF7D0] bg-[#F0FDF4] p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#FFFFFF] text-[#16A34A] shrink-0">
+              <CalendarClock className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-[#166534]">Hay una nueva medición disponible</p>
+              <p className="mt-0.5 text-sm text-[#15803D]">
+                Vuelve a responder la encuesta para ver cómo cambió tu bienestar desde la primera vez
+                {seguimiento.fecha_cierre
+                  ? `. Tienes hasta el ${new Date(seguimiento.fecha_cierre).toLocaleDateString("es-ES", {
+                      day: "2-digit",
+                      month: "long",
+                    })}.`
+                  : "."}
+              </p>
+            </div>
+            <Link
+              href="/onboarding/survey?seguimiento=1"
+              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold text-white shadow-md shadow-[#16A34A]/20 hover:shadow-lg transition-all shrink-0"
+              style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
+            >
+              Responder ahora
+            </Link>
+          </section>
+        )}
 
         {/* PEPS II global + dimensiones */}
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
