@@ -7,6 +7,7 @@ import { getAccessToken } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
 import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap, Bell, Check } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { ComparativoAnterior } from "@/components/comparativo-anterior"
 import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
 import { NotificarModal } from "@/components/notificar-modal"
 import {
@@ -39,6 +40,7 @@ type Usuario = {
   tipo_usuario: string
   universidad?: string
   fecha?: string
+  indice_anterior?: number | null
   psicologia_positiva: PsicologiaPositiva
 }
 
@@ -169,9 +171,12 @@ function UsuarioRow({
               </span>
             )}
           </div>
-          <p className="text-xs text-[#6B7280] truncate">
-            {usuario.universidad && `${usuario.universidad} · `}{fecha}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-[#6B7280] truncate">
+              {usuario.universidad && `${usuario.universidad} · `}{fecha}
+            </p>
+            <ComparativoAnterior actual={pp.pp_indice} anterior={usuario.indice_anterior} />
+          </div>
         </div>
         <div className="flex items-center gap-3 ml-4">
           <div className="hidden sm:flex items-center gap-2 w-52">
