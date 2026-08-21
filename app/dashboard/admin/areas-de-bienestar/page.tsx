@@ -4,6 +4,8 @@ import {
   Dumbbell,
   Stethoscope,
   HeartHandshake,
+  Brain,
+  Apple,
   ArrowRight,
 } from "lucide-react"
 
@@ -37,6 +39,20 @@ const AREAS = [
     href: "/dashboard/relaciones-interpersonales",
     Icon: HeartHandshake,
     box: "bg-[#EEF2FF] text-[#4F46E5]",
+  },
+  {
+    title: "Manejo del estrés",
+    desc: "Resultados y estadísticas de manejo del estrés.",
+    href: "/dashboard/manejo-estres",
+    Icon: Brain,
+    box: "bg-[#F0FDFA] text-[#0D9488]",
+  },
+  {
+    title: "Nutrición",
+    desc: "Resultados y estadísticas de nutrición.",
+    href: "/dashboard/nutricion",
+    Icon: Apple,
+    box: "bg-[#FFF7ED] text-[#EA580C]",
   },
 ]
 
