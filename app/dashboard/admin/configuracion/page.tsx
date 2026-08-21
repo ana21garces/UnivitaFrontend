@@ -13,6 +13,8 @@ import {
   Check,
   AlertTriangle,
   Users,
+  Pencil,
+  Trash2,
 } from "lucide-react"
 
 type Ciclo = {
@@ -70,6 +72,10 @@ export default function ConfiguracionPage() {
   const [mover, setMover] = useState<{ ciclo: Ciclo; modo: "extender" | "reabrir" } | null>(null)
   const [nuevaFecha, setNuevaFecha] = useState("")
   const [cerrar, setCerrar] = useState<Ciclo | null>(null)
+
+  const [renombrar, setRenombrar] = useState<Ciclo | null>(null)
+  const [nuevoNombre, setNuevoNombre] = useState("")
+  const [eliminar, setEliminar] = useState<Ciclo | null>(null)
 
   async function cargar() {
     try {
@@ -185,6 +191,49 @@ export default function ConfiguracionPage() {
       if (!redirigirPorError(err, router)) {
         setLoadError(detalleDeError(err, "No pudimos cerrar la medición."))
         setCerrar(null)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function abrirRenombrar(ciclo: Ciclo) {
+    setNuevoNombre(ciclo.nombre)
+    setFormError("")
+    setRenombrar(ciclo)
+  }
+
+  async function guardarNombre() {
+    if (!renombrar) return
+    if (nuevoNombre.trim().length < 3) return setFormError("Ponle un nombre de al menos 3 caracteres.")
+    setSaving(true)
+    setFormError("")
+    try {
+      await api.patch(`/ciclos/${renombrar.id}/nombre`, { nombre: nuevoNombre.trim() })
+      setRenombrar(null)
+      await cargar()
+      mostrarAviso("Nombre actualizado.")
+    } catch (err) {
+      if (!redirigirPorError(err, router)) {
+        setFormError(detalleDeError(err, "No pudimos cambiar el nombre."))
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function confirmarEliminar() {
+    if (!eliminar) return
+    setSaving(true)
+    try {
+      await api.delete(`/ciclos/${eliminar.id}`)
+      setEliminar(null)
+      await cargar()
+      mostrarAviso("Medición eliminada.")
+    } catch (err) {
+      if (!redirigirPorError(err, router)) {
+        setLoadError(detalleDeError(err, "No pudimos eliminar la medición."))
+        setEliminar(null)
       }
     } finally {
       setSaving(false)
@@ -307,6 +356,7 @@ export default function ConfiguracionPage() {
                       <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Ventana</th>
                       <th className="text-center px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Respondieron</th>
                       <th className="text-center px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Participación</th>
+                      <th className="text-right px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -329,6 +379,30 @@ export default function ConfiguracionPage() {
                           {c.respondieron} / {c.elegibles}
                         </td>
                         <td className="px-4 py-3 text-center font-semibold text-[#1F2937]">{c.participacion}%</td>
+                        <td className="px-4 py-3">
+                          {c.tipo === "linea_base" ? (
+                            <span className="block text-right text-xs text-[#CBD5E1]">—</span>
+                          ) : (
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => abrirRenombrar(c)}
+                                title="Editar nombre"
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#16A34A] cursor-pointer transition-colors"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              {c.respondieron === 0 && (
+                                <button
+                                  onClick={() => setEliminar(c)}
+                                  title="Eliminar medición"
+                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-[#64748B] hover:bg-[#FEF2F2] hover:text-[#DC2626] cursor-pointer transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -348,14 +422,32 @@ export default function ConfiguracionPage() {
                       {c.fecha_cierre ? ` → ${formatFecha(c.fecha_cierre)}` : " → sin cierre"}
                     </p>
                     <Participacion ciclo={c} />
+                    {c.tipo !== "linea_base" && (
+                      <div className="flex items-center gap-2 pt-1">
+                        <button onClick={() => abrirRenombrar(c)} className={btnSec}>
+                          <Pencil className="w-4 h-4" />
+                          Nombre
+                        </button>
+                        {c.respondieron === 0 && (
+                          <button
+                            onClick={() => setEliminar(c)}
+                            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#FECACA] bg-[#FFFFFF] text-sm font-medium text-[#DC2626] hover:bg-[#FEF2F2] cursor-pointer transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Eliminar
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
 
             <p className="mt-4 text-xs text-[#94A3B8] max-w-2xl">
-              Solo la medición más reciente se puede extender, cerrar o reabrir. Si necesitas volver a
-              medir, programa una nueva: así cada respuesta queda en la ronda que le corresponde.
+              Solo la medición más reciente se puede extender, cerrar o reabrir: así cada respuesta queda
+              en la ronda que le corresponde. El nombre sí se puede editar en cualquier momento, y una
+              medición que aún no tiene respuestas se puede eliminar.
             </p>
           </>
         )}
@@ -511,6 +603,80 @@ export default function ConfiguracionPage() {
               <button onClick={cerrarAhora} disabled={saving} className="flex-1 h-10 rounded-lg text-sm font-semibold text-[#FFFFFF] bg-[#D97706] hover:bg-[#B45309] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 transition-colors">
                 <Ban className="w-4 h-4" />
                 {saving ? "Cerrando..." : "Cerrar ahora"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: renombrar */}
+      {renombrar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-[#1F2937]/50 backdrop-blur-sm" onClick={() => !saving && setRenombrar(null)} />
+          <div className="relative bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md mx-4 p-6">
+            <button onClick={() => setRenombrar(null)} disabled={saving} className="absolute top-4 right-4 p-1 rounded-lg text-[#94A3B8] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50" aria-label="Cerrar">
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#EAF3DE] text-[#16A34A] mb-4">
+              <Pencil className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Editar nombre</h3>
+            <p className="text-sm text-[#6B7280] mb-5 leading-relaxed">
+              Cambia solo cómo se llama la medición. No afecta las fechas ni las respuestas ya recibidas.
+            </p>
+            {formError && (
+              <div className="flex items-center gap-1.5 mb-4 text-sm text-[#DC2626]">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5 mb-5">
+              <label className="text-sm font-medium text-[#1F2937]">Nombre</label>
+              <input
+                type="text"
+                value={nuevoNombre}
+                onChange={(e) => setNuevoNombre(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && guardarNombre()}
+                className={inputCls}
+                autoFocus
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setRenombrar(null)} disabled={saving} className="flex-1 h-10 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50">
+                Cancelar
+              </button>
+              <button onClick={guardarNombre} disabled={saving} className="flex-1 h-10 rounded-lg text-sm font-semibold text-[#FFFFFF] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60" style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}>
+                <Check className="w-4 h-4" />
+                {saving ? "Guardando..." : "Guardar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: eliminar medición sin respuestas */}
+      {eliminar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-[#1F2937]/50 backdrop-blur-sm" onClick={() => !saving && setEliminar(null)} />
+          <div className="relative bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md mx-4 p-6">
+            <button onClick={() => setEliminar(null)} disabled={saving} className="absolute top-4 right-4 p-1 rounded-lg text-[#94A3B8] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50" aria-label="Cerrar">
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#FEF2F2] text-[#DC2626] mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Eliminar medición</h3>
+            <p className="text-sm text-[#6B7280] mb-5 leading-relaxed">
+              «{eliminar.nombre}» se eliminará por completo. Nadie ha respondido todavía, así que no se
+              pierde ningún dato. Si era la más reciente, la anterior volverá a poder editarse.
+            </p>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setEliminar(null)} disabled={saving} className="flex-1 h-10 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50">
+                Cancelar
+              </button>
+              <button onClick={confirmarEliminar} disabled={saving} className="flex-1 h-10 rounded-lg text-sm font-semibold text-[#FFFFFF] bg-[#DC2626] hover:bg-[#B91C1C] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 transition-colors">
+                <Trash2 className="w-4 h-4" />
+                {saving ? "Eliminando..." : "Eliminar"}
               </button>
             </div>
           </div>
