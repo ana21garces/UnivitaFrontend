@@ -107,6 +107,18 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
     api.get("/notificaciones").then((res) => setNotificaciones(res.data)).catch(() => {})
   }, [])
 
+  // Aviso de medición de seguimiento abierta: cuenta como una notificación por
+  // leer en la campana. Solo aplica a los usuarios que responden la encuesta.
+  const [seguimiento, setSeguimiento] = useState<{ nombre: string; fecha_cierre: string | null } | null>(null)
+
+  useEffect(() => {
+    if (role !== "user") return
+    api
+      .get("/encuesta/estado")
+      .then((res) => setSeguimiento(res.data.seguimiento_pendiente ?? null))
+      .catch(() => {})
+  }, [role])
+
   const marcarLeida = async (id: number) => {
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)))
     try {
@@ -116,7 +128,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
     }
   }
 
-  const noLeidas = notificaciones.filter((n) => !n.leida).length
+  const noLeidas = notificaciones.filter((n) => !n.leida).length + (seguimiento ? 1 : 0)
 
   const pathname = usePathname()
   const router = useRouter()
@@ -193,10 +205,25 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
                 <div className="px-4 py-3 border-b border-[#E2E8F0]">
                   <p className="text-sm font-bold text-[#1F2937]">Notificaciones</p>
                 </div>
-                {notificaciones.length === 0 ? (
+                {notificaciones.length === 0 && !seguimiento ? (
                   <p className="px-4 py-6 text-xs text-[#6B7280] text-center">No tienes notificaciones.</p>
                 ) : (
                   <div className="flex flex-col divide-y divide-[#F1F5F9]">
+                    {seguimiento && (
+                      <div className="px-4 py-3 bg-[#F0FDF4]">
+                        <p className="text-xs font-semibold text-[#166534]">Nueva medición disponible</p>
+                        <p className="text-xs text-[#15803D] mt-0.5">
+                          Responde la encuesta para ver cómo cambió tu bienestar.
+                        </p>
+                        <Link
+                          href="/onboarding/survey?seguimiento=1"
+                          onClick={() => setPanelAbierto(false)}
+                          className="inline-block mt-1.5 text-[11px] font-semibold text-[#16A34A] hover:underline"
+                        >
+                          Responder ahora →
+                        </Link>
+                      </div>
+                    )}
                     {notificaciones.map((n) => (
                       <div key={n.id} className={`px-4 py-3 ${n.leida ? "" : "bg-[#F0FDF4]"}`}>
                         <div className="flex items-start justify-between gap-2">
