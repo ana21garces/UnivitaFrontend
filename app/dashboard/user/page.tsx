@@ -8,6 +8,7 @@ import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { MisionesHoySection } from "@/components/misiones-hoy"
 import { getAccessToken, setSurveyDone } from "@/lib/auth"
 import { TrendingUp } from "lucide-react"
+import type { ProgresoDimension } from "@/lib/seguimiento-recomendaciones"
 
 type DimensionResult = { indice: number; nivel: string }
 type EncuestaResultado = {
@@ -77,6 +78,7 @@ export default function UserDashboard() {
   const router = useRouter()
   const [resultado, setResultado] = useState<EncuestaResultado | null>(null)
   const [loading, setLoading] = useState(true)
+  const [progreso, setProgreso] = useState<Record<string, ProgresoDimension>>({})
 
   useEffect(() => {
     const fetchResultado = async () => {
@@ -96,6 +98,16 @@ export default function UserDashboard() {
       }
     }
     fetchResultado()
+
+    // Progreso de seguimiento por dimensión — solo informativo, si falla
+    // (ej. todavía sin encuesta) simplemente no se muestran los badges.
+    api.get("/seguimiento-recomendaciones/progreso")
+      .then(({ data }) => {
+        const porDimension: Record<string, ProgresoDimension> = {}
+        for (const d of data.dimensiones as ProgresoDimension[]) porDimension[d.dimension] = d
+        setProgreso(porDimension)
+      })
+      .catch(() => {})
   }, [router])
 
   if (loading) {
@@ -216,11 +228,19 @@ export default function UserDashboard() {
                     const planRoute = DIMENSION_PLAN_ROUTE[d.key]
                     const prioColor = i === 0 ? "#EF4444" : "#F59E0B"
                     const prioLabel = i === 0 ? "Prioridad alta" : "Prioridad media"
+                    const prog = progreso[d.key]
                     return (
                       <div key={d.key} className="flex items-center justify-between py-2.5 gap-3">
                         <span className="text-sm text-[#1F2937] min-w-0">
                           {DIMENSION_NAMES[d.key]}{" "}
                           <span className="text-[#9CA3AF] font-normal">({Math.round(d.indice)})</span>
+                          {prog && prog.total > 0 && (
+                            <span className="block text-[10px] text-[#9CA3AF] font-normal">
+                              {prog.mensaje_cierre
+                                ? "✓ Recomendaciones completadas"
+                                : `${prog.completadas}/${prog.total} recomendaciones completadas`}
+                            </span>
+                          )}
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-xs font-semibold" style={{ color: prioColor }}>

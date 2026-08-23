@@ -5,103 +5,16 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
-import { ArrowLeft, ChevronDown, ChevronUp, AlertCircle, Stethoscope } from "lucide-react"
+import { ArrowLeft, AlertCircle, Stethoscope } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
-
-// ── Tipos ──────────────────────────────────────────────────────────────────
-
-type Tarjeta = {
-  pregunta_num: number
-  pregunta_texto: string
-  nivel: string
-  puntaje: number
-  tecnica: string
-  objetivo: string
-  instrucciones: string[]
-}
-
-type RecomendacionesRSData = {
-  usuario_id: string
-  nombre: string
-  rs_nivel: string
-  rs_indice: number
-  total_tarjetas: number
-  tarjetas: Tarjeta[]
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-
-const NIVEL_CHIP: Record<string, { bg: string; text: string }> = {
-  POBRE:     { bg: "#FFF5F5", text: "#E53E3E" },
-  MODERADO:  { bg: "#FFFAF0", text: "#DD6B20" },
-  BUENO:     { bg: "#EBF8FF", text: "#3182CE" },
-  EXCELENTE: { bg: "#F0FFF4", text: "#38A169" },
-}
-
-function NivelChip({ nivel }: { nivel: string }) {
-  const cfg = NIVEL_CHIP[nivel.toUpperCase()] ?? { bg: "#EDF2F7", text: "#718096" }
-  return (
-    <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide"
-      style={{ background: cfg.bg, color: cfg.text }}
-    >
-      {nivel}
-    </span>
-  )
-}
-
-// ── Tarjeta de recomendación ───────────────────────────────────────────────
-
-function TarjetaRS({ tarjeta }: { tarjeta: Tarjeta }) {
-  const [open, setOpen] = useState(true)
-
-  return (
-    <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
-      <button
-        className="w-full flex items-start justify-between px-5 py-4 hover:bg-[#F8FAFC] transition-colors text-left"
-        onClick={() => setOpen(!open)}
-      >
-        <div className="flex-1 pr-4">
-          <div className="flex items-center gap-2 mb-1">
-            <NivelChip nivel={tarjeta.nivel} />
-          </div>
-          <p className="text-xs text-[#6B7280] mb-1">Pregunta {tarjeta.pregunta_num} · {tarjeta.pregunta_texto}</p>
-          <h3 className="text-base font-bold text-[#1F2937]">{tarjeta.tecnica}</h3>
-        </div>
-        {open
-          ? <ChevronUp className="w-5 h-5 text-[#6B7280] shrink-0 mt-1" />
-          : <ChevronDown className="w-5 h-5 text-[#6B7280] shrink-0 mt-1" />
-        }
-      </button>
-
-      {open && (
-        <div className="px-5 pb-5 border-t border-[#E2E8F0]">
-          <p className="text-sm text-[#374151] mt-4 mb-3 leading-relaxed">{tarjeta.objetivo}</p>
-          <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">Instrucciones</p>
-          <ol className="flex flex-col gap-2">
-            {tarjeta.instrucciones.map((paso, i) => (
-              <li key={i} className="flex gap-3 text-sm text-[#374151]">
-                <span
-                  className="flex items-center justify-center w-5 h-5 rounded-full font-bold text-[10px] shrink-0 mt-0.5"
-                  style={{ background: "#ECFEFF", color: "#0891B2" }}
-                >
-                  {i + 1}
-                </span>
-                <span className="leading-relaxed">{paso}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-    </div>
-  )
-}
+import { TarjetaSeguimiento } from "@/components/tarjeta-seguimiento"
+import type { SeguimientoRecomendacion, TarjetasSeguimientoResponse } from "@/lib/seguimiento-recomendaciones"
 
 // ── Página principal ───────────────────────────────────────────────────────
 
 export default function RecomendacionesRSPage() {
   const router = useRouter()
-  const [data, setData] = useState<RecomendacionesRSData | null>(null)
+  const [data, setData] = useState<TarjetasSeguimientoResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [noEncuesta, setNoEncuesta] = useState(false)
@@ -110,7 +23,7 @@ export default function RecomendacionesRSPage() {
     if (!getAccessToken()) { router.replace("/"); return }
 
     api
-      .get("/encuesta/recomendaciones/responsabilidad-salud")
+      .get("/seguimiento-recomendaciones/responsabilidad-salud/tarjetas")
       .then((res) => setData(res.data))
       .catch((err) => {
         if (redirigirPorError(err, router)) return
@@ -119,6 +32,19 @@ export default function RecomendacionesRSPage() {
       })
       .finally(() => setLoading(false))
   }, [router])
+
+  const actualizarSeguimiento = (nuevo: SeguimientoRecomendacion) => {
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            tarjetas: prev.tarjetas.map((t) =>
+              t.seguimiento.id === nuevo.id ? { ...t, seguimiento: nuevo } : t
+            ),
+          }
+        : prev
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -149,11 +75,11 @@ export default function RecomendacionesRSPage() {
           {data && (
             <div className="flex items-center gap-3 self-start sm:self-auto">
               <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm text-center">
-                <p className="text-lg font-bold text-[#1F2937]">{data.rs_indice.toFixed(1)}</p>
+                <p className="text-lg font-bold text-[#1F2937]">{data.indice_dimension.toFixed(1)}</p>
                 <p className="text-[10px] text-[#6B7280]">Índice RS</p>
               </div>
               <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm text-center">
-                <p className="text-sm font-bold text-[#1F2937]">{data.rs_nivel}</p>
+                <p className="text-sm font-bold text-[#1F2937]">{data.nivel_dimension}</p>
                 <p className="text-[10px] text-[#6B7280]">Nivel RS</p>
               </div>
             </div>
@@ -204,8 +130,13 @@ export default function RecomendacionesRSPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                {data.tarjetas.map((t, i) => (
-                  <TarjetaRS key={i} tarjeta={t} />
+                {data.tarjetas.map((t) => (
+                  <TarjetaSeguimiento
+                    key={t.seguimiento.id}
+                    tarjeta={t.tarjeta}
+                    seguimiento={t.seguimiento}
+                    onUpdate={actualizarSeguimiento}
+                  />
                 ))}
               </div>
             )}
