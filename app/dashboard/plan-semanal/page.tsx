@@ -1,235 +1,21 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useRef, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { ArrowLeft, ChevronDown, ChevronUp, Printer, AlertCircle, BookOpen } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
-
-// ── Tipos ──────────────────────────────────────────────────────────────────
-
-type Tarjeta = {
-  pregunta_num: number
-  pregunta_texto: string
-  nivel: string
-  puntaje: number
-  tecnica: string
-  objetivo: string
-  instrucciones: string[]
-}
-
-type RecomendacionesData = {
-  usuario_id: string
-  nombre: string
-  pp_nivel: string
-  pp_indice: number
-  total_tarjetas: number
-  tarjetas: Tarjeta[]
-}
-
-// ── Helpers de estilo ──────────────────────────────────────────────────────
-
-const NIVEL_CHIP: Record<string, { bg: string; text: string }> = {
-  POBRE:     { bg: "#FFF5F5", text: "#E53E3E" },
-  MODERADO:  { bg: "#FFFAF0", text: "#DD6B20" },
-  BUENO:     { bg: "#EBF8FF", text: "#3182CE" },
-  EXCELENTE: { bg: "#F0FFF4", text: "#38A169" },
-}
-
-function NivelChip({ nivel }: { nivel: string }) {
-  const cfg = NIVEL_CHIP[nivel.toUpperCase()] ?? { bg: "#EDF2F7", text: "#718096" }
-  return (
-    <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide"
-      style={{ background: cfg.bg, color: cfg.text }}
-    >
-      {nivel}
-    </span>
-  )
-}
-
-// ── Tarjeta tipo A ─────────────────────────────────────────────────────────
-
-function TarjetaEstandar({ tarjeta }: { tarjeta: Tarjeta }) {
-  const [open, setOpen] = useState(true)
-  return (
-    <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm overflow-hidden">
-      <button
-        className="w-full flex items-start justify-between px-5 py-4 hover:bg-[#F8FAFC] transition-colors text-left"
-        onClick={() => setOpen(!open)}
-      >
-        <div className="flex-1 pr-4">
-          <div className="flex items-center gap-2 mb-1">
-            <NivelChip nivel={tarjeta.nivel} />
-          </div>
-          <p className="text-xs text-[#6B7280] mb-1">Pregunta {tarjeta.pregunta_num} · {tarjeta.pregunta_texto}</p>
-          <h3 className="text-base font-bold text-[#1F2937]">{tarjeta.tecnica}</h3>
-        </div>
-        {open
-          ? <ChevronUp className="w-5 h-5 text-[#6B7280] shrink-0 mt-1" />
-          : <ChevronDown className="w-5 h-5 text-[#6B7280] shrink-0 mt-1" />
-        }
-      </button>
-
-      {open && (
-        <div className="px-5 pb-5 border-t border-[#E2E8F0]">
-          <p className="text-sm text-[#374151] mt-4 mb-3 leading-relaxed">{tarjeta.objetivo}</p>
-          <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">Instrucciones</p>
-          <ol className="flex flex-col gap-2">
-            {tarjeta.instrucciones.map((paso, i) => (
-              <li key={i} className="flex gap-3 text-sm text-[#374151]">
-                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#F0FDF4] text-[#16A34A] font-bold text-[10px] shrink-0 mt-0.5">
-                  {i + 1}
-                </span>
-                <span className="leading-relaxed">{paso}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Habit Tracker ──────────────────────────────────────────────────────────
-
-const MONTHS = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"]
-const NUM_HABITS = 12
-const NUM_DAYS = 31
-
-function HabitTracker() {
-  const [month, setMonth] = useState(new Date().getMonth())
-  const [year, setYear] = useState(new Date().getFullYear())
-  const [habitNames, setHabitNames] = useState<string[]>(Array(NUM_HABITS).fill(""))
-  const [checked, setChecked] = useState<boolean[][]>(
-    Array.from({ length: NUM_DAYS }, () => Array(NUM_HABITS).fill(false))
-  )
-  const [notes, setNotes] = useState("")
-
-  const toggleCell = (day: number, habit: number) => {
-    setChecked((prev) => {
-      const next = prev.map((row) => [...row])
-      next[day][habit] = !next[day][habit]
-      return next
-    })
-  }
-
-  return (
-    <div className="rounded-2xl overflow-hidden border border-[#1e293b]" style={{ background: "#0f172a" }}>
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-white/10">
-        <h4 className="text-white font-bold text-sm uppercase tracking-widest">Habit Tracker</h4>
-        <div className="flex items-center gap-2">
-          {/* Month selector */}
-          <div className="flex gap-1 flex-wrap">
-            {MONTHS.map((m, i) => (
-              <button
-                key={m}
-                onClick={() => setMonth(i)}
-                className={`text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors ${
-                  month === i
-                    ? "bg-white text-[#0f172a]"
-                    : "text-white/50 hover:text-white"
-                }`}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-          {/* Year input */}
-          <input
-            type="number"
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="w-16 bg-white/10 text-white text-xs font-bold text-center rounded px-1 py-0.5 border border-white/20 focus:outline-none focus:border-white/50"
-          />
-        </div>
-      </div>
-
-      {/* Grid — scroll horizontal en mobile */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-white text-xs" style={{ borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th className="w-8 text-white/40 font-normal py-1 px-2 text-left sticky left-0 z-10" style={{ background: "#0f172a" }}>
-                DÍA
-              </th>
-              {Array.from({ length: NUM_HABITS }, (_, i) => (
-                <th key={i} className="w-8 text-center font-bold text-white/70 py-1 px-1">
-                  {i + 1}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: NUM_DAYS }, (_, day) => (
-              <tr key={day} className="group">
-                <td
-                  className="text-white/40 font-mono text-[10px] py-0.5 px-2 text-left sticky left-0 z-10 group-hover:text-white/70 transition-colors"
-                  style={{ background: "#0f172a" }}
-                >
-                  {String(day + 1).padStart(2, "0")}
-                </td>
-                {Array.from({ length: NUM_HABITS }, (_, habit) => (
-                  <td key={habit} className="py-0.5 px-0.5 text-center">
-                    <button
-                      onClick={() => toggleCell(day, habit)}
-                      className={`w-6 h-6 rounded transition-colors border ${
-                        checked[day][habit]
-                          ? "bg-green-400 border-green-400"
-                          : "border-white/20 hover:border-white/50 bg-white/5"
-                      }`}
-                      aria-label={`Día ${day + 1}, hábito ${habit + 1}`}
-                    />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Habit legend */}
-      <div className="px-5 py-4 border-t border-white/10">
-        <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">
-          HABIT / KEY
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {habitNames.map((name, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="text-white/50 text-[10px] font-bold w-4 shrink-0">{i + 1}.</span>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => {
-                  const next = [...habitNames]
-                  next[i] = e.target.value
-                  setHabitNames(next)
-                }}
-                placeholder={`Hábito ${i + 1}`}
-                className="flex-1 bg-transparent border-b border-white/20 text-white text-xs py-0.5 focus:outline-none focus:border-white/60 placeholder:text-white/20"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Notes */}
-      <div className="px-5 pb-5 border-t border-white/10 pt-4">
-        <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-2">NOTES</p>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={3}
-          placeholder="Escribe tus notas aquí..."
-          className="w-full bg-white/5 border border-white/20 rounded-lg text-white text-xs p-2 focus:outline-none focus:border-white/50 placeholder:text-white/20 resize-none"
-        />
-      </div>
-    </div>
-  )
-}
+import { TarjetaSeguimiento, NivelChip } from "@/components/tarjeta-seguimiento"
+import { SeguimientoControles } from "@/components/seguimiento-controles"
+import { HabitTracker } from "@/components/actividades/PlantillaHabitoCalendario"
+import type {
+  SeguimientoRecomendacion,
+  TarjetaConSeguimiento,
+  TarjetasSeguimientoResponse,
+} from "@/lib/seguimiento-recomendaciones"
 
 // ── Hoja de trabajo interactiva (Tipo B) ───────────────────────────────────
 
@@ -401,9 +187,16 @@ function HojaDeTrabajoModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ── Tarjeta tipo B ─────────────────────────────────────────────────────────
+// ── Tarjeta tipo B (pregunta 6, Moderado): hoja de trabajo + seguimiento ───
 
-function TarjetaConHoja({ tarjeta }: { tarjeta: Tarjeta }) {
+function TarjetaConHoja({
+  item,
+  onUpdate,
+}: {
+  item: TarjetaConSeguimiento
+  onUpdate: (nuevo: SeguimientoRecomendacion) => void
+}) {
+  const { tarjeta, seguimiento } = item
   const [open, setOpen] = useState(true)
   const [hojaOpen, setHojaOpen] = useState(false)
 
@@ -452,6 +245,8 @@ function TarjetaConHoja({ tarjeta }: { tarjeta: Tarjeta }) {
               <BookOpen className="w-4 h-4" />
               Abrir hoja de trabajo
             </button>
+
+            <SeguimientoControles tarjeta={tarjeta} seguimiento={seguimiento} onUpdate={onUpdate} />
           </div>
         )}
       </div>
@@ -465,7 +260,7 @@ function TarjetaConHoja({ tarjeta }: { tarjeta: Tarjeta }) {
 
 export default function PlanSemanalPage() {
   const router = useRouter()
-  const [data, setData] = useState<RecomendacionesData | null>(null)
+  const [data, setData] = useState<TarjetasSeguimientoResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -473,7 +268,7 @@ export default function PlanSemanalPage() {
     if (!getAccessToken()) { router.replace("/"); return }
 
     api
-      .get("/encuesta/recomendaciones/psicologia-positiva")
+      .get("/seguimiento-recomendaciones/psicologia-positiva/tarjetas")
       .then((res) => setData(res.data))
       .catch((err) => {
         if (redirigirPorError(err, router)) return
@@ -482,7 +277,21 @@ export default function PlanSemanalPage() {
       .finally(() => setLoading(false))
   }, [router])
 
-  const esTipoB = (t: Tarjeta) => t.pregunta_num === 6 && t.nivel === "MODERADO"
+  const actualizarSeguimiento = (nuevo: SeguimientoRecomendacion) => {
+    setData((prev) =>
+      prev
+        ? {
+            ...prev,
+            tarjetas: prev.tarjetas.map((t) =>
+              t.seguimiento.id === nuevo.id ? { ...t, seguimiento: nuevo } : t
+            ),
+          }
+        : prev
+    )
+  }
+
+  const esTipoB = (item: TarjetaConSeguimiento) =>
+    item.tarjeta.pregunta_num === 6 && item.tarjeta.nivel === "MODERADO"
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -509,11 +318,11 @@ export default function PlanSemanalPage() {
           {data && (
             <div className="flex items-center gap-3 self-start sm:self-auto">
               <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm text-center">
-                <p className="text-lg font-bold text-[#1F2937]">{data.pp_indice.toFixed(1)}</p>
+                <p className="text-lg font-bold text-[#1F2937]">{data.indice_dimension.toFixed(1)}</p>
                 <p className="text-[10px] text-[#6B7280]">Índice PP</p>
               </div>
               <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm text-center">
-                <p className="text-sm font-bold text-[#1F2937]">{data.pp_nivel}</p>
+                <p className="text-sm font-bold text-[#1F2937]">{data.nivel_dimension}</p>
                 <p className="text-[10px] text-[#6B7280]">Nivel PP</p>
               </div>
             </div>
@@ -545,10 +354,19 @@ export default function PlanSemanalPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                {data.tarjetas.map((t, i) =>
-                  esTipoB(t)
-                    ? <TarjetaConHoja key={i} tarjeta={t} />
-                    : <TarjetaEstandar key={i} tarjeta={t} />
+                {data.tarjetas.map((item) =>
+                  esTipoB(item)
+                    ? (
+                      <TarjetaConHoja key={item.seguimiento.id} item={item} onUpdate={actualizarSeguimiento} />
+                    )
+                    : (
+                      <TarjetaSeguimiento
+                        key={item.seguimiento.id}
+                        tarjeta={item.tarjeta}
+                        seguimiento={item.seguimiento}
+                        onUpdate={actualizarSeguimiento}
+                      />
+                    )
                 )}
               </div>
             )}
