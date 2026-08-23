@@ -62,6 +62,7 @@ export default function PerfilesDeSaludPage() {
   const [filterFacultad, setFilterFacultad] = useState("all")
   const [filterNivel, setFilterNivel] = useState("all")
   const [detalle, setDetalle] = useState<Perfil | null>(null)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -91,6 +92,20 @@ export default function PerfilesDeSaludPage() {
       filterNivel === "all" || (p.resultados.nivel_global || "").toLowerCase() === filterNivel.toLowerCase()
     return matchesSearch && matchesTipo && matchesFacultad && matchesNivel
   })
+
+  // Al filtrar o buscar, vuelve a la primera página para no quedar en una vacía.
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery, filterTipo, filterFacultad, filterNivel])
+
+  const pageSize = 10
+  const total = filtered.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const paginaActual = Math.min(page, totalPages)
+  const inicio = (paginaActual - 1) * pageSize
+  const paginados = filtered.slice(inicio, inicio + pageSize)
+  const desde = total === 0 ? 0 : inicio + 1
+  const hasta = Math.min(inicio + pageSize, total)
 
   const formatFecha = (iso: string) =>
     new Date(iso).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })
@@ -212,7 +227,7 @@ export default function PerfilesDeSaludPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((p) => (
+                    {paginados.map((p) => (
                       <tr key={p.usuario_id} className="border-b border-[#E2E8F0] last:border-b-0 hover:bg-[#F8FAFC] transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -252,7 +267,7 @@ export default function PerfilesDeSaludPage() {
 
               {/* Mobile */}
               <div className="md:hidden divide-y divide-[#E2E8F0]">
-                {filtered.map((p) => (
+                {paginados.map((p) => (
                   <div key={p.usuario_id} className="p-4 flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
@@ -281,6 +296,33 @@ export default function PerfilesDeSaludPage() {
             </>
           )}
         </div>
+
+        {!loading && total > 0 && (
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-[#6B7280]">
+              Mostrando {desde}–{hasta} de {total} perfil{total === 1 ? "" : "es"}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={paginaActual === 1}
+                className="h-9 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm text-[#475569] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-[#6B7280] px-2">
+                Página {paginaActual} de {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={paginaActual === totalPages}
+                className="h-9 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm text-[#475569] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Modal: detalle del perfil */}
