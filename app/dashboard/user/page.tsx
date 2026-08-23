@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation"
 import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import Link from "next/link"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { MisionesHoySection } from "@/components/misiones-hoy"
 import { getAccessToken, setSurveyDone } from "@/lib/auth"
 import { TrendingUp } from "lucide-react"
+import type { ProgresoDimension } from "@/lib/seguimiento-recomendaciones"
 
 type DimensionResult = { indice: number; nivel: string }
 type EncuestaResultado = {
@@ -33,15 +35,6 @@ const DIMENSION_NAMES: Record<string, string> = {
   relaciones_interpersonales: "Relaciones interpersonales",
   nutricion: "Nutrición",
   manejo_estres: "Manejo del estrés",
-}
-
-const ACTIVITIES_BY_DIMENSION: Record<string, string[]> = {
-  actividad_fisica: ["Caminata de 30 min al aire libre", "Rutina de estiramientos matutinos"],
-  manejo_estres: ["Ejercicio de respiración 4-7-8", "30 min sin pantallas antes de dormir"],
-  nutricion: ["Registrar lo que comí hoy", "Incluir una fruta en el desayuno"],
-  relaciones_interpersonales: ["Llama a un amigo o familiar hoy"],
-  responsabilidad_salud: ["Programa una consulta médica preventiva"],
-  psicologia_positiva: ["Escribe 3 cosas por las que estás agradecido"],
 }
 
 // Dimensiones que ya tienen plan en el backend — las demás no muestran enlace
@@ -85,6 +78,7 @@ export default function UserDashboard() {
   const router = useRouter()
   const [resultado, setResultado] = useState<EncuestaResultado | null>(null)
   const [loading, setLoading] = useState(true)
+  const [progreso, setProgreso] = useState<Record<string, ProgresoDimension>>({})
 
   useEffect(() => {
     const fetchResultado = async () => {
@@ -104,6 +98,16 @@ export default function UserDashboard() {
       }
     }
     fetchResultado()
+
+    // Progreso de seguimiento por dimensión — solo informativo, si falla
+    // (ej. todavía sin encuesta) simplemente no se muestran los badges.
+    api.get("/seguimiento-recomendaciones/progreso")
+      .then(({ data }) => {
+        const porDimension: Record<string, ProgresoDimension> = {}
+        for (const d of data.dimensiones as ProgresoDimension[]) porDimension[d.dimension] = d
+        setProgreso(porDimension)
+      })
+      .catch(() => {})
   }, [router])
 
   if (loading) {
@@ -130,21 +134,16 @@ export default function UserDashboard() {
   const lowestThree = sortedAsc.slice(0, 3)
   const esNivelMaximo = resultados.nivel_global === "Excelente"
 
-  const recommendedActivities = lowestThree
-    .flatMap((d) => (ACTIVITIES_BY_DIMENSION[d.key] ?? []).map((title) => ({ title, dimension: DIMENSION_NAMES[d.key] })))
-    .slice(0, 5)
-
   return (
     <>
       <DashboardNavbar role="user" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        {/* Header */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold font-heading text-[#1F2937]">¡Bienvenido de nuevo!</h2>
             <p className="mt-1 text-sm text-[#6B7280]">
-              Completaste el cuestionario PEPS II — aquí están tus resultados de estilo de vida.
+              Completaste el cuestionario PEPS II — aquí están tus resultados y misiones de hoy.
             </p>
           </div>
           <Link
@@ -155,6 +154,8 @@ export default function UserDashboard() {
             <TrendingUp className="w-4 h-4" /> Mi evolución
           </Link>
         </div>
+
+        <MisionesHoySection />
 
         {/* PEPS II global + dimensiones */}
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
@@ -213,25 +214,8 @@ export default function UserDashboard() {
           </section>
         </div>
 
-        {/* Actividades + Dimensiones prioritarias */}
-        <div className="grid lg:grid-cols-2 gap-6 items-start">
-          {/* Actividades recomendadas */}
-          <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
-            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Actividades recomendadas</h3>
-            <p className="text-xs text-[#6B7280] mb-4">
-              Basadas en tus dimensiones más bajas: {lowestThree.map((d) => DIMENSION_NAMES[d.key]).join(", ")}
-            </p>
-            <div className="flex flex-col gap-2">
-              {recommendedActivities.map((act, i) => (
-                <div key={i} className="p-3 rounded-xl border border-[#E2E8F0] hover:border-[#16A34A]/40 transition-colors">
-                  <p className="text-sm font-medium text-[#1F2937]">{act.title}</p>
-                  <p className="text-xs text-[#6B7280]">{act.dimension}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Dimensiones prioritarias */}
+        {/* Dimensiones prioritarias */}
+        <div className="grid lg:grid-cols-1 gap-6 items-start">
           <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
             <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Dimensiones prioritarias</h3>
             {!esNivelMaximo ? (
@@ -244,11 +228,19 @@ export default function UserDashboard() {
                     const planRoute = DIMENSION_PLAN_ROUTE[d.key]
                     const prioColor = i === 0 ? "#EF4444" : "#F59E0B"
                     const prioLabel = i === 0 ? "Prioridad alta" : "Prioridad media"
+                    const prog = progreso[d.key]
                     return (
                       <div key={d.key} className="flex items-center justify-between py-2.5 gap-3">
                         <span className="text-sm text-[#1F2937] min-w-0">
                           {DIMENSION_NAMES[d.key]}{" "}
                           <span className="text-[#9CA3AF] font-normal">({Math.round(d.indice)})</span>
+                          {prog && prog.total > 0 && (
+                            <span className="block text-[10px] text-[#9CA3AF] font-normal">
+                              {prog.mensaje_cierre
+                                ? "✓ Recomendaciones completadas"
+                                : `${prog.completadas}/${prog.total} recomendaciones completadas`}
+                            </span>
+                          )}
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-xs font-semibold" style={{ color: prioColor }}>
