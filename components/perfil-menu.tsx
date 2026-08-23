@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ChevronDown, UserCog, LogOut } from "lucide-react"
-import { clearSession } from "@/lib/auth"
+import { api } from "@/lib/api"
+import { clearSession, getAccessToken } from "@/lib/auth"
 
 // Chip de perfil con menú: "Mi perfil" (editar credenciales) y "Cerrar sesión".
 // Se usa en la barra superior del admin y en la de los demás roles.
@@ -13,7 +14,23 @@ export function PerfilMenu({ nombre, subtitulo }: { nombre: string; subtitulo?: 
   const [open, setOpen] = useState(false)
   const inicial = (nombre || "U").charAt(0).toUpperCase()
 
-  const cerrarSesion = () => {
+  // Latido para la auditoría: marca que el usuario sigue activo mientras la
+  // pestaña está abierta, así el tiempo de sesión es fiel aunque no dé logout.
+  useEffect(() => {
+    if (!getAccessToken()) return
+    const latir = () => {
+      if (getAccessToken()) api.post("/auth/heartbeat").catch(() => {})
+    }
+    latir()
+    const id = setInterval(latir, 60000)
+    return () => clearInterval(id)
+  }, [])
+
+  const cerrarSesion = async () => {
+    // Registra el cierre antes de borrar el token (después ya no habría sesión).
+    try {
+      await api.post("/auth/logout")
+    } catch {}
     clearSession()
     router.replace("/")
   }

@@ -14,7 +14,7 @@ const SECTION_LABELS: Record<string, string> = {
   "/dashboard/admin/perfiles-de-salud": "Perfiles de salud",
   "/dashboard/admin/areas-de-bienestar": "Áreas de bienestar",
   "/dashboard/admin/seguimiento": "Seguimiento / Estadísticas",
-  "/dashboard/admin/actividades": "Actividades",
+  "/dashboard/admin/auditoria": "Auditoría",
   "/dashboard/admin/notificaciones": "Notificaciones",
   "/dashboard/admin/reportes": "Reportes",
   "/dashboard/admin/configuracion": "Configuración",
