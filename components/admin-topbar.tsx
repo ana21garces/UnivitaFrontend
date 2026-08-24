@@ -33,11 +33,18 @@ export function AdminTopbar({ onMenu }: { onMenu: () => void }) {
   const section = SECTION_LABELS[pathname] ?? "Panel"
 
   const [nombre, setNombre] = useState("")
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([])
   const [panelAbierto, setPanelAbierto] = useState(false)
 
   useEffect(() => {
-    api.get("/users/me").then((res) => setNombre(res.data.full_name)).catch(() => {})
+    api
+      .get("/users/me")
+      .then((res) => {
+        setNombre(res.data.full_name)
+        setAvatarUrl(res.data.avatar_url ?? null)
+      })
+      .catch(() => {})
     api.get("/notificaciones").then((res) => setNotificaciones(res.data)).catch(() => {})
   }, [])
 
@@ -132,7 +139,7 @@ export function AdminTopbar({ onMenu }: { onMenu: () => void }) {
           )}
         </div>
 
-        <PerfilMenu nombre={nombre} subtitulo="Administrador" />
+        <PerfilMenu nombre={nombre} subtitulo="Administrador" avatarUrl={avatarUrl} />
       </div>
     </header>
   )

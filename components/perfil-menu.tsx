@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ChevronDown, UserCog, LogOut } from "lucide-react"
 import { api } from "@/lib/api"
-import { clearSession, getAccessToken } from "@/lib/auth"
+import { clearSession, getAccessToken, getRoleFromToken } from "@/lib/auth"
 import { ProfileAvatar } from "@/components/profile-avatar"
 import type { RankTier } from "@/lib/gamificacion"
 
@@ -27,16 +27,21 @@ export function PerfilMenu({
 }: PerfilMenuProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [esUsuario, setEsUsuario] = useState(false)
+
+  useEffect(() => {
+    const t = getAccessToken()
+    setEsUsuario(!!t && getRoleFromToken(t) === "student")
+  }, [])
 
   const subtituloCompleto = [
     subtitulo,
-    currentLevel ? `Nv. ${currentLevel}` : null,
+    esUsuario && currentLevel ? `Nv. ${currentLevel}` : null,
   ]
     .filter(Boolean)
     .join(" · ")
 
-  // Latido para la auditoría: marca que el usuario sigue activo mientras la
-  // pestaña está abierta, así el tiempo de sesión es fiel aunque no dé logout.
+  // Latido para la auditoría: marca que el usuario sigue activo.
   useEffect(() => {
     if (!getAccessToken()) return
     const latir = () => {
@@ -48,7 +53,6 @@ export function PerfilMenu({
   }, [])
 
   const cerrarSesion = async () => {
-    // Registra el cierre antes de borrar el token (después ya no habría sesión).
     try {
       await api.post("/auth/logout")
     } catch {}
@@ -69,6 +73,7 @@ export function PerfilMenu({
           rankTier={rankTier}
           avatarUrl={avatarUrl}
           size="sm"
+          plain={!esUsuario}
         />
         <div className="hidden sm:flex flex-col leading-tight text-left">
           <span className="text-sm font-medium text-[#1F2937]">{nombre || "Usuario"}</span>
