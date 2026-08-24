@@ -156,11 +156,7 @@ export default function AuditoriaPage() {
     )
 
   const TipoPill = ({ t }: { t: string }) => (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${
-        t === "Usuario" ? "bg-[#EFF6FF] text-[#2563EB]" : "bg-[#F3E8FF] text-[#7C3AED]"
-      }`}
-    >
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F1F5F9] text-[#475569]">
       {t}
     </span>
   )
