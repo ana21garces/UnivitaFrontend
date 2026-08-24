@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, Bell } from "lucide-react"
+import { Menu, Bell, LayoutDashboard } from "lucide-react"
 import { api } from "@/lib/api"
 import { PerfilMenu } from "@/components/perfil-menu"
 
@@ -61,29 +60,24 @@ export function AdminTopbar({ onMenu }: { onMenu: () => void }) {
 
 
   return (
-    <header className="sticky top-0 z-20 h-16 bg-[#FFFFFF] border-b border-[#E2E8F0] flex items-center justify-between px-4 sm:px-6">
-      {/* Izquierda: menú móvil + miga de pan */}
+    <header
+      className="sticky top-0 z-20 h-16 border-b border-[#DCFCE7] flex items-center justify-between px-4 sm:px-6"
+      style={{ background: "linear-gradient(90deg, #EAF3DE 0%, #F0FDF4 22%, #FFFFFF 58%)", backgroundAttachment: "fixed" }}
+    >
       <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={onMenu}
-          className="lg:hidden p-2 rounded-lg text-[#6B7280] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
+          className="lg:hidden p-2 rounded-lg text-[#3B6D11] hover:bg-[#DCFCE7] transition-colors cursor-pointer"
           aria-label="Abrir menú"
         >
           <Menu className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-2 text-sm min-w-0">
-          {section !== "Dashboard" && (
-            <>
-              <Link
-                href="/dashboard/admin"
-                className="text-[#94A3B8] hover:text-[#16A34A] transition-colors hidden sm:inline"
-              >
-                Dashboard
-              </Link>
-              <span className="text-[#CBD5E1] hidden sm:inline">/</span>
-            </>
-          )}
-          <span className="font-medium text-[#1F2937] truncate">{section}</span>
+        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#16A34A] text-white shrink-0">
+          <LayoutDashboard className="w-[18px] h-[18px]" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-[15px] font-semibold text-[#14532D] leading-tight truncate">{section}</p>
+          <p className="text-[11px] text-[#3B6D11] leading-none">Panel de administración</p>
         </div>
       </div>
 
@@ -95,7 +89,7 @@ export function AdminTopbar({ onMenu }: { onMenu: () => void }) {
           )}
           <button
             onClick={() => setPanelAbierto((p) => !p)}
-            className="relative p-2 rounded-lg text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors cursor-pointer"
+            className="relative p-2 rounded-lg text-[#16A34A] hover:bg-[#DCFCE7] transition-colors cursor-pointer"
             aria-label="Notificaciones"
           >
             <Bell className="w-5 h-5" />
