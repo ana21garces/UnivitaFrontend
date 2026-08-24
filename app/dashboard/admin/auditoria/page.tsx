@@ -246,10 +246,10 @@ export default function AuditoriaPage() {
                 <thead>
                   <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
                     <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Usuario</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Tipo</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Evento</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">IP</th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Fecha y hora</th>
+                    <th className="text-center px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Tipo</th>
+                    <th className="text-center px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Evento</th>
+                    <th className="text-center px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">IP</th>
+                    <th className="text-center px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">Fecha y hora</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -264,10 +264,10 @@ export default function AuditoriaPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3"><TipoPill t={it.tipo} /></td>
-                      <td className="px-4 py-3"><EventoPill e={it.evento} /></td>
-                      <td className="px-4 py-3 text-[#6B7280]">{it.ip || "—"}</td>
-                      <td className="px-4 py-3 text-[#6B7280]">{formatFecha(it.fecha)}</td>
+                      <td className="px-4 py-3 text-center"><TipoPill t={it.tipo} /></td>
+                      <td className="px-4 py-3 text-center"><EventoPill e={it.evento} /></td>
+                      <td className="px-4 py-3 text-center text-[#6B7280]">{it.ip || "—"}</td>
+                      <td className="px-4 py-3 text-center text-[#6B7280]">{formatFecha(it.fecha)}</td>
                     </tr>
                   ))}
                   {items.length === 0 && (
