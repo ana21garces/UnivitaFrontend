@@ -8,7 +8,7 @@ import {
   HeartPulse,
   LayoutGrid,
   BarChart3,
-  CalendarCheck,
+  ShieldCheck,
   Bell,
   FileText,
   Settings,
@@ -28,7 +28,7 @@ const NAV: NavItem[] = [
   { label: "Perfiles de salud", href: "/dashboard/admin/perfiles-de-salud", icon: <HeartPulse className="w-[18px] h-[18px]" /> },
   { label: "Áreas de bienestar", href: "/dashboard/admin/areas-de-bienestar", icon: <LayoutGrid className="w-[18px] h-[18px]" /> },
   { label: "Seguimiento / Estadísticas", href: "/dashboard/admin/seguimiento", icon: <BarChart3 className="w-[18px] h-[18px]" /> },
-  { label: "Actividades", href: "/dashboard/admin/actividades", icon: <CalendarCheck className="w-[18px] h-[18px]" /> },
+  { label: "Auditoría", href: "/dashboard/admin/auditoria", icon: <ShieldCheck className="w-[18px] h-[18px]" /> },
   { label: "Notificaciones", href: "/dashboard/admin/notificaciones", icon: <Bell className="w-[18px] h-[18px]" /> },
   { label: "Reportes", href: "/dashboard/admin/reportes", icon: <FileText className="w-[18px] h-[18px]" /> },
   { label: "Configuración", href: "/dashboard/admin/configuracion", icon: <Settings className="w-[18px] h-[18px]" /> },
@@ -62,9 +62,12 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 function Header() {
   return (
-    <div className="flex items-center gap-2 px-5 h-16 border-b border-[#E2E8F0] shrink-0">
+    <div
+      className="flex items-center gap-2 px-5 h-16 border-b border-[#DCFCE7] shrink-0"
+      style={{ background: "linear-gradient(90deg, #EAF3DE 0%, #F0FDF4 22%, #FFFFFF 58%)", backgroundAttachment: "fixed" }}
+    >
       <UniVitaLogo size="nav" />
-      <p className="text-lg font-bold font-heading text-[#1F2937]">UnacHealth</p>
+      <p className="text-lg font-bold font-heading text-[#14532D]">UnacHealth</p>
     </div>
   )
 }
@@ -89,7 +92,7 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
   return (
     <>
       {/* Sidebar fijo en escritorio */}
-      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-gradient-to-b from-[#FFFFFF] to-[#F1F8EA] border-r border-[#E2E8F0] z-30">
+      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 bg-gradient-to-b from-[#EAF3DE] via-[#F0FDF4] to-[#FFFFFF] border-r border-[#E7E5E4] z-30">
         <Header />
         <NavList />
         <Footer />
@@ -99,7 +102,7 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
       {open && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-[#1F2937]/50" onClick={onClose} />
-          <aside className="relative flex flex-col w-64 max-w-[80%] bg-gradient-to-b from-[#FFFFFF] to-[#F1F8EA] border-r border-[#E2E8F0]">
+          <aside className="relative flex flex-col w-64 max-w-[80%] bg-gradient-to-b from-[#EAF3DE] via-[#F0FDF4] to-[#FFFFFF] border-r border-[#E7E5E4]">
             <button
               onClick={onClose}
               className="absolute top-4 right-3 p-1 rounded-lg text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer"

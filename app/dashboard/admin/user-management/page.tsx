@@ -22,6 +22,7 @@ import {
   Wand2,
   UserPlus,
 } from "lucide-react"
+import { avatarSrc } from "@/lib/gamificacion"
 
 interface ApiUser {
   id: string
@@ -34,12 +35,13 @@ interface ApiUser {
   facultad: string | null
   program: string | null
   sexo: string | null
+  avatar_url: string | null
 }
 
 const ROLE_LABELS: Record<string, string> = {
   student: "Usuario",
   admin: "Administrador",
-  capellan: "Capellán",
+  capellan: "Psicología Positiva",
   actividad_fisica: "Actividad física",
   responsabilidad_salud: "Responsabilidad en salud",
   relaciones_interpersonales: "Relaciones interpersonales",
@@ -371,11 +373,18 @@ export default function UserManagementPage() {
   const btnEstado = `${btnBase} bg-[#FFFBEB] text-[#D97706] border-[#FDE68A] hover:bg-[#FEF3C7]`
   const btnDel = `${btnBase} bg-[#FEF2F2] text-[#EF4444] border-[#FECACA] hover:bg-[#FEE2E2]`
 
-  const Avatar = ({ name }: { name: string }) => (
-    <div className="w-9 h-9 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A] shrink-0">
-      {name.charAt(0).toUpperCase()}
-    </div>
-  )
+  const Avatar = ({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) => {
+    const src = avatarSrc(avatarUrl)
+    return (
+      <div className="w-9 h-9 rounded-full overflow-hidden bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A] shrink-0">
+        {src ? (
+          <img src={src} alt={name} className="w-full h-full object-cover" />
+        ) : (
+          name.charAt(0).toUpperCase()
+        )}
+      </div>
+    )
+  }
 
   const ChipTu = () => (
     <span className="shrink-0 px-1.5 py-0.5 rounded-md text-[10px] font-bold text-[#16A34A] bg-[#F0FDF4] border border-[#BBF7D0]">
@@ -574,7 +583,7 @@ export default function UserManagementPage() {
                       <tr key={user.id} className="border-b border-[#E2E8F0] last:border-b-0 hover:bg-[#F8FAFC] transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <Avatar name={user.full_name} />
+                            <Avatar name={user.full_name} avatarUrl={user.avatar_url} />
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 min-w-0">
                                 <p className="font-medium text-[#1F2937] truncate">{user.full_name}</p>
@@ -612,7 +621,7 @@ export default function UserManagementPage() {
                 {paginados.map((user) => (
                   <div key={user.id} className="p-4 flex flex-col gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <Avatar name={user.full_name} />
+                      <Avatar name={user.full_name} avatarUrl={user.avatar_url} />
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <p className="font-medium text-[#1F2937] text-sm truncate">{user.full_name}</p>
@@ -675,8 +684,12 @@ export default function UserManagementPage() {
               <X className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-12 h-12 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-lg font-bold text-[#16A34A]">
-                {detalle.full_name.charAt(0).toUpperCase()}
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-[#16A34A]/10 flex items-center justify-center text-lg font-bold text-[#16A34A]">
+                {avatarSrc(detalle.avatar_url) ? (
+                  <img src={avatarSrc(detalle.avatar_url)!} alt={detalle.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  detalle.full_name.charAt(0).toUpperCase()
+                )}
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-[#1F2937] truncate">{detalle.full_name}</p>

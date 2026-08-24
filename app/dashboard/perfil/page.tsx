@@ -32,7 +32,7 @@ import {
 const ROLE_LABELS: Record<string, string> = {
   student: "Usuario",
   admin: "Administrador",
-  capellan: "Capellán",
+  capellan: "Psicología Positiva",
   actividad_fisica: "Actividad física",
   responsabilidad_salud: "Responsabilidad en salud",
   relaciones_interpersonales: "Relaciones interpersonales",
@@ -193,6 +193,7 @@ export default function PerfilPage() {
   const label = "text-sm font-medium text-[#1F2937]"
 
   const rank = progreso?.rank_tier ?? "bronce"
+  const esUsuario = rol === "student"
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -244,26 +245,31 @@ export default function PerfilPage() {
                     rankTier={rank}
                     avatarUrl={progreso.avatar_url}
                     size="lg"
-                    showRankBadge
+                    plain={!esUsuario}
+                    showRankBadge={esUsuario}
                   />
                   <div className="flex-1 w-full text-center sm:text-left">
                     <h2 className="text-xl font-bold text-[#1F2937]">{nombre || "Usuario"}</h2>
                     <p className="text-sm text-[#6B7280]">{correoOriginal}</p>
-                    <div className="mt-4">
-                      <XpProgressBar
-                        currentXp={progreso.xp_en_nivel}
-                        maxXp={progreso.xp_para_siguiente}
-                        level={progreso.current_level}
-                      />
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm text-[#6B7280]">
-                      <span>{progreso.total_xp} XP total</span>
-                      <span>Rango: {RANK_LABELS[rank]}</span>
-                      <span className="inline-flex items-center gap-1">
-                        <Flame className="w-4 h-4 text-orange-500" />
-                        Racha: {progreso.streak_days} días
-                      </span>
-                    </div>
+                    {esUsuario && (
+                      <>
+                        <div className="mt-4">
+                          <XpProgressBar
+                            currentXp={progreso.xp_en_nivel}
+                            maxXp={progreso.xp_para_siguiente}
+                            level={progreso.current_level}
+                          />
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm text-[#6B7280]">
+                          <span>{progreso.total_xp} XP total</span>
+                          <span>Rango: {RANK_LABELS[rank]}</span>
+                          <span className="inline-flex items-center gap-1">
+                            <Flame className="w-4 h-4 text-orange-500" />
+                            Racha: {progreso.streak_days} días
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -400,6 +406,7 @@ export default function PerfilPage() {
               </div>
             </form>
 
+            {esUsuario && (
             <section className="rounded-2xl border border-[#E2E8F0] bg-[#FFFFFF] shadow-sm p-6">
               <h2 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Historial de XP</h2>
               {historial.length === 0 ? (
@@ -424,6 +431,7 @@ export default function PerfilPage() {
                 </div>
               )}
             </section>
+            )}
           </>
         )}
       </main>

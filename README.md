@@ -17,17 +17,25 @@ El backend (FastAPI, repo `vitalis-api`) debe estar corriendo aparte en `localho
 
 ## Variables de entorno
 
-Ver `.env.example`. Las tres que importan:
+Ver `.env.example`. Las que importan:
 
 | Variable | Local | Servidor |
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | `/api/proxy` | URL pública absoluta con `/api/v1` |
-| `BACKEND_URL` | `http://localhost:8000/api/v1` | (sin uso) |
+| `BACKEND_URL` | `http://localhost:8001/api/v1` | (sin uso) |
+| `NEXT_PUBLIC_BACKEND_URL` | `http://localhost:8001` (puerto de tu backend, **sin** `/api/v1`) | URL pública del backend, sin `/api/v1` |
 | `NEXT_PUBLIC_BASE_PATH` | vacío | `/~ana.garces/univita` |
 
 En local el navegador llama a `/api/proxy/*` y la ruta
 [`app/api/proxy/[...path]/route.ts`](app/api/proxy/[...path]/route.ts) reenvía al backend
 (evita CORS). En el servidor se llama al backend directo y el proxy no se usa.
+
+**`NEXT_PUBLIC_BACKEND_URL` es obligatoria para las fotos de perfil.** El navegador
+carga las imágenes estáticas (`/uploads/avatars/...`) **directo** del backend, no por el
+proxy, así que esta variable le dice a qué dirección pedirlas. Si falta, las fotos no
+cargan (se ve el avatar vacío) aunque la subida haya funcionado. En local apunta al
+puerto de tu backend; en el servidor, a la URL pública del backend (sin `/api/v1`).
+Vale también para cualquier archivo servido en `/uploads` que se agregue en el futuro.
 
 `NEXT_PUBLIC_BASE_PATH` alimenta el `basePath` de `next.config.mjs` **y** las rutas de
 imágenes. Por eso no se define en el config: cambiar de máquina no debe ensuciar el diff.
