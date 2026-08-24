@@ -125,6 +125,7 @@ export default function OnboardingSurveyPage() {
   const [showConsentModal, setShowConsentModal] = useState(true);
   const [showBienvenida, setShowBienvenida] = useState(false);
   const [consentChecked, setConsentChecked] = useState(false);
+  const [consentAceptadoEn, setConsentAceptadoEn] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(false);
 
   const topRef = useRef<HTMLDivElement>(null);
@@ -225,6 +226,7 @@ export default function OnboardingSurveyPage() {
         program: programa,
         tipo_usuario: tipoUsuario.toLowerCase() as "estudiante" | "docente" | "administrativo",
         sexo,
+        consentimiento_aceptado_en: consentAceptadoEn,
         ...buildSurveyPayload(answers),
       };
 
@@ -305,7 +307,10 @@ export default function OnboardingSurveyPage() {
               <input
                 type="checkbox"
                 checked={consentChecked}
-                onChange={(e) => setConsentChecked(e.target.checked)}
+                onChange={(e) => {
+                  setConsentChecked(e.target.checked);
+                  setConsentAceptadoEn(e.target.checked ? new Date().toISOString() : null);
+                }}
                 className="mt-1 w-4 h-4 accent-[#16A34A]"
               />
               <span className="text-sm text-[#374151]">
