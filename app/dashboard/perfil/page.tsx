@@ -32,7 +32,7 @@ import {
 const ROLE_LABELS: Record<string, string> = {
   student: "Usuario",
   admin: "Administrador",
-  capellan: "Capellán",
+  capellan: "Psicología Positiva",
   actividad_fisica: "Actividad física",
   responsabilidad_salud: "Responsabilidad en salud",
   relaciones_interpersonales: "Relaciones interpersonales",
