@@ -9,12 +9,37 @@ export type TipoActividad =
   | "lista"
   | "habito_calendario"
   | "checklist_simple"
+  | "autoexamen_corporal"
+  | "matriz_habito"
+  | "pensamiento_positivo_dia"
+  | "metas_smart"
+  | "servicio_activo_valores"
+  | "rutina_pasos"
+  | "reto_gradual"
+  | "habitos_identidad_semana"
+  | "optimismo_semanal"
+  | "diario_campos"
+  | "mapa_valores"
+  | "micro_reto"
 
 export type ConfigActividad = {
   prompt?: string
   unidad?: string
   cuadrantes?: string[]
   placeholder?: string
+  /** Campos de un diario estructurado (ej. Síntoma, Duración, Intensidad)
+   * que acompañan al semáforo de colores en `cuadrantes`. */
+  campos?: string[]
+  /** Repite el diario en N filas (ej. 3 gratitudes), cada una con el campo
+   * principal + una segunda pregunta corta (`subPrompt`) debajo. */
+  filas?: number
+  subPrompt?: string
+  /** Áreas de vida fijas (ej. Académica, Personal...); cada una repite un
+   * "sueño" + los campos de `campos` (ej. metas SMART a distintos plazos). */
+  areas?: string[]
+  /** Pasos de una rutina (ej. Meditación, Lectura, Oración) que se marcan
+   * como hechos antes de escribir la reflexión final (`prompt`). */
+  pasos?: string[]
 }
 
 export type TarjetaRecomendacion = {

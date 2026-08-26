@@ -69,7 +69,7 @@ export default function RecomendacionesRIPage() {
               <HeartHandshake className="w-5 h-5 text-[#7C3AED]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Plan de Relaciones Interpersonales</h1>
+              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Relaciones Interpersonales</h1>
               <p className="text-sm text-[#6B7280] mt-0.5">Recomendaciones personalizadas</p>
             </div>
           </div>

@@ -69,7 +69,7 @@ export default function RecomendacionesAFPage() {
               <Dumbbell className="w-5 h-5 text-[#2563EB]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Plan de Actividad Física</h1>
+              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Actividad Física</h1>
               <p className="text-sm text-[#6B7280] mt-0.5">Recomendaciones personalizadas</p>
             </div>
           </div>
