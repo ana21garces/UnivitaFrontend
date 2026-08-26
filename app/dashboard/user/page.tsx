@@ -37,6 +37,18 @@ const DIMENSION_NAMES: Record<string, string> = {
   manejo_estres: "Manejo del estrés",
 }
 
+// Emoji + color pastel por dimensión — coordinados con la gama del
+// dashboard (los mismos tonos suaves que ya usan las secciones de nivel
+// y prioridad) en vez de un solo color plano para todas.
+const DIMENSION_BADGE: Record<string, { emoji: string; bg: string }> = {
+  responsabilidad_salud:      { emoji: "🩺", bg: "#EFF6FF" },
+  psicologia_positiva:        { emoji: "🧠", bg: "#F5F3FF" },
+  actividad_fisica:           { emoji: "💪", bg: "#FFF7ED" },
+  relaciones_interpersonales: { emoji: "🤝", bg: "#FDF2F8" },
+  nutricion:                  { emoji: "🥗", bg: "#F0FDF4" },
+  manejo_estres:              { emoji: "🧘", bg: "#ECFEFF" },
+}
+
 // Dimensiones que ya tienen plan en el backend — las demás no muestran enlace
 const DIMENSION_PLAN_ROUTE: Record<string, string> = {
   psicologia_positiva:   "/dashboard/plan-semanal",
@@ -225,33 +237,49 @@ export default function UserDashboard() {
             <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Dimensiones prioritarias</h3>
             {!esNivelMaximo ? (
               <>
-                <p className="text-xs text-[#6B7280] mb-4">
+                <p className="text-xs text-[#6B7280] mb-1">
                   {dimensionesPrioritarias.length > 3
-                    ? "Estas dimensiones están empatadas como las que más pueden mejorar tu estilo de vida:"
-                    : "Estas tres dimensiones son las que más pueden mejorar tu estilo de vida:"}
+                    ? "Con base en tus resultados, todas estas dimensiones necesitan la misma atención para mejorar tu estilo de vida:"
+                    : "Con base en tus resultados, estas tres dimensiones son las que más pueden mejorar tu estilo de vida:"}
+                </p>
+                <p className="text-xs text-[#6B7280] mb-4">
+                  Entra a cada plan para ver las indicaciones que debes seguir para subirlas.
                 </p>
                 <div className="flex flex-col divide-y divide-[#F1F5F9]">
                   {dimensionesPrioritarias.map((d) => {
                     const planRoute = DIMENSION_PLAN_ROUTE[d.key]
                     const esLaMasBaja = d.indice === sortedAsc[0].indice
                     const prioColor = esLaMasBaja ? "#EF4444" : "#F59E0B"
+                    const prioBg = esLaMasBaja ? "#FEF2F2" : "#FFFBEB"
                     const prioLabel = esLaMasBaja ? "Prioridad alta" : "Prioridad media"
                     const prog = progreso[d.key]
                     return (
-                      <div key={d.key} className="flex items-center justify-between py-2.5 gap-3">
-                        <span className="text-sm text-[#1F2937] min-w-0">
-                          {DIMENSION_NAMES[d.key]}{" "}
-                          <span className="text-[#9CA3AF] font-normal">({Math.round(d.indice)})</span>
-                          {prog && prog.total > 0 && (
-                            <span className="block text-[10px] text-[#9CA3AF] font-normal">
-                              {prog.mensaje_cierre
-                                ? "✓ Recomendaciones completadas"
-                                : `${prog.completadas}/${prog.total} recomendaciones completadas`}
-                            </span>
-                          )}
-                        </span>
+                      <div key={d.key} className="flex items-center justify-between py-3 gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className="flex items-center justify-center w-9 h-9 rounded-full text-base shrink-0"
+                            style={{ background: DIMENSION_BADGE[d.key].bg }}
+                          >
+                            {DIMENSION_BADGE[d.key].emoji}
+                          </span>
+                          <span className="text-sm text-[#1F2937] min-w-0">
+                            {DIMENSION_NAMES[d.key]}{" "}
+                            <span className="text-[#9CA3AF] font-normal">({Math.round(d.indice)})</span>
+                            {prog && prog.total > 0 && (
+                              <span className="block text-[10px] text-[#9CA3AF] font-normal">
+                                {prog.mensaje_cierre
+                                  ? "✓ Recomendaciones completadas"
+                                  : `${prog.completadas}/${prog.total} recomendaciones completadas`}
+                              </span>
+                            )}
+                          </span>
+                        </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs font-semibold" style={{ color: prioColor }}>
+                          <span
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                            style={{ background: prioBg, color: prioColor }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: prioColor }} />
                             {prioLabel}
                           </span>
                           {planRoute && (
