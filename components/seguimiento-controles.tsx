@@ -9,11 +9,23 @@ import {
   type SeguimientoRecomendacion,
   type TarjetaRecomendacion,
 } from "@/lib/seguimiento-recomendaciones"
+import { PlantillaAutoexamenCorporal } from "@/components/actividades/PlantillaAutoexamenCorporal"
 import { PlantillaChecklistSimple } from "@/components/actividades/PlantillaChecklistSimple"
 import { PlantillaDiario } from "@/components/actividades/PlantillaDiario"
 import { PlantillaHabitoCalendario } from "@/components/actividades/PlantillaHabitoCalendario"
 import { PlantillaLista } from "@/components/actividades/PlantillaLista"
 import { PlantillaMatriz } from "@/components/actividades/PlantillaMatriz"
+import { PlantillaMatrizConHabito } from "@/components/actividades/PlantillaMatrizConHabito"
+import { PlantillaPensamientoPositivo } from "@/components/actividades/PlantillaPensamientoPositivo"
+import { PlantillaMetasSmart } from "@/components/actividades/PlantillaMetasSmart"
+import { PlantillaServicioActivo } from "@/components/actividades/PlantillaServicioActivo"
+import { PlantillaRutina } from "@/components/actividades/PlantillaRutina"
+import { PlantillaRetoGradual } from "@/components/actividades/PlantillaRetoGradual"
+import { PlantillaHabitosIdentidad } from "@/components/actividades/PlantillaHabitosIdentidad"
+import { PlantillaOptimismoSemanal } from "@/components/actividades/PlantillaOptimismoSemanal"
+import { PlantillaDiarioCampos } from "@/components/actividades/PlantillaDiarioCampos"
+import { PlantillaMapaValores } from "@/components/actividades/PlantillaMapaValores"
+import { PlantillaMicroReto } from "@/components/actividades/PlantillaMicroReto"
 import { PlantillaRegistroNumerico } from "@/components/actividades/PlantillaRegistroNumerico"
 
 export function SeguimientoControles({
@@ -104,15 +116,23 @@ export function SeguimientoControles({
       </div>
 
       {historial !== null && (
-        <ul className="mb-3 flex flex-col gap-1 text-xs text-[#6B7280]">
-          {historial.length === 0 && <li>Todavía no hay días registrados.</li>}
-          {historial.map((r) => (
-            <li key={r.id} className="flex gap-2">
-              <span className="font-semibold text-[#1F2937]">{r.fecha}</span>
-              {r.notas && <span>· {r.notas}</span>}
-            </li>
-          ))}
-        </ul>
+        <div className="mb-3 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8] mb-2">Bitácora</p>
+          {historial.length === 0 ? (
+            <p className="text-xs text-[#6B7280]">Todavía no hay días registrados.</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {historial.map((r) => (
+                <li key={r.id} className="rounded-lg bg-white border border-[#E2E8F0] px-3 py-2">
+                  <span className="text-xs font-semibold text-[#1F2937]">{r.fecha}</span>
+                  {r.notas && (
+                    <p className="mt-0.5 text-xs text-[#6B7280] whitespace-pre-line">{r.notas}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       {completada ? (
@@ -159,10 +179,34 @@ function PlantillaPorTipo({
       return <PlantillaRegistroNumerico config={tarjeta.config_actividad} objetivo={tarjeta.objetivo} enviando={enviando} onEnviar={onEnviar} />
     case "matriz":
       return <PlantillaMatriz config={tarjeta.config_actividad} objetivo={tarjeta.objetivo} enviando={enviando} onEnviar={onEnviar} />
+    case "matriz_habito":
+      return <PlantillaMatrizConHabito config={tarjeta.config_actividad} objetivo={tarjeta.objetivo} enviando={enviando} onEnviar={onEnviar} />
     case "lista":
       return <PlantillaLista config={tarjeta.config_actividad} objetivo={tarjeta.objetivo} enviando={enviando} onEnviar={onEnviar} />
     case "habito_calendario":
       return <PlantillaHabitoCalendario enviando={enviando} onEnviar={onEnviar} />
+    case "autoexamen_corporal":
+      return <PlantillaAutoexamenCorporal enviando={enviando} onEnviar={onEnviar} />
+    case "pensamiento_positivo_dia":
+      return <PlantillaPensamientoPositivo enviando={enviando} onEnviar={onEnviar} />
+    case "metas_smart":
+      return <PlantillaMetasSmart config={tarjeta.config_actividad} objetivo={tarjeta.objetivo} enviando={enviando} onEnviar={onEnviar} />
+    case "servicio_activo_valores":
+      return <PlantillaServicioActivo enviando={enviando} onEnviar={onEnviar} />
+    case "rutina_pasos":
+      return <PlantillaRutina config={tarjeta.config_actividad} objetivo={tarjeta.objetivo} enviando={enviando} onEnviar={onEnviar} />
+    case "reto_gradual":
+      return <PlantillaRetoGradual enviando={enviando} onEnviar={onEnviar} />
+    case "habitos_identidad_semana":
+      return <PlantillaHabitosIdentidad enviando={enviando} onEnviar={onEnviar} />
+    case "optimismo_semanal":
+      return <PlantillaOptimismoSemanal enviando={enviando} onEnviar={onEnviar} />
+    case "diario_campos":
+      return <PlantillaDiarioCampos config={tarjeta.config_actividad} objetivo={tarjeta.objetivo} enviando={enviando} onEnviar={onEnviar} />
+    case "mapa_valores":
+      return <PlantillaMapaValores enviando={enviando} onEnviar={onEnviar} />
+    case "micro_reto":
+      return <PlantillaMicroReto enviando={enviando} onEnviar={onEnviar} />
     default:
       return <PlantillaChecklistSimple enviando={enviando} onEnviar={onEnviar} />
   }

@@ -69,7 +69,7 @@ export default function RecomendacionesNPage() {
               <Salad className="w-5 h-5 text-[#7C3AED]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Plan de Nutrición</h1>
+              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Nutrición</h1>
               <p className="text-sm text-[#6B7280] mt-0.5">Recomendaciones personalizadas</p>
             </div>
           </div>

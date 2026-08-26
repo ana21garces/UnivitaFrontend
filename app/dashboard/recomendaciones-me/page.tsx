@@ -69,7 +69,7 @@ export default function RecomendacionesMEPage() {
               <Brain className="w-5 h-5 text-[#7C3AED]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Plan de Manejo del Estrés</h1>
+              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Manejo del Estrés</h1>
               <p className="text-sm text-[#6B7280] mt-0.5">Recomendaciones personalizadas</p>
             </div>
           </div>

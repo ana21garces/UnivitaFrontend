@@ -64,8 +64,7 @@ export function TarjetaSeguimiento({
 
       {open && (
         <div className="px-5 pb-5 border-t border-[#E2E8F0]">
-          <p className="text-sm text-[#374151] mt-4 mb-3 leading-relaxed">{tarjeta.objetivo}</p>
-          <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">Instrucciones</p>
+          <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mt-4 mb-2">Instrucciones</p>
           <ol className="flex flex-col gap-2">
             {tarjeta.instrucciones.map((paso, i) => (
               <li key={i} className="flex gap-3 text-sm text-[#374151]">

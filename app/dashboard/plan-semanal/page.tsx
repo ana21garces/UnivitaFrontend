@@ -6,11 +6,10 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
-import { ArrowLeft, ChevronDown, ChevronUp, Printer, AlertCircle, BookOpen } from "lucide-react"
+import { ArrowLeft, ChevronDown, ChevronUp, Printer, AlertCircle, BookOpen, BookHeart } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { TarjetaSeguimiento, NivelChip } from "@/components/tarjeta-seguimiento"
 import { SeguimientoControles } from "@/components/seguimiento-controles"
-import { HabitTracker } from "@/components/actividades/PlantillaHabitoCalendario"
 import type {
   SeguimientoRecomendacion,
   TarjetaConSeguimiento,
@@ -176,11 +175,6 @@ function HojaDeTrabajoModal({ onClose }: { onClose: () => void }) {
             />
           </section>
 
-          {/* 7. Habit Tracker */}
-          <section>
-            <h3 className="text-sm font-bold text-[#1F2937] mb-3">Habit Tracker</h3>
-            <HabitTracker />
-          </section>
         </div>
       </div>
     </div>
@@ -225,8 +219,7 @@ function TarjetaConHoja({
 
         {open && (
           <div className="px-5 pb-5 border-t border-[#16A34A]/20">
-            <p className="text-sm text-[#374151] mt-4 mb-3 leading-relaxed">{tarjeta.objetivo}</p>
-            <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">Instrucciones</p>
+            <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mt-4 mb-2">Instrucciones</p>
             <ol className="flex flex-col gap-2 mb-5">
               {tarjeta.instrucciones.map((paso, i) => (
                 <li key={i} className="flex gap-3 text-sm text-[#374151]">
@@ -311,9 +304,14 @@ export default function PlanSemanalPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Plan semanal personalizado</h1>
-            <p className="text-sm text-[#6B7280] mt-1">Psicología Positiva — recomendaciones priorizadas</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#F0FDF4] flex items-center justify-center">
+              <BookHeart className="w-5 h-5 text-[#16A34A]" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Psicología Positiva</h1>
+              <p className="text-sm text-[#6B7280] mt-0.5">Recomendaciones personalizadas</p>
+            </div>
           </div>
           {data && (
             <div className="flex items-center gap-3 self-start sm:self-auto">

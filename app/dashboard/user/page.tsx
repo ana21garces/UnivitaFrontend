@@ -131,7 +131,12 @@ export default function UserDashboard() {
   ]
 
   const sortedAsc = [...dimensions].sort((a, b) => a.indice - b.indice)
-  const lowestThree = sortedAsc.slice(0, 3)
+  // Prioriza las 3 dimensiones más bajas, pero si hay empate en el corte
+  // (ej. todas en 0/Pobre) se incluyen todas las empatadas, no solo las
+  // primeras 3 del orden de array — si no, dimensiones igual de mal
+  // calificadas quedarían sin "Ver plan" por pura casualidad de posición.
+  const indiceCorte = sortedAsc[Math.min(2, sortedAsc.length - 1)]?.indice ?? 0
+  const dimensionesPrioritarias = sortedAsc.filter((d) => d.indice <= indiceCorte)
   const esNivelMaximo = resultados.nivel_global === "Excelente"
 
   return (
@@ -221,13 +226,16 @@ export default function UserDashboard() {
             {!esNivelMaximo ? (
               <>
                 <p className="text-xs text-[#6B7280] mb-4">
-                  Estas tres dimensiones son las que más pueden mejorar tu estilo de vida:
+                  {dimensionesPrioritarias.length > 3
+                    ? "Estas dimensiones están empatadas como las que más pueden mejorar tu estilo de vida:"
+                    : "Estas tres dimensiones son las que más pueden mejorar tu estilo de vida:"}
                 </p>
                 <div className="flex flex-col divide-y divide-[#F1F5F9]">
-                  {lowestThree.map((d, i) => {
+                  {dimensionesPrioritarias.map((d) => {
                     const planRoute = DIMENSION_PLAN_ROUTE[d.key]
-                    const prioColor = i === 0 ? "#EF4444" : "#F59E0B"
-                    const prioLabel = i === 0 ? "Prioridad alta" : "Prioridad media"
+                    const esLaMasBaja = d.indice === sortedAsc[0].indice
+                    const prioColor = esLaMasBaja ? "#EF4444" : "#F59E0B"
+                    const prioLabel = esLaMasBaja ? "Prioridad alta" : "Prioridad media"
                     const prog = progreso[d.key]
                     return (
                       <div key={d.key} className="flex items-center justify-between py-2.5 gap-3">
