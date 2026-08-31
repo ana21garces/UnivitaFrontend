@@ -65,6 +65,8 @@ export type SeguimientoRecomendacion = {
   racha_actual: number
   mejor_racha: number
   total_dias_registrados: number
+  /** Días que hay que sostener la actividad para que se complete sola. */
+  dias_objetivo: number
   ultima_fecha_registro: string | null
   completada_at: string | null
 }
@@ -93,6 +95,8 @@ export type RegistrarDiaResponse = {
   seguimiento: SeguimientoRecomendacion
   registro: RegistroDiario
   racha_aumento: boolean
+  /** El registro de hoy alcanzó los días objetivo y la actividad quedó completada. */
+  meta_alcanzada: boolean
 }
 
 export type ProgresoDimension = {
