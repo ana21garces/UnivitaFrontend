@@ -25,7 +25,7 @@ export type EstadisticasDimension = {
   por_facultad: FacultadEstadistica[]
 }
 
-// Colores fijos para el número del índice promedio. Independientes de la
+// Colores fijos para la etiqueta de nivel promedio. Independientes de la
 // paleta que use cada vista para sus propias insignias por fila: aquí solo
 // importa que Pobre/Moderado/Bueno/Excelente se lean igual en las tres vistas.
 const COLOR_TEXTO_NIVEL: Record<string, string> = {
@@ -88,10 +88,12 @@ export function EstadisticasSection({
         <h3 className="text-sm font-bold text-[#1F2937] mb-1">Población general</h3>
         <p className="text-xs text-[#6B7280] mb-3">{tituloDimension} en toda la universidad</p>
         <div className="flex items-baseline gap-2 mb-3">
-          <span className="text-3xl font-bold" style={{ color: COLOR_TEXTO_NIVEL[nivelDeIndice(g.promedio_indice)] }}>
-            {g.promedio_indice.toFixed(1)}
+          <span className="text-2xl font-bold" style={{ color: COLOR_TEXTO_NIVEL[nivelDeIndice(g.promedio_indice)] }}>
+            {Math.round(g.promedio_indice)}%
           </span>
-          <span className="text-xs text-[#6B7280]">índice promedio · {g.total} persona{g.total !== 1 ? "s" : ""}</span>
+          <span className="text-xs text-[#6B7280]">
+            promedio ({nivelDeIndice(g.promedio_indice)}) · {g.total} persona{g.total !== 1 ? "s" : ""}
+          </span>
         </div>
         <BarraSegmentada conteo={g} />
         <LeyendaConteo conteo={g} />
@@ -100,7 +102,7 @@ export function EstadisticasSection({
       {/* Por facultad */}
       <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm">
         <h3 className="text-sm font-bold text-[#1F2937] mb-1">Facultades que más necesitan atención</h3>
-        <p className="text-xs text-[#6B7280] mb-3">Ordenadas de menor a mayor índice promedio</p>
+        <p className="text-xs text-[#6B7280] mb-3">Ordenadas de menor a mayor porcentaje promedio</p>
         {stats.por_facultad.length === 0 ? (
           <p className="text-xs text-[#6B7280] py-4 text-center">Sin datos suficientes todavía.</p>
         ) : (
@@ -113,7 +115,7 @@ export function EstadisticasSection({
                     <span className="text-[#9CA3AF] font-normal">({f.conteo.total})</span>
                   </span>
                   <span className="text-xs font-bold shrink-0" style={{ color: COLOR_TEXTO_NIVEL[nivelDeIndice(f.conteo.promedio_indice)] }}>
-                    {f.conteo.promedio_indice.toFixed(1)}
+                    {Math.round(f.conteo.promedio_indice)}%
                   </span>
                 </div>
                 <BarraSegmentada conteo={f.conteo} />

@@ -6,11 +6,12 @@ import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
 import { useResaltadoAlerta } from "@/lib/use-resaltado-alerta"
-import { ChevronDown, ChevronUp, Users, Brain, AlertCircle, Building2, GraduationCap, Bell, Check, XCircle } from "lucide-react"
+import { ChevronDown, ChevronUp, Users, Brain, AlertCircle, Building2, GraduationCap, Bell, Check, XCircle, FileDown } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { ComparativoAnterior } from "@/components/comparativo-anterior"
 import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
 import { NotificarModal } from "@/components/notificar-modal"
+import { ReporteIndividualModal, type PreguntaReporte } from "@/components/reporte-individual-modal"
 import {
   EstadisticasSection,
   type EstadisticasDimension,
@@ -104,7 +105,7 @@ function IndiceBar({ indice, nivel }: { indice: number; nivel: string }) {
       <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${indice}%`, backgroundColor: cfg.bar }} />
       </div>
-      <span className="text-xs font-semibold text-[#1F2937] w-12 text-right">{indice.toFixed(1)}%</span>
+      <span className="text-xs font-semibold text-[#1F2937] w-10 text-right">{Math.round(indice)}%</span>
       <NivelBadge nivel={nivel} />
     </div>
   )
@@ -129,10 +130,12 @@ function UsuarioRow({
   usuario,
   notificado,
   onNotificar,
+  onReporte,
 }: {
   usuario: Usuario
   notificado: string | null
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+  onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(false)
   const me = usuario.manejo_estres
@@ -218,7 +221,7 @@ function UsuarioRow({
       {open && (
         <div className="px-4 pb-4 pt-2 bg-[#F8FAFC] border-t border-[#E2E8F0]">
           <div className="sm:hidden mb-3">
-            <p className="text-xs font-medium text-[#6B7280] mb-1">Índice ME</p>
+            <p className="text-xs font-medium text-[#6B7280] mb-1">Nivel</p>
             <IndiceBar indice={me.me_indice} nivel={me.me_nivel} />
           </div>
           <div className="flex flex-col gap-1.5 mb-3">
@@ -238,7 +241,28 @@ function UsuarioRow({
               )
             })}
           </div>
-          <p className="text-xs text-[#6B7280]"><span className="font-medium">Programa:</span> {usuario.programa}</p>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs text-[#6B7280]"><span className="font-medium">Programa:</span> {usuario.programa}</p>
+            {usuario.usuario_id && (
+              <button
+                type="button"
+                onClick={() =>
+                  onReporte({
+                    usuarioId: usuario.usuario_id!,
+                    preguntas: ME_ITEMS.map((item) => ({
+                      numero: item.replace("me_item_", ""),
+                      texto: ME_ITEM_TEXTO[item],
+                      valor: me[item],
+                    })),
+                  })
+                }
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[#16A34A] text-[#16A34A] hover:bg-[#F0FDF4] transition-colors shrink-0"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                Reporte para remisión
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -251,10 +275,12 @@ function CarreraCard({
   carrera,
   notificados,
   onNotificar,
+  onReporte,
 }: {
   carrera: Carrera
   notificados: Record<string, string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+  onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(true)
   return (
@@ -276,6 +302,7 @@ function CarreraCard({
               usuario={u}
               notificado={u.usuario_id ? notificados[u.usuario_id] ?? null : null}
               onNotificar={onNotificar}
+              onReporte={onReporte}
             />
           ))}
         </div>
@@ -288,10 +315,12 @@ function FacultadCard({
   facultad,
   notificados,
   onNotificar,
+  onReporte,
 }: {
   facultad: Facultad
   notificados: Record<string, string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+  onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(true)
   return (
@@ -312,7 +341,7 @@ function FacultadCard({
       {open && (
         <div className="px-4 pb-4 flex flex-col gap-3 border-t border-[#E2E8F0] pt-3">
           {facultad.carreras.map((c) => (
-            <CarreraCard key={c.carrera} carrera={c} notificados={notificados} onNotificar={onNotificar} />
+            <CarreraCard key={c.carrera} carrera={c} notificados={notificados} onNotificar={onNotificar} onReporte={onReporte} />
           ))}
         </div>
       )}
@@ -389,6 +418,7 @@ export default function ManejoEstresPage() {
 
   const [stats, setStats] = useState<EstadisticasDimension | null>(null)
   const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
+  const [reporteObjetivo, setReporteObjetivo] = useState<{ usuarioId: string; preguntas: PreguntaReporte[] } | null>(null)
   const [notificados, setNotificados] = useState<Record<string, string>>({})
 
   const getToken = useCallback(() => {
@@ -521,6 +551,7 @@ export default function ManejoEstresPage() {
                   facultad={fac}
                   notificados={notificados}
                   onNotificar={setNotifObjetivo}
+                  onReporte={setReporteObjetivo}
                 />
               ))
             )}
@@ -536,6 +567,16 @@ export default function ManejoEstresPage() {
           rol="manejo_estres"
           onClose={() => setNotifObjetivo(null)}
           onEnviado={(id) => setNotificados((prev) => ({ ...prev, [id]: "pendiente" }))}
+        />
+      )}
+
+      {reporteObjetivo && (
+        <ReporteIndividualModal
+          usuarioId={reporteObjetivo.usuarioId}
+          dimensionClave="manejo_estres"
+          dimensionLabel="Manejo del Estrés"
+          preguntas={reporteObjetivo.preguntas}
+          onClose={() => setReporteObjetivo(null)}
         />
       )}
     </div>
