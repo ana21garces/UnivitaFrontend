@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { Menu, Bell, LayoutDashboard } from "lucide-react"
 import { api } from "@/lib/api"
 import { PerfilMenu } from "@/components/perfil-menu"
+import { NotificacionItem } from "@/components/notificacion-item"
 
 // Título de sección según la ruta, para la miga de pan.
 const SECTION_LABELS: Record<string, string> = {
@@ -23,6 +24,7 @@ type Notificacion = {
   id: number
   remitente_nombre: string
   mensaje: string
+  enlace?: string | null
   leida: boolean
   created_at: string
 }
@@ -110,22 +112,12 @@ export function AdminTopbar({ onMenu }: { onMenu: () => void }) {
               ) : (
                 <div className="flex flex-col divide-y divide-[#F1F5F9]">
                   {notificaciones.map((n) => (
-                    <div key={n.id} className={`px-4 py-3 ${n.leida ? "" : "bg-[#F0FDF4]"}`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-[#1F2937]">{n.remitente_nombre}</p>
-                          <p className="text-xs text-[#6B7280] mt-0.5">{n.mensaje}</p>
-                        </div>
-                        {!n.leida && (
-                          <button
-                            onClick={() => marcarLeida(n.id)}
-                            className="text-[10px] font-semibold text-[#16A34A] hover:underline shrink-0 cursor-pointer"
-                          >
-                            Descartar
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    <NotificacionItem
+                      key={n.id}
+                      n={n}
+                      onDescartar={marcarLeida}
+                      onNavegar={() => setPanelAbierto(false)}
+                    />
                   ))}
                 </div>
               )}

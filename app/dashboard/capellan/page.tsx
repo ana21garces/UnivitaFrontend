@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
-import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap, Bell, Check } from "lucide-react"
+import { useResaltadoAlerta } from "@/lib/use-resaltado-alerta"
+import { ChevronDown, ChevronUp, Users, BookHeart, AlertCircle, Building2, GraduationCap, Bell, Check, XCircle } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { ComparativoAnterior } from "@/components/comparativo-anterior"
 import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
@@ -134,18 +135,27 @@ function UsuarioRow({
   onNotificar,
 }: {
   usuario: Usuario
-  notificado: boolean
+  notificado: string | null
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
 }) {
   const [open, setOpen] = useState(false)
   const pp = usuario.psicologia_positiva
   const requiereAtencion = pp.pp_nivel === "Pobre"
+  const { ref: filaRef, resaltado } = useResaltadoAlerta(usuario.usuario_id, () => setOpen(true))
+  useEffect(() => { if (notificado) setOpen(false) }, [notificado])
   const fecha = usuario.fecha
     ? new Date(usuario.fecha).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" })
     : null
 
   return (
-    <div className={`border rounded-xl overflow-hidden ${requiereAtencion ? "border-red-200" : "border-[#E2E8F0]"}`}>
+    <div
+      ref={filaRef}
+      className={`border rounded-xl overflow-hidden transition-shadow ${
+        resaltado
+          ? "border-red-400 ring-2 ring-red-400 ring-offset-2"
+          : requiereAtencion ? "border-red-200" : "border-[#E2E8F0]"
+      }`}
+    >
       {/* Antes era un <button>: con el botón de Notificar dentro, quedaba un
           botón anidado en otro botón, invalido en HTML. Por eso es un div
           con el mismo comportamiento de teclado. */}
@@ -183,21 +193,32 @@ function UsuarioRow({
             <IndiceBar indice={pp.pp_indice} />
           </div>
           {requiereAtencion && usuario.usuario_id && (
-            notificado ? (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A] shrink-0">
-                <Check className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Notificado</span>
-              </span>
-            ) : (
+            <div className="flex items-center gap-2 shrink-0">
+              {notificado === "rechazada" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#B45309]">
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Rechazó la cita</span>
+                </span>
+              ) : notificado === "aceptada" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A]">
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Aceptó la cita</span>
+                </span>
+              ) : notificado === "pendiente" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A]">
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Notificado</span>
+                </span>
+              ) : null}
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onNotificar({ nombre: usuario.nombre, usuarioId: usuario.usuario_id! }) }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shrink-0"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 <Bell className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Notificar</span>
+                <span className="hidden sm:inline">{notificado === "rechazada" ? "Volver a invitar" : "Notificar"}</span>
               </button>
-            )
+            </div>
           )}
           {open ? <ChevronUp className="w-4 h-4 text-[#6B7280] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#6B7280] shrink-0" />}
         </div>
@@ -250,7 +271,7 @@ function CarreraCard({
   onNotificar,
 }: {
   carrera: Carrera
-  notificados: Set<string>
+  notificados: Record<string, string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
 }) {
   const [open, setOpen] = useState(true)
@@ -275,7 +296,7 @@ function CarreraCard({
               <UsuarioRow
                 key={u.encuesta_id ?? i}
                 usuario={u}
-                notificado={!!u.usuario_id && notificados.has(u.usuario_id)}
+                notificado={u.usuario_id ? notificados[u.usuario_id] ?? null : null}
                 onNotificar={onNotificar}
               />
             ))}
@@ -294,7 +315,7 @@ function FacultadCard({
   onNotificar,
 }: {
   facultad: Facultad
-  notificados: Set<string>
+  notificados: Record<string, string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
 }) {
   const [open, setOpen] = useState(true)
@@ -456,7 +477,7 @@ export default function CapellanPage() {
 
   const [stats, setStats] = useState<EstadisticasDimension | null>(null)
   const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
-  const [notificados, setNotificados] = useState<Set<string>>(new Set())
+  const [notificados, setNotificados] = useState<Record<string, string>>({})
 
   const getToken = useCallback(() => {
     const t = getAccessToken()
@@ -543,6 +564,14 @@ export default function CapellanPage() {
     },
     [getToken, mergeOpciones, router]
   )
+
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    api.get("/notificaciones/notificados?rol=capellan")
+      .then((res) => setNotificados((prev) => ({ ...prev, ...res.data })))
+      .catch(() => {})
+  }, [getToken])
 
   const handleFiltrosChange = (f: Filtros) => {
     setFiltros(f)
@@ -634,8 +663,9 @@ export default function CapellanPage() {
           nombre={notifObjetivo.nombre}
           usuarioId={notifObjetivo.usuarioId}
           mensajeSugerido="Te invitamos a agendar una cita con capellanía para hablar de tus resultados."
+          rol="capellan"
           onClose={() => setNotifObjetivo(null)}
-          onEnviado={(id) => setNotificados((prev) => new Set(prev).add(id))}
+          onEnviado={(id) => setNotificados((prev) => ({ ...prev, [id]: "pendiente" }))}
         />
       )}
     </div>

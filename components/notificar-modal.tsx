@@ -14,12 +14,14 @@ export function NotificarModal({
   nombre,
   usuarioId,
   mensajeSugerido,
+  rol,
   onClose,
   onEnviado,
 }: {
   nombre: string
   usuarioId: string
   mensajeSugerido: string
+  rol?: string
   onClose: () => void
   onEnviado: (usuarioId: string) => void
 }) {
@@ -32,7 +34,7 @@ export function NotificarModal({
     setEnviando(true)
     setError("")
     try {
-      await api.post("/notificaciones", { destinatario_id: usuarioId, mensaje: mensaje.trim() })
+      await api.post("/notificaciones", { destinatario_id: usuarioId, mensaje: mensaje.trim(), rol })
       onEnviado(usuarioId)
       onClose()
     } catch {
