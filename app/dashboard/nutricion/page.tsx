@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
-import { ChevronDown, ChevronUp, Users, Salad, AlertCircle, Building2, GraduationCap, Bell, Check } from "lucide-react"
+import { ChevronDown, ChevronUp, Users, Salad, AlertCircle, Building2, GraduationCap, Bell, Check, FileDown } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { ComparativoAnterior } from "@/components/comparativo-anterior"
 import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
 import { NotificarModal } from "@/components/notificar-modal"
+import { ReporteIndividualModal, type PreguntaReporte } from "@/components/reporte-individual-modal"
 import {
   EstadisticasSection,
   type EstadisticasDimension,
@@ -132,10 +133,12 @@ function UsuarioRow({
   usuario,
   notificado,
   onNotificar,
+  onReporte,
 }: {
   usuario: Usuario
   notificado: boolean
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+  onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(false)
   const n = usuario.nutricion
@@ -221,7 +224,28 @@ function UsuarioRow({
               )
             })}
           </div>
-          <p className="text-xs text-[#6B7280]"><span className="font-medium">Programa:</span> {usuario.programa}</p>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs text-[#6B7280]"><span className="font-medium">Programa:</span> {usuario.programa}</p>
+            {usuario.usuario_id && (
+              <button
+                type="button"
+                onClick={() =>
+                  onReporte({
+                    usuarioId: usuario.usuario_id!,
+                    preguntas: N_ITEMS.map((item) => ({
+                      numero: item.replace("n_item_", ""),
+                      texto: N_ITEM_TEXTO[item],
+                      valor: n[item],
+                    })),
+                  })
+                }
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[#16A34A] text-[#16A34A] hover:bg-[#F0FDF4] transition-colors shrink-0"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                Reporte para remisión
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -234,10 +258,12 @@ function CarreraCard({
   carrera,
   notificados,
   onNotificar,
+  onReporte,
 }: {
   carrera: Carrera
   notificados: Set<string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+  onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(true)
   return (
@@ -259,6 +285,7 @@ function CarreraCard({
               usuario={u}
               notificado={!!u.usuario_id && notificados.has(u.usuario_id)}
               onNotificar={onNotificar}
+              onReporte={onReporte}
             />
           ))}
         </div>
@@ -271,10 +298,12 @@ function FacultadCard({
   facultad,
   notificados,
   onNotificar,
+  onReporte,
 }: {
   facultad: Facultad
   notificados: Set<string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+  onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(true)
   return (
@@ -295,7 +324,7 @@ function FacultadCard({
       {open && (
         <div className="px-4 pb-4 flex flex-col gap-3 border-t border-[#E2E8F0] pt-3">
           {facultad.carreras.map((c) => (
-            <CarreraCard key={c.carrera} carrera={c} notificados={notificados} onNotificar={onNotificar} />
+            <CarreraCard key={c.carrera} carrera={c} notificados={notificados} onNotificar={onNotificar} onReporte={onReporte} />
           ))}
         </div>
       )}
@@ -372,6 +401,7 @@ export default function NutricionPage() {
 
   const [stats, setStats] = useState<EstadisticasDimension | null>(null)
   const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
+  const [reporteObjetivo, setReporteObjetivo] = useState<{ usuarioId: string; preguntas: PreguntaReporte[] } | null>(null)
   const [notificados, setNotificados] = useState<Set<string>>(new Set())
 
   const getToken = useCallback(() => {
@@ -496,6 +526,7 @@ export default function NutricionPage() {
                   facultad={fac}
                   notificados={notificados}
                   onNotificar={setNotifObjetivo}
+                  onReporte={setReporteObjetivo}
                 />
               ))
             )}
@@ -510,6 +541,16 @@ export default function NutricionPage() {
           mensajeSugerido="Te invitamos a agendar una cita con nutrición para hablar de tus resultados."
           onClose={() => setNotifObjetivo(null)}
           onEnviado={(id) => setNotificados((prev) => new Set(prev).add(id))}
+        />
+      )}
+
+      {reporteObjetivo && (
+        <ReporteIndividualModal
+          usuarioId={reporteObjetivo.usuarioId}
+          dimensionClave="nutricion"
+          dimensionLabel="Nutrición"
+          preguntas={reporteObjetivo.preguntas}
+          onClose={() => setReporteObjetivo(null)}
         />
       )}
     </div>
