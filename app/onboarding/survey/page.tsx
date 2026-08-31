@@ -11,6 +11,7 @@ import {
   buildSurveyPayload,
 } from "@/lib/survey-data";
 import { setSurveyDone } from "@/lib/auth";
+import { FACULTADES as facultades } from "@/lib/facultades";
 
 import Select from "react-select";
 
@@ -37,36 +38,6 @@ export default function OnboardingSurveyPage() {
   const [esSeguimiento, setEsSeguimiento] = useState(false);
   // Seguimiento de alguien cuyo sexo nunca se guardó: hay que pedírselo.
   const [faltaSexo, setFaltaSexo] = useState(false);
-
-  const facultades = {
-    "Ciencias de la Salud": [
-      "Enfermería",
-      "Tecnología en atención prehospitalaria",
-    ],
-    "Ingeniería": [
-      "Ingeniería industrial",
-      "Ingeniería de sistemas",
-      "Especialización en Inteligencia de Negocios y Big Data",
-    ],
-    "Ciencias Administrativas y Contables": [
-      "Administración de empresas",
-      "Contaduría pública",
-      "Marketing y comunicación digital",
-      "Especialización en alta gerencia"
-    ],
-    "Ciencias Humanas y de la Educación": [
-      "Licenciatura en español e inglés",
-      "Licenciatura en educación infantil",
-      "Licenciatura en música",
-      "Especialización en docencia",
-      "Maestría en educación"
-    ],
-    "Teología y Religión": [
-      "Teología",
-      "Licenciatura en educación religiosa",
-      "Maestría en estudios religiosos y teología"
-    ],
-  } as const;
 
   const [facultad, setFacultad] = useState<string>("");
   const [programa, setPrograma] = useState<string>("");

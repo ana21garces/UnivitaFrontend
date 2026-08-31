@@ -1,8 +1,8 @@
 import { TrendingUp, TrendingDown, Minus } from "lucide-react"
 
 /**
- * Chip "antes 55% ▲" que compara el índice actual de una dimensión con el de la
- * medición anterior del usuario. No muestra nada si es su primera medición
+ * Chip "antes 55% ▲" que compara el porcentaje actual de una dimensión con el de
+ * la medición anterior del usuario. No muestra nada si es su primera medición
  * (`anterior` nulo), para no ensuciar la fila de quien solo tiene una encuesta.
  */
 export function ComparativoAnterior({
@@ -30,7 +30,7 @@ export function ComparativoAnterior({
   return (
     <span
       className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${estilo}`}
-      title={`Medición anterior: ${anterior.toFixed(1)}%`}
+      title="Comparado con su medición anterior"
     >
       <Icono className="w-3 h-3" />
       antes {anterior.toFixed(0)}%

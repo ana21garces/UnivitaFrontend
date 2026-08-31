@@ -57,9 +57,11 @@ export function SeguimientoControles({
       onUpdate(data.seguimiento)
       setHistorial(null)
       setMensaje(
-        data.racha_aumento
-          ? `¡Racha de ${data.seguimiento.racha_actual} días! +15 XP`
-          : "Registrado hoy · +15 XP"
+        data.meta_alcanzada
+          ? `¡Meta de ${data.seguimiento.dias_objetivo} días alcanzada! Recomendación completada · +65 XP`
+          : data.racha_aumento
+            ? `¡Racha de ${data.seguimiento.racha_actual} días! +15 XP`
+            : "Registrado hoy · +15 XP"
       )
     } catch {
       setMensaje("No se pudo registrar. Intenta de nuevo.")
@@ -107,8 +109,16 @@ export function SeguimientoControles({
             <Flame className="w-4 h-4 text-orange-500" /> Racha: {seguimiento.racha_actual} días
           </span>
         )}
-        {seguimiento.total_dias_registrados > 0 && (
-          <span className="text-xs text-[#6B7280]">{seguimiento.total_dias_registrados} día(s) registrados</span>
+        {!completada && (
+          <span className="inline-flex items-center gap-1.5 text-xs text-[#6B7280]">
+            <span className="inline-block w-16 h-1.5 rounded-full bg-[#F1F5F9] overflow-hidden align-middle">
+              <span
+                className="block h-full rounded-full bg-[#16A34A]"
+                style={{ width: `${Math.min(100, (seguimiento.total_dias_registrados / Math.max(1, seguimiento.dias_objetivo)) * 100)}%` }}
+              />
+            </span>
+            {seguimiento.total_dias_registrados} / {seguimiento.dias_objetivo} días
+          </span>
         )}
         <button type="button" onClick={toggleHistorial} className="text-xs text-[#2563EB] font-semibold hover:underline">
           {cargandoHistorial ? "Cargando..." : historial !== null ? "Ocultar historial" : "Ver historial"}
