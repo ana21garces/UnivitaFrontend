@@ -59,11 +59,22 @@ const DIMENSION_PLAN_ROUTE: Record<string, string> = {
   nutricion: "/dashboard/recomendaciones-n",
 }
 
-const PUNTAJE_RANGES: Record<string, string> = {
-  Pobre: "52–90",
-  Moderado: "91–129",
-  Bueno: "130–168",
-  Excelente: "169–208",
+// Rango en porcentaje (0–100) de cada nivel. Es la misma escala que la barra
+// de cada dimensión, para que se lea igual en toda la pantalla.
+const NIVEL_RANGO_PCT: Record<string, string> = {
+  Pobre: "0 a 25%",
+  Moderado: "26 a 50%",
+  Bueno: "51 a 75%",
+  Excelente: "76 a 100%",
+}
+
+// Explicación en lenguaje sencillo de qué significa cada nivel, para que
+// cualquier persona lo entienda sin tecnicismos.
+const NIVEL_EXPLICACION: Record<string, string> = {
+  Pobre: "Varios de tus hábitos de vida pueden mejorar. El plan de abajo te muestra por dónde empezar.",
+  Moderado: "Vas bien en varias cosas y todavía puedes fortalecer algunos hábitos.",
+  Bueno: "Tus hábitos de vida son sólidos. Puedes seguir afinando algunos detalles.",
+  Excelente: "Tus hábitos de vida son muy saludables. ¡Sigue así!",
 }
 
 function getNivelColor(nivel: string) {
@@ -178,41 +189,59 @@ export default function UserDashboard() {
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Resultado global */}
           <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
-            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Resultado global PEPS II</h3>
-            <div className="text-center mb-5">
+            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Resultado global PEPS II</h3>
+            <p className="text-xs text-[#6B7280] mb-4">Tu bienestar general según el cuestionario de salud</p>
+            <div className="text-center mb-4">
               <p className="text-5xl font-bold" style={{ color: getNivelColor(resultados.nivel_global) }}>
-                {Math.round(resultados.indice_global)}
+                {Math.round(resultados.indice_global)}%
               </p>
-              <p className="text-sm text-[#6B7280] mt-1">Índice global (0–100)</p>
               <span
-                className="inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold"
+                className="inline-block mt-3 px-5 py-2 rounded-full text-lg font-bold"
                 style={{ backgroundColor: `${getNivelColor(resultados.nivel_global)}18`, color: getNivelColor(resultados.nivel_global) }}
               >
                 {resultados.nivel_global}
               </span>
             </div>
-            <p className="text-xs font-semibold text-[#6B7280] mb-2">Progresión de niveles</p>
+            {/* Barra 0–100% con las cuatro zonas de nivel */}
+            <div className="relative h-3 rounded-full bg-[#F1F5F9] mb-1">
+              <div
+                className={`h-full rounded-full ${getBarColor(resultados.nivel_global)}`}
+                style={{ width: `${Math.max(2, Math.round(resultados.indice_global))}%` }}
+              />
+              {[25, 50, 75].map((m) => (
+                <span key={m} className="absolute top-0 h-full w-px bg-white" style={{ left: `${m}%` }} />
+              ))}
+            </div>
+            <div className="flex justify-between text-[10px] text-[#9CA3AF] mb-4">
+              <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+            </div>
+            <p className="text-xs text-[#6B7280] mb-4">
+              Es un resumen de tus respuestas al cuestionario de salud, de 0% a 100%.
+              No son los puntos (XP) que ganas al completar tus misiones diarias.
+            </p>
+            <p className="text-xs font-semibold text-[#6B7280] mb-2">Los cuatro niveles</p>
             <div className="grid grid-cols-4 gap-1 mb-3">
               {["Pobre", "Moderado", "Bueno", "Excelente"].map((nivel) => (
                 <div
                   key={nivel}
-                  className={`text-center py-1.5 rounded text-xs font-semibold ${
+                  className={`text-center py-1.5 rounded text-xs font-semibold leading-tight ${
                     nivel === resultados.nivel_global ? "bg-[#16A34A] text-white" : "bg-[#F1F5F9] text-[#6B7280]"
                   }`}
                 >
                   {nivel}
+                  <span className="block text-[10px] font-normal opacity-90">{NIVEL_RANGO_PCT[nivel]}</span>
                 </div>
               ))}
             </div>
             <p className="text-xs text-[#6B7280]">
-              Puntaje crudo: {resultados.puntaje_crudo}/208 · Rango {resultados.nivel_global.toLowerCase()}:{" "}
-              {PUNTAJE_RANGES[resultados.nivel_global]}
+              <span className="font-semibold">Nivel {resultados.nivel_global.toLowerCase()}:</span>{" "}
+              {NIVEL_EXPLICACION[resultados.nivel_global]}
             </p>
           </section>
 
-          {/* Índice por dimensión */}
+          {/* Nivel por dimensión */}
           <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
-            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Índice por dimensión</h3>
+            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Nivel por dimensión</h3>
             <div className="flex flex-col gap-3.5">
               {dimensions.map((dim) => (
                 <div key={dim.key} className="flex items-center gap-2 sm:gap-3">
@@ -220,8 +249,8 @@ export default function UserDashboard() {
                   <div className="flex-1 h-2 bg-[#F1F5F9] rounded-full">
                     <div className={`h-full rounded-full ${getBarColor(dim.nivel)}`} style={{ width: `${dim.indice}%` }} />
                   </div>
-                  <span className="text-sm font-bold text-[#1F2937] w-8 text-right shrink-0">{Math.round(dim.indice)}</span>
-                  <span className="hidden sm:inline text-xs font-semibold w-20 text-right shrink-0" style={{ color: getNivelColor(dim.nivel) }}>
+                  <span className="text-xs font-bold text-[#1F2937] w-9 text-right shrink-0">{Math.round(dim.indice)}%</span>
+                  <span className="text-xs font-semibold w-20 text-right shrink-0" style={{ color: getNivelColor(dim.nivel) }}>
                     {dim.nivel}
                   </span>
                 </div>
@@ -263,8 +292,7 @@ export default function UserDashboard() {
                             {DIMENSION_BADGE[d.key].emoji}
                           </span>
                           <span className="text-sm text-[#1F2937] min-w-0">
-                            {DIMENSION_NAMES[d.key]}{" "}
-                            <span className="text-[#9CA3AF] font-normal">({Math.round(d.indice)})</span>
+                            {DIMENSION_NAMES[d.key]}
                             {prog && prog.total > 0 && (
                               <span className="block text-[10px] text-[#9CA3AF] font-normal">
                                 {prog.mensaje_cierre

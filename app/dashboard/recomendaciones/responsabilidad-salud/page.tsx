@@ -75,12 +75,12 @@ export default function RecomendacionesRSPage() {
           {data && (
             <div className="flex items-center gap-3 self-start sm:self-auto">
               <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm text-center">
-                <p className="text-lg font-bold text-[#1F2937]">{data.indice_dimension.toFixed(1)}</p>
-                <p className="text-[10px] text-[#6B7280]">Índice RS</p>
+                <p className="text-sm font-bold text-[#1F2937]">{Math.round(data.indice_dimension)}%</p>
+                <p className="text-[10px] text-[#6B7280]">Porcentaje</p>
               </div>
               <div className="px-3 py-1.5 rounded-xl bg-white border border-[#E2E8F0] shadow-sm text-center">
                 <p className="text-sm font-bold text-[#1F2937]">{data.nivel_dimension}</p>
-                <p className="text-[10px] text-[#6B7280]">Nivel RS</p>
+                <p className="text-[10px] text-[#6B7280]">Nivel</p>
               </div>
             </div>
           )}

@@ -105,7 +105,7 @@ function IndiceBar({ indice, nivel }: { indice: number; nivel: string }) {
       <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${indice}%`, backgroundColor: cfg.bar }} />
       </div>
-      <span className="text-xs font-semibold text-[#1F2937] w-12 text-right">{indice.toFixed(1)}%</span>
+      <span className="text-xs font-semibold text-[#1F2937] w-10 text-right">{Math.round(indice)}%</span>
       <NivelBadge nivel={nivel} />
     </div>
   )
@@ -199,7 +199,7 @@ function UsuarioRow({
       {open && (
         <div className="px-4 pb-4 pt-2 bg-[#F8FAFC] border-t border-[#E2E8F0]">
           <div className="sm:hidden mb-3">
-            <p className="text-xs font-medium text-[#6B7280] mb-1">Índice RI</p>
+            <p className="text-xs font-medium text-[#6B7280] mb-1">Nivel</p>
             <IndiceBar indice={ri.ri_indice} nivel={ri.ri_nivel} />
           </div>
           <div className="flex flex-col gap-1.5 mb-3">
