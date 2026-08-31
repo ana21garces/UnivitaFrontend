@@ -183,9 +183,7 @@ export default function UserDashboard() {
           </Link>
         </div>
 
-        <MisionesHoySection />
-
-        {/* PEPS II global + dimensiones */}
+        {/* PEPS II global + dimensiones — primero los resultados */}
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Resultado global */}
           <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
@@ -260,7 +258,10 @@ export default function UserDashboard() {
           </section>
         </div>
 
-        {/* Dimensiones prioritarias */}
+        {/* Misiones del día — después de los resultados */}
+        <MisionesHoySection />
+
+        {/* Dimensiones prioritarias — las recomendaciones van al final */}
         <div className="grid lg:grid-cols-1 gap-6 items-start">
           <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
             <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Dimensiones prioritarias</h3>
