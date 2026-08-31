@@ -62,9 +62,11 @@ export function NotificacionItem({
     const abrir = () => {
       onDescartar(n.id)
       onNavegar?.()
-      const alerta = new URLSearchParams(n.enlace!.split("?")[1] ?? "").get("alerta")
+      const params = new URLSearchParams(n.enlace!.split("?")[1] ?? "")
       router.push(n.enlace!)
-      window.dispatchEvent(new CustomEvent("alerta-nav", { detail: alerta }))
+      window.dispatchEvent(new CustomEvent("alerta-nav", { detail: params.get("alerta") }))
+      const reporte = params.get("reporte")
+      if (reporte) window.dispatchEvent(new CustomEvent("reporte-nav", { detail: reporte }))
     }
     return (
       <div

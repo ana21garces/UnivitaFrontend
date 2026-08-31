@@ -12,6 +12,7 @@ import { ComparativoAnterior } from "@/components/comparativo-anterior"
 import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
 import { NotificarModal } from "@/components/notificar-modal"
 import { ReporteIndividualModal, type PreguntaReporte } from "@/components/reporte-individual-modal"
+import { useReporteEnlace } from "@/lib/use-reporte-enlace"
 import {
   EstadisticasSection,
   type EstadisticasDimension,
@@ -508,6 +509,15 @@ export default function CapellanPage() {
   const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
   const [notificados, setNotificados] = useState<Record<string, string>>({})
   const [reporteObjetivo, setReporteObjetivo] = useState<{ usuarioId: string; preguntas: PreguntaReporte[] } | null>(null)
+
+  useReporteEnlace(!!data, (id) => {
+    const u = (data?.facultades ?? []).flatMap((f) => f.carreras.flatMap((c) => c.usuarios)).find((x) => x.usuario_id === id)
+    if (!u) return
+    setReporteObjetivo({
+      usuarioId: id,
+      preguntas: PP_ITEMS.map((item) => ({ numero: item.replace("pp_item_", ""), texto: PP_ITEM_TEXTO[item], valor: u.psicologia_positiva[item] })),
+    })
+  })
 
   const getToken = useCallback(() => {
     const t = getAccessToken()

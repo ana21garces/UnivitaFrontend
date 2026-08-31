@@ -12,6 +12,7 @@ import { ComparativoAnterior } from "@/components/comparativo-anterior"
 import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
 import { NotificarModal } from "@/components/notificar-modal"
 import { ReporteIndividualModal, type PreguntaReporte } from "@/components/reporte-individual-modal"
+import { useReporteEnlace } from "@/lib/use-reporte-enlace"
 import {
   EstadisticasSection,
   type EstadisticasDimension,
@@ -422,6 +423,15 @@ export default function ActividadFisicaPage() {
   const [stats, setStats] = useState<EstadisticasDimension | null>(null)
   const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
   const [reporteObjetivo, setReporteObjetivo] = useState<{ usuarioId: string; preguntas: PreguntaReporte[] } | null>(null)
+
+  useReporteEnlace(!!data, (id) => {
+    const u = (data?.facultades ?? []).flatMap((f) => f.carreras.flatMap((c) => c.usuarios)).find((x) => x.usuario_id === id)
+    if (!u) return
+    setReporteObjetivo({
+      usuarioId: id,
+      preguntas: AF_ITEMS.map((item) => ({ numero: item.replace("af_item_", ""), texto: AF_ITEM_TEXTO[item], valor: u.actividad_fisica[item] })),
+    })
+  })
   const [notificados, setNotificados] = useState<Record<string, string>>({})
 
   const getToken = useCallback(() => {

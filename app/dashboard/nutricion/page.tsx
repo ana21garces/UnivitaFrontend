@@ -12,6 +12,7 @@ import { ComparativoAnterior } from "@/components/comparativo-anterior"
 import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
 import { NotificarModal } from "@/components/notificar-modal"
 import { ReporteIndividualModal, type PreguntaReporte } from "@/components/reporte-individual-modal"
+import { useReporteEnlace } from "@/lib/use-reporte-enlace"
 import {
   EstadisticasSection,
   type EstadisticasDimension,
@@ -423,6 +424,15 @@ export default function NutricionPage() {
   const [stats, setStats] = useState<EstadisticasDimension | null>(null)
   const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
   const [reporteObjetivo, setReporteObjetivo] = useState<{ usuarioId: string; preguntas: PreguntaReporte[] } | null>(null)
+
+  useReporteEnlace(!!data, (id) => {
+    const u = (data?.facultades ?? []).flatMap((f) => f.carreras.flatMap((c) => c.usuarios)).find((x) => x.usuario_id === id)
+    if (!u) return
+    setReporteObjetivo({
+      usuarioId: id,
+      preguntas: N_ITEMS.map((item) => ({ numero: item.replace("n_item_", ""), texto: N_ITEM_TEXTO[item], valor: u.nutricion[item] })),
+    })
+  })
   const [notificados, setNotificados] = useState<Record<string, string>>({})
 
   const getToken = useCallback(() => {
