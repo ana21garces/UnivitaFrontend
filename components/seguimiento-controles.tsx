@@ -59,8 +59,8 @@ export function SeguimientoControles({
       setHistorial(null)
       setMensaje(
         data.racha_aumento
-          ? `¡Racha de ${data.seguimiento.racha_actual} días! +15 XP`
-          : "Registrado hoy · +15 XP"
+          ? `¡Racha de ${data.seguimiento.racha_actual} días! +15 puntos`
+          : "Registrado hoy · +15 puntos"
       )
     } catch {
       setMensaje("No se pudo registrar. Intenta de nuevo.")
@@ -76,7 +76,7 @@ export function SeguimientoControles({
     try {
       const { data } = await api.post(`/seguimiento-recomendaciones/${seguimiento.id}/completar`)
       onUpdate(data)
-      setMensaje("¡Recomendación completada! +50 XP")
+      setMensaje("¡Recomendación completada! +50 puntos")
     } catch {
       setMensaje("No se pudo completar. Intenta de nuevo.")
     } finally {

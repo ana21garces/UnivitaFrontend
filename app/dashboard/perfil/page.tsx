@@ -68,7 +68,7 @@ export default function PerfilPage() {
   const [xpExpandido, setXpExpandido] = useState<Set<string>>(new Set())
   const [diasColapsados, setDiasColapsados] = useState<Set<string>>(new Set())
 
-  // Historial de XP agrupado por día; dentro de cada día se juntan los eventos
+  // Historial de puntos agrupado por día; dentro de cada día se juntan los eventos
   // seguidos del mismo tipo (ej. "Misión completada ·3") para que no sea un
   // larguero. El backend ya lo entrega del más reciente al más antiguo.
   const historialPorDia = useMemo(() => {
@@ -317,13 +317,16 @@ export default function PerfilPage() {
                           />
                         </div>
                         <div className="mt-3 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm text-[#6B7280]">
-                          <span>{progreso.total_xp} XP total</span>
+                          <span>{progreso.total_xp} puntos en total</span>
                           <span>Rango: {RANK_LABELS[rank]}</span>
                           <span className="inline-flex items-center gap-1">
                             <Flame className="w-4 h-4 text-orange-500" />
                             Racha: {progreso.streak_days} días
                           </span>
                         </div>
+                        <p className="mt-2 text-xs text-[#9CA3AF]">
+                          Ganas puntos al completar misiones y actividades. Suman tu nivel y tu rango (bronce, plata, oro, platino).
+                        </p>
                       </>
                     )}
                   </div>
@@ -470,10 +473,10 @@ export default function PerfilPage() {
 
             {esUsuario && (
             <section className="rounded-2xl border border-[#E2E8F0] bg-[#FFFFFF] shadow-sm p-6">
-              <h2 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Historial de XP</h2>
+              <h2 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Historial de puntos</h2>
               {historialPorDia.length === 0 ? (
                 <p className="text-sm text-[#6B7280]">
-                  Aún no has ganado XP. Completa misiones en tu dashboard.
+                  Aún no has ganado puntos. Completa misiones en tu dashboard.
                 </p>
               ) : (
                 <>
@@ -500,7 +503,7 @@ export default function PerfilPage() {
                             />
                             {g.dia}
                           </span>
-                          <span className="text-xs font-bold text-[#16A34A]">+{g.totalXp} XP</span>
+                          <span className="text-xs font-bold text-[#16A34A]">+{g.totalXp} puntos</span>
                         </button>
                         {!colapsado && (
                         <div className="flex flex-col divide-y divide-[#F1F5F9] rounded-lg border border-[#F1F5F9]">
@@ -540,7 +543,7 @@ export default function PerfilPage() {
                                       <span className="block text-xs text-[#9CA3AF] truncate">{it.detalles[0].detalle}</span>
                                     )}
                                   </span>
-                                  <span className="text-sm font-semibold text-[#16A34A] shrink-0">+{it.xp} XP</span>
+                                  <span className="text-sm font-semibold text-[#16A34A] shrink-0">+{it.xp} puntos</span>
                                 </button>
                                 {desglosable && abierto && (
                                   <div className="bg-[#F8FAFC] px-3 py-1.5 flex flex-col gap-1">
@@ -550,7 +553,7 @@ export default function PerfilPage() {
                                           {d.detalle ?? "Registro"}
                                           <span className="text-[#B8C0CC]"> · {d.hora}</span>
                                         </span>
-                                        <span className="font-medium text-[#16A34A] shrink-0">+{d.xp} XP</span>
+                                        <span className="font-medium text-[#16A34A] shrink-0">+{d.xp} puntos</span>
                                       </div>
                                     ))}
                                   </div>

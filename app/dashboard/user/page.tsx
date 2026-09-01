@@ -219,7 +219,7 @@ export default function UserDashboard() {
             </div>
             <p className="text-xs text-[#6B7280] mb-4">
               Es un resumen de tus respuestas al cuestionario de salud, de 0% a 100%.
-              No son los puntos (XP) que ganas al completar tus misiones diarias.
+              No son los puntos que ganas al completar tus misiones diarias.
             </p>
             <p className="text-xs font-semibold text-[#6B7280] mb-2">Los cuatro niveles</p>
             <div className="grid grid-cols-4 gap-1 mb-3">
