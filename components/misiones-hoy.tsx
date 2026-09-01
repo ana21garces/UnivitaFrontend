@@ -99,42 +99,48 @@ export function MisionesHoySection({ onProgresoChange }: MisionesHoyProps) {
       )}
 
       <div className="flex flex-col gap-2">
-        {data.misiones.map((mision) => (
-          <div
-            key={mision.id}
-            className={`flex items-start justify-between gap-3 p-3 rounded-xl border transition-colors ${
-              mision.completada
-                ? "border-[#16A34A]/30 bg-[#F0FDF4]"
-                : "border-[#E2E8F0] hover:border-[#16A34A]/40"
-            }`}
-          >
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-[#1F2937]">{mision.titulo}</p>
-              <p className="text-xs text-[#6B7280] mt-0.5">{mision.descripcion}</p>
-              <p className="text-[10px] text-[#9CA3AF] mt-1">
-                {mision.dimension_label}
-                {mision.duracion_min ? ` · ${mision.duracion_min} min` : ""}
-                {" · "}
-                {mision.xp} XP
-              </p>
-            </div>
-            {mision.completada ? (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A] shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
-                Hecho
-              </span>
-            ) : (
-              <button
-                type="button"
-                disabled={completando === mision.id}
-                onClick={() => completar(mision.id)}
-                className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#16A34A] text-white hover:bg-[#15803D] disabled:opacity-60 transition-colors cursor-pointer"
+        {[...data.misiones]
+          .sort((a, b) => Number(a.completada) - Number(b.completada))
+          .map((mision) =>
+            mision.completada ? (
+              <div
+                key={mision.id}
+                className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl bg-[#F0FDF4] border border-[#16A34A]/20"
               >
-                {completando === mision.id ? "..." : "✓ Hice"}
-              </button>
-            )}
-          </div>
-        ))}
+                <span className="flex items-center gap-2 min-w-0">
+                  <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
+                  <span className="text-sm text-[#16A34A] truncate">{mision.titulo}</span>
+                </span>
+                <span className="text-[11px] text-[#16A34A]/80 shrink-0 whitespace-nowrap">
+                  {mision.dimension_label} · {mision.xp} XP
+                </span>
+              </div>
+            ) : (
+              <div
+                key={mision.id}
+                className="flex items-start justify-between gap-3 p-3 rounded-xl border border-[#E2E8F0] hover:border-[#16A34A]/40 transition-colors"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-[#1F2937]">{mision.titulo}</p>
+                  <p className="text-xs text-[#6B7280] mt-0.5">{mision.descripcion}</p>
+                  <p className="text-[10px] text-[#9CA3AF] mt-1">
+                    {mision.dimension_label}
+                    {mision.duracion_min ? ` · ${mision.duracion_min} min` : ""}
+                    {" · "}
+                    {mision.xp} XP
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={completando === mision.id}
+                  onClick={() => completar(mision.id)}
+                  className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#16A34A] text-white hover:bg-[#15803D] disabled:opacity-60 transition-colors cursor-pointer"
+                >
+                  {completando === mision.id ? "..." : "✓ Hice"}
+                </button>
+              </div>
+            ),
+          )}
       </div>
     </section>
   )

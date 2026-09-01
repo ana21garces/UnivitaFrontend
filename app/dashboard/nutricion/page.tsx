@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
-import { ChevronDown, ChevronUp, Users, Salad, AlertCircle, Building2, GraduationCap, Bell, Check, FileDown } from "lucide-react"
+import { useResaltadoAlerta } from "@/lib/use-resaltado-alerta"
+import { ChevronDown, ChevronUp, Users, Salad, AlertCircle, Building2, GraduationCap, Bell, Check, XCircle, FileDown } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { ComparativoAnterior } from "@/components/comparativo-anterior"
 import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
 import { NotificarModal } from "@/components/notificar-modal"
 import { ReporteIndividualModal, type PreguntaReporte } from "@/components/reporte-individual-modal"
+import { useReporteEnlace } from "@/lib/use-reporte-enlace"
 import {
   EstadisticasSection,
   type EstadisticasDimension,
@@ -136,19 +138,30 @@ function UsuarioRow({
   onReporte,
 }: {
   usuario: Usuario
-  notificado: boolean
+  notificado: string | null
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
   onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(false)
   const n = usuario.nutricion
   const requiereAtencion = n.n_nivel === "Pobre"
+  const retrocedio = usuario.indice_anterior != null && n.n_indice < usuario.indice_anterior
+  const necesitaCita = requiereAtencion || n.n_nivel === "Moderado" || retrocedio
+  const { ref: filaRef, resaltado } = useResaltadoAlerta(usuario.usuario_id, () => setOpen(true))
+  useEffect(() => { if (notificado) setOpen(false) }, [notificado])
   const fecha = usuario.fecha
     ? new Date(usuario.fecha).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" })
     : null
 
   return (
-    <div className={`border rounded-xl overflow-hidden ${requiereAtencion ? "border-red-200" : "border-[#E2E8F0]"}`}>
+    <div
+      ref={filaRef}
+      className={`border rounded-xl overflow-hidden transition-shadow ${
+        resaltado
+          ? "border-red-400 ring-2 ring-red-400 ring-offset-2"
+          : requiereAtencion ? "border-red-200" : "border-[#E2E8F0]"
+      }`}
+    >
       {/* div en vez de button: el boton de Notificar de adentro quedaria
           anidado en otro boton, invalido en HTML. */}
       <div
@@ -180,22 +193,33 @@ function UsuarioRow({
         </div>
         <div className="flex items-center gap-3 ml-4">
           <div className="hidden sm:flex items-center gap-2 w-52"><IndiceBar indice={n.n_indice} nivel={n.n_nivel} /></div>
-          {requiereAtencion && usuario.usuario_id && (
-            notificado ? (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A] shrink-0">
-                <Check className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Notificado</span>
-              </span>
-            ) : (
+          {necesitaCita && usuario.usuario_id && (
+            <div className="flex items-center gap-2 shrink-0">
+              {notificado === "rechazada" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#B45309]">
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Rechazó la cita</span>
+                </span>
+              ) : notificado === "aceptada" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A]">
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Aceptó la cita</span>
+                </span>
+              ) : notificado === "pendiente" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A]">
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Notificado</span>
+                </span>
+              ) : null}
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onNotificar({ nombre: usuario.nombre, usuarioId: usuario.usuario_id! }) }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shrink-0"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 <Bell className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Notificar</span>
+                <span className="hidden sm:inline">{notificado === "rechazada" ? "Volver a invitar" : "Notificar"}</span>
               </button>
-            )
+            </div>
           )}
           {open ? <ChevronUp className="w-4 h-4 text-[#6B7280] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#6B7280] shrink-0" />}
         </div>
@@ -261,7 +285,7 @@ function CarreraCard({
   onReporte,
 }: {
   carrera: Carrera
-  notificados: Set<string>
+  notificados: Record<string, string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
   onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
@@ -283,7 +307,7 @@ function CarreraCard({
             <UsuarioRow
               key={u.encuesta_id ?? i}
               usuario={u}
-              notificado={!!u.usuario_id && notificados.has(u.usuario_id)}
+              notificado={u.usuario_id ? notificados[u.usuario_id] ?? null : null}
               onNotificar={onNotificar}
               onReporte={onReporte}
             />
@@ -301,7 +325,7 @@ function FacultadCard({
   onReporte,
 }: {
   facultad: Facultad
-  notificados: Set<string>
+  notificados: Record<string, string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
   onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
@@ -402,7 +426,16 @@ export default function NutricionPage() {
   const [stats, setStats] = useState<EstadisticasDimension | null>(null)
   const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
   const [reporteObjetivo, setReporteObjetivo] = useState<{ usuarioId: string; preguntas: PreguntaReporte[] } | null>(null)
-  const [notificados, setNotificados] = useState<Set<string>>(new Set())
+
+  useReporteEnlace(!!data, (id) => {
+    const u = (data?.facultades ?? []).flatMap((f) => f.carreras.flatMap((c) => c.usuarios)).find((x) => x.usuario_id === id)
+    if (!u) return
+    setReporteObjetivo({
+      usuarioId: id,
+      preguntas: N_ITEMS.map((item) => ({ numero: item.replace("n_item_", ""), texto: N_ITEM_TEXTO[item], valor: u.nutricion[item] })),
+    })
+  })
+  const [notificados, setNotificados] = useState<Record<string, string>>({})
 
   const getToken = useCallback(() => {
     const t = getAccessToken()
@@ -462,6 +495,14 @@ export default function NutricionPage() {
   }, [getToken, mergeOpciones, router])
 
   useEffect(() => { fetchData(filtros) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    api.get("/notificaciones/notificados?rol=nutricion")
+      .then((res) => setNotificados((prev) => ({ ...prev, ...res.data })))
+      .catch(() => {})
+  }, [getToken])
 
   const handleFiltrosChange = (f: Filtros) => { setFiltros(f); fetchData(f) }
 
@@ -539,8 +580,9 @@ export default function NutricionPage() {
           nombre={notifObjetivo.nombre}
           usuarioId={notifObjetivo.usuarioId}
           mensajeSugerido="Te invitamos a agendar una cita con nutrición para hablar de tus resultados."
+          rol="nutricion"
           onClose={() => setNotifObjetivo(null)}
-          onEnviado={(id) => setNotificados((prev) => new Set(prev).add(id))}
+          onEnviado={(id) => setNotificados((prev) => ({ ...prev, [id]: "pendiente" }))}
         />
       )}
 
