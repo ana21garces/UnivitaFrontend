@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, AlertCircle, ChevronUp, Send, ShieldCheck, Phone } from "lucide-react";
+import { CheckCircle2, AlertCircle, ChevronUp, Send, ShieldCheck, Phone, Clock } from "lucide-react";
 import { UniVitaLogo } from "@/components/univita-logo";
 import { api, estadoDeError, redirigirPorError } from "@/lib/api";
 import {
@@ -18,6 +18,15 @@ import Select from "react-select";
 type Sexo = "masculino" | "femenino" | null;
 
 const TOTAL_QUESTIONS = QUESTIONS.length;
+const DIMENSIONES_CONTEO: [string, number][] = [
+  ["Nutrición", 10],
+  ["Actividad física", 9],
+  ["Responsabilidad en salud", 7],
+  ["Manejo del estrés", 8],
+  ["Relaciones interpersonales", 9],
+  ["Psicología positiva", 9],
+];
+
 const QUESTIONS_PER_PAGE = 8;
 const TOTAL_PAGES = Math.ceil(TOTAL_QUESTIONS / QUESTIONS_PER_PAGE);
 
@@ -85,7 +94,9 @@ export default function OnboardingSurveyPage() {
 
   // Consentimiento informado
   const [showConsentModal, setShowConsentModal] = useState(true);
+  const [showBienvenida, setShowBienvenida] = useState(false);
   const [consentChecked, setConsentChecked] = useState(false);
+  const [consentAceptadoEn, setConsentAceptadoEn] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(false);
 
   const topRef = useRef<HTMLDivElement>(null);
@@ -186,6 +197,7 @@ export default function OnboardingSurveyPage() {
         program: programa,
         tipo_usuario: tipoUsuario.toLowerCase() as "estudiante" | "docente" | "administrativo",
         sexo,
+        consentimiento_aceptado_en: consentAceptadoEn,
         ...buildSurveyPayload(answers),
       };
 
@@ -266,7 +278,10 @@ export default function OnboardingSurveyPage() {
               <input
                 type="checkbox"
                 checked={consentChecked}
-                onChange={(e) => setConsentChecked(e.target.checked)}
+                onChange={(e) => {
+                  setConsentChecked(e.target.checked);
+                  setConsentAceptadoEn(e.target.checked ? new Date().toISOString() : null);
+                }}
                 className="mt-1 w-4 h-4 accent-[#16A34A]"
               />
               <span className="text-sm text-[#374151]">
@@ -281,6 +296,7 @@ export default function OnboardingSurveyPage() {
                 onClick={() => {
                   setShowConsentModal(false);
                   setShowIntro(true);
+                  setShowBienvenida(true);
                 }}
                 className="px-10 py-2.5 rounded-lg text-white text-sm font-semibold disabled:opacity-40"
                 style={{
@@ -290,6 +306,35 @@ export default function OnboardingSurveyPage() {
                 Continuar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {showBienvenida && (
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white max-w-md w-full rounded-2xl shadow-xl border border-slate-200 p-6 text-center">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#EAF3DE] text-[#16A34A] mx-auto mb-3">
+              <Clock className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-bold text-[#1F2937] mb-2">
+              {esSeguimiento ? "Gracias por volver" : "Gracias por tomarte este tiempo"}
+            </h2>
+            <p className="text-sm text-[#6B7280] leading-relaxed">
+              {esSeguimiento
+                ? "Es la misma encuesta de la primera vez: 52 preguntas, entre 10 y 15 minutos. Responderla otra vez te muestra tu progreso, en qué mejoraste y en qué necesitas apoyo."
+                : "Son 52 preguntas y toma entre 10 y 15 minutos. Con lo que respondas armamos tus recomendaciones y el acompañamiento que necesitas."}
+            </p>
+            <p className="mt-2 text-sm text-[#6B7280] leading-relaxed">
+              {esSeguimiento
+                ? "Responde según cómo estás ahora, no como respondiste antes. No hay respuestas buenas ni malas."
+                : "Busca un momento tranquilo: no hay respuestas buenas ni malas, solo lo que haces hoy."}
+            </p>
+            <button
+              onClick={() => setShowBienvenida(false)}
+              className="mt-5 w-full py-2.5 rounded-lg text-white text-sm font-semibold"
+              style={{ background: "linear-gradient(135deg,#16A34A,#22C55E)" }}
+            >
+              Comenzar
+            </button>
           </div>
         </div>
       )}
@@ -353,12 +398,26 @@ export default function OnboardingSurveyPage() {
             </h2>
 
             <p className="text-sm text-[#065F46] leading-relaxed">
-              Este cuestionario contiene oraciones acerca de su estilo de vida o
-              hábitos personales en el presente. Por favor, responda a cada
-              oración lo más exacto posible y trate de no pasar por alto ninguna
-              oración. Indique la frecuencia con la que usted se dedica a cada
-              conducta o costumbre
+              Este cuestionario contiene afirmaciones acerca de tu estilo de vida o hábitos
+              personales en el presente. Responde a cada afirmación lo más exacto posible y trata
+              de no pasar por alto ninguna. Indica la frecuencia con la que realizas cada conducta
+              o costumbre.
             </p>
+
+            <p className="mt-3 text-sm font-semibold text-[#166534]">
+              Estas son las seis dimensiones que vas a responder:
+            </p>
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {DIMENSIONES_CONTEO.map(([nombre, total]) => (
+                <div
+                  key={nombre}
+                  className="flex items-center justify-between gap-2 rounded-lg bg-[#FFFFFF] border border-[#BBF7D0] px-3 py-2"
+                >
+                  <span className="text-xs text-[#065F46] leading-tight">{nombre}</span>
+                  <span className="text-xs font-bold text-[#16A34A] shrink-0">{total}</span>
+                </div>
+              ))}
+            </div>
           </section>
         )}
         {/* Datos demográficos: solo en la primera página. En un seguimiento ya

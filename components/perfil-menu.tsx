@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ChevronDown, UserCog, LogOut } from "lucide-react"
+import { api } from "@/lib/api"
+import { clearSession, getAccessToken, getRoleFromToken } from "@/lib/auth"
 import { ProfileAvatar } from "@/components/profile-avatar"
-import { clearSession } from "@/lib/auth"
 import type { RankTier } from "@/lib/gamificacion"
 
 type PerfilMenuProps = {
@@ -26,15 +27,35 @@ export function PerfilMenu({
 }: PerfilMenuProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [esUsuario, setEsUsuario] = useState(false)
+
+  useEffect(() => {
+    const t = getAccessToken()
+    setEsUsuario(!!t && getRoleFromToken(t) === "student")
+  }, [])
 
   const subtituloCompleto = [
     subtitulo,
-    currentLevel ? `Nv. ${currentLevel}` : null,
+    esUsuario && currentLevel ? `Nv. ${currentLevel}` : null,
   ]
     .filter(Boolean)
     .join(" · ")
 
-  const cerrarSesion = () => {
+  // Latido para la auditoría: marca que el usuario sigue activo.
+  useEffect(() => {
+    if (!getAccessToken()) return
+    const latir = () => {
+      if (getAccessToken()) api.post("/auth/heartbeat").catch(() => {})
+    }
+    latir()
+    const id = setInterval(latir, 60000)
+    return () => clearInterval(id)
+  }, [])
+
+  const cerrarSesion = async () => {
+    try {
+      await api.post("/auth/logout")
+    } catch {}
     clearSession()
     router.replace("/")
   }
@@ -52,6 +73,7 @@ export function PerfilMenu({
           rankTier={rankTier}
           avatarUrl={avatarUrl}
           size="sm"
+          plain={!esUsuario}
         />
         <div className="hidden sm:flex flex-col leading-tight text-left">
           <span className="text-sm font-medium text-[#1F2937]">{nombre || "Usuario"}</span>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { Search, Eye, X } from "lucide-react"
+import { avatarSrc } from "@/lib/gamificacion"
 
 interface Dimension {
   indice: number
@@ -30,6 +31,7 @@ interface Perfil {
   facultad: string | null
   programa: string | null
   tipo_usuario: string | null
+  avatar_url: string | null
   fecha: string
   resultados: Resultados
 }
@@ -62,6 +64,7 @@ export default function PerfilesDeSaludPage() {
   const [filterFacultad, setFilterFacultad] = useState("all")
   const [filterNivel, setFilterNivel] = useState("all")
   const [detalle, setDetalle] = useState<Perfil | null>(null)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     if (!getAccessToken()) {
@@ -92,14 +95,35 @@ export default function PerfilesDeSaludPage() {
     return matchesSearch && matchesTipo && matchesFacultad && matchesNivel
   })
 
+  // Al filtrar o buscar, vuelve a la primera página para no quedar en una vacía.
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery, filterTipo, filterFacultad, filterNivel])
+
+  const pageSize = 10
+  const total = filtered.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const paginaActual = Math.min(page, totalPages)
+  const inicio = (paginaActual - 1) * pageSize
+  const paginados = filtered.slice(inicio, inicio + pageSize)
+  const desde = total === 0 ? 0 : inicio + 1
+  const hasta = Math.min(inicio + pageSize, total)
+
   const formatFecha = (iso: string) =>
     new Date(iso).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "numeric" })
 
-  const Avatar = ({ name }: { name: string }) => (
-    <div className="w-9 h-9 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A] shrink-0">
-      {name.charAt(0).toUpperCase()}
-    </div>
-  )
+  const Avatar = ({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) => {
+    const src = avatarSrc(avatarUrl)
+    return (
+      <div className="w-9 h-9 rounded-full overflow-hidden bg-[#16A34A]/10 flex items-center justify-center text-sm font-bold text-[#16A34A] shrink-0">
+        {src ? (
+          <img src={src} alt={name} className="w-full h-full object-cover" />
+        ) : (
+          name.charAt(0).toUpperCase()
+        )}
+      </div>
+    )
+  }
 
   const NivelBadge = ({ nivel, indice }: { nivel: string; indice: number }) => {
     const s = nivelStyle(nivel)
@@ -111,16 +135,40 @@ export default function PerfilesDeSaludPage() {
     )
   }
 
-  // Fila de 6 puntitos, uno por dimensión, coloreados por nivel.
-  const DimDots = ({ r }: { r: Resultados }) => (
-    <div className="flex items-center justify-center gap-1">
+  const AnilloNivel = ({ nivel, indice }: { nivel: string; indice: number }) => {
+    const s = nivelStyle(nivel)
+    const pct = Math.round(indice)
+    return (
+      <div className="flex items-center justify-center gap-2.5">
+        <div
+          className="w-11 h-11 rounded-full flex items-center justify-center"
+          style={{ background: `conic-gradient(${s.bar} ${pct}%, #E9ECEA ${pct}%)` }}
+        >
+          <div
+            className="w-[34px] h-[34px] rounded-full bg-white flex items-center justify-center text-[13px] font-bold"
+            style={{ color: s.bar }}
+          >
+            {pct}
+          </div>
+        </div>
+        <div className="text-left">
+          <div className={`text-sm font-semibold ${s.text}`}>{nivel}</div>
+          <div className="text-[11px] text-[#94A3B8]">de 100</div>
+        </div>
+      </div>
+    )
+  }
+
+  const MiniBarras = ({ r }: { r: Resultados }) => (
+    <div className="flex items-end justify-center gap-1 h-7">
       {DIMS.map((d) => {
         const dim = r[d.key] as Dimension
         return (
-          <span
+          <div
             key={d.key}
-            className={`w-2 h-2 rounded-full ${nivelStyle(dim.nivel).dot}`}
-            title={`${d.label}: ${dim.nivel}`}
+            className="w-[7px] rounded-sm"
+            style={{ height: `${Math.max(12, Math.round(dim.indice))}%`, background: nivelStyle(dim.nivel).bar }}
+            title={`${d.label}: ${dim.nivel} · ${Math.round(dim.indice)}`}
           />
         )
       })}
@@ -212,11 +260,11 @@ export default function PerfilesDeSaludPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((p) => (
+                    {paginados.map((p) => (
                       <tr key={p.usuario_id} className="border-b border-[#E2E8F0] last:border-b-0 hover:bg-[#F8FAFC] transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <Avatar name={p.nombre} />
+                            <Avatar name={p.nombre} avatarUrl={p.avatar_url} />
                             <div className="min-w-0">
                               <p className="font-medium text-[#1F2937] truncate">{p.nombre}</p>
                               <p className="text-xs text-[#94A3B8] truncate">{p.email}</p>
@@ -224,10 +272,10 @@ export default function PerfilesDeSaludPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <NivelBadge nivel={p.resultados.nivel_global} indice={p.resultados.indice_global} />
+                          <AnilloNivel nivel={p.resultados.nivel_global} indice={p.resultados.indice_global} />
                         </td>
                         <td className="px-4 py-3 text-center">
-                          <DimDots r={p.resultados} />
+                          <MiniBarras r={p.resultados} />
                         </td>
                         <td className="px-4 py-3 text-center text-[#6B7280]">{formatFecha(p.fecha)}</td>
                         <td className="px-4 py-3">
@@ -252,11 +300,11 @@ export default function PerfilesDeSaludPage() {
 
               {/* Mobile */}
               <div className="md:hidden divide-y divide-[#E2E8F0]">
-                {filtered.map((p) => (
+                {paginados.map((p) => (
                   <div key={p.usuario_id} className="p-4 flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <Avatar name={p.nombre} />
+                        <Avatar name={p.nombre} avatarUrl={p.avatar_url} />
                         <div className="min-w-0">
                           <p className="font-medium text-[#1F2937] text-sm truncate">{p.nombre}</p>
                           <p className="text-xs text-[#94A3B8] truncate">{p.email}</p>
@@ -267,8 +315,8 @@ export default function PerfilesDeSaludPage() {
                       </button>
                     </div>
                     <div className="flex items-center justify-between">
-                      <NivelBadge nivel={p.resultados.nivel_global} indice={p.resultados.indice_global} />
-                      <DimDots r={p.resultados} />
+                      <AnilloNivel nivel={p.resultados.nivel_global} indice={p.resultados.indice_global} />
+                      <MiniBarras r={p.resultados} />
                     </div>
                   </div>
                 ))}
@@ -281,6 +329,33 @@ export default function PerfilesDeSaludPage() {
             </>
           )}
         </div>
+
+        {!loading && total > 0 && (
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-sm text-[#6B7280]">
+              Mostrando {desde}–{hasta} de {total} perfil{total === 1 ? "" : "es"}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={paginaActual === 1}
+                className="h-9 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm text-[#475569] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-[#6B7280] px-2">
+                Página {paginaActual} de {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={paginaActual === totalPages}
+                className="h-9 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm text-[#475569] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Modal: detalle del perfil */}
@@ -293,8 +368,12 @@ export default function PerfilesDeSaludPage() {
             </button>
 
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-12 h-12 rounded-full bg-[#16A34A]/10 flex items-center justify-center text-lg font-bold text-[#16A34A]">
-                {detalle.nombre.charAt(0).toUpperCase()}
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-[#16A34A]/10 flex items-center justify-center text-lg font-bold text-[#16A34A]">
+                {avatarSrc(detalle.avatar_url) ? (
+                  <img src={avatarSrc(detalle.avatar_url)!} alt={detalle.nombre} className="w-full h-full object-cover" />
+                ) : (
+                  detalle.nombre.charAt(0).toUpperCase()
+                )}
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-[#1F2937] truncate">{detalle.nombre}</p>
