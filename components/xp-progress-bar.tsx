@@ -29,8 +29,8 @@ export function XpProgressBar({ currentXp, maxXp, level }: XpProgressBarProps) {
           }}
         />
       </div>
-      <span className="text-xs font-medium text-[#6B7280]">
-        {currentXp}/{maxXp} XP
+      <span className="text-xs font-medium text-[#6B7280] whitespace-nowrap">
+        {currentXp}/{maxXp} pts
       </span>
     </div>
   )

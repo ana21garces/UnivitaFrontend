@@ -6,6 +6,7 @@ import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import Link from "next/link"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { MisionesHoySection } from "@/components/misiones-hoy"
+import { InsigniasContador } from "@/components/insignias-contador"
 import { getAccessToken, setSurveyDone } from "@/lib/auth"
 import { TrendingUp } from "lucide-react"
 import type { ProgresoDimension } from "@/lib/seguimiento-recomendaciones"
@@ -174,13 +175,16 @@ export default function UserDashboard() {
               Completaste el cuestionario PEPS II — aquí están tus resultados y misiones de hoy.
             </p>
           </div>
-          <Link
-            href="/dashboard/mi-evolucion"
-            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold text-white shadow-md shadow-[#16A34A]/20 hover:shadow-lg transition-all shrink-0"
-            style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
-          >
-            <TrendingUp className="w-4 h-4" /> Mi evolución
-          </Link>
+          <div className="flex items-center gap-3 shrink-0">
+            <InsigniasContador />
+            <Link
+              href="/dashboard/mi-evolucion"
+              className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold text-white shadow-md shadow-[#16A34A]/20 hover:shadow-lg transition-all shrink-0"
+              style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
+            >
+              <TrendingUp className="w-4 h-4" /> Mi evolución
+            </Link>
+          </div>
         </div>
 
         {/* PEPS II global + dimensiones — primero los resultados */}
@@ -215,7 +219,7 @@ export default function UserDashboard() {
             </div>
             <p className="text-xs text-[#6B7280] mb-4">
               Es un resumen de tus respuestas al cuestionario de salud, de 0% a 100%.
-              No son los puntos (XP) que ganas al completar tus misiones diarias.
+              No son los puntos que ganas al completar tus misiones diarias.
             </p>
             <p className="text-xs font-semibold text-[#6B7280] mb-2">Los cuatro niveles</p>
             <div className="grid grid-cols-4 gap-1 mb-3">
@@ -238,23 +242,32 @@ export default function UserDashboard() {
           </section>
 
           {/* Nivel por dimensión */}
-          <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
-            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Nivel por dimensión</h3>
-            <div className="flex flex-col gap-3.5">
+          <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6 flex flex-col">
+            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-2">Nivel por dimensión</h3>
+            <div className="flex-1 flex flex-col divide-y divide-[#F1F5F9]">
               {dimensions.map((dim) => (
-                <div key={dim.key} className="flex items-center gap-2 sm:gap-3">
-                  <span className="text-xs text-[#6B7280] w-24 sm:w-44 shrink-0 leading-tight">{DIMENSION_NAMES[dim.key]}</span>
-                  <div className="flex-1 h-2 bg-[#F1F5F9] rounded-full">
-                    <div className={`h-full rounded-full ${getBarColor(dim.nivel)}`} style={{ width: `${dim.indice}%` }} />
+                <div key={dim.key} className="flex-1 flex items-center gap-3 py-2 first:pt-0 last:pb-0">
+                  <span className="text-xs font-medium text-[#374151] w-28 sm:w-36 shrink-0 leading-tight">
+                    {DIMENSION_NAMES[dim.key]}
+                  </span>
+                  <div className="flex-1 h-2 bg-[#F1F5F9] rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${getBarColor(dim.nivel)}`} style={{ width: `${Math.max(dim.indice, 3)}%` }} />
                   </div>
-                  <span className="text-xs font-bold text-[#1F2937] w-9 text-right shrink-0">{Math.round(dim.indice)}%</span>
-                  <span className="text-xs font-semibold w-20 text-right shrink-0" style={{ color: getNivelColor(dim.nivel) }}>
+                  <span className="text-xs font-bold text-[#1F2937] w-8 text-right shrink-0 tabular-nums">
+                    {Math.round(dim.indice)}%
+                  </span>
+                  <span
+                    className="text-[11px] font-semibold px-2 py-0.5 rounded-full w-[76px] text-center shrink-0"
+                    style={{ backgroundColor: `${getNivelColor(dim.nivel)}18`, color: getNivelColor(dim.nivel) }}
+                  >
                     {dim.nivel}
                   </span>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-[#6B7280] mt-4">Las barras en rojo indican dimensiones prioritarias a mejorar.</p>
+            <p className="text-xs text-[#6B7280] mt-4">
+              El color de la barra indica el nivel: rojo es prioritario, ámbar por mejorar y verde va bien.
+            </p>
           </section>
         </div>
 

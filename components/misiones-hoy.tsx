@@ -39,9 +39,9 @@ export function MisionesHoySection({ onProgresoChange }: MisionesHoyProps) {
       const { data: res } = await api.post(`/gamificacion/misiones/${misionId}/completar`)
       await cargar()
       onProgresoChange?.(res.progreso)
-      let texto = `+${res.xp_ganado} XP`
+      let texto = `+${res.xp_ganado} puntos`
       if (res.subio_nivel) texto += " · ¡Subiste de nivel!"
-      if (res.nuevo_rank) texto += ` · Nuevo rango: ${res.nuevo_rank}`
+      if (res.nuevo_rank) texto += ` · Nuevo rango: ${res.nuevo_rank[0].toUpperCase()}${res.nuevo_rank.slice(1)}`
       setMensaje(texto)
     } catch {
       setMensaje("No se pudo registrar la tarea. Intenta de nuevo.")
@@ -74,7 +74,7 @@ export function MisionesHoySection({ onProgresoChange }: MisionesHoyProps) {
           <p className="text-xs text-[#6B7280] mt-1">
             {data.completadas_hoy}/{data.total_hoy} completadas
             {!todasCompletas && data.bonus_disponible > 0 && (
-              <> · Bonus al completar todas: +{data.bonus_disponible} XP</>
+              <> · Bono al completarlas todas: +{data.bonus_disponible} puntos</>
             )}
           </p>
         </div>
@@ -112,7 +112,7 @@ export function MisionesHoySection({ onProgresoChange }: MisionesHoyProps) {
                   <span className="text-sm text-[#16A34A] truncate">{mision.titulo}</span>
                 </span>
                 <span className="text-[11px] text-[#16A34A]/80 shrink-0 whitespace-nowrap">
-                  {mision.dimension_label} · {mision.xp} XP
+                  {mision.dimension_label} · {mision.xp} puntos
                 </span>
               </div>
             ) : (
@@ -127,7 +127,7 @@ export function MisionesHoySection({ onProgresoChange }: MisionesHoyProps) {
                     {mision.dimension_label}
                     {mision.duracion_min ? ` · ${mision.duracion_min} min` : ""}
                     {" · "}
-                    {mision.xp} XP
+                    {mision.xp} puntos
                   </p>
                 </div>
                 <button

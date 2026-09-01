@@ -49,11 +49,14 @@ export function avatarSrc(avatarUrl: string | null | undefined): string | null {
 
 export function motivoXpLabel(motivo: string): string {
   const labels: Record<string, string> = {
-    tarea_completada: "Tarea completada",
+    tarea_completada: "Misión completada",
     bonus_dia: "Bonus del día",
     racha_3: "Racha de 3 días",
     racha_7: "Racha de 7 días",
     encuesta: "Encuesta completada",
+    recomendacion_dia: "Actividad registrada",
+    recomendacion_completada: "Recomendación completada",
+    insignia: "Insignia ganada",
   }
   return labels[motivo] ?? motivo
 }
