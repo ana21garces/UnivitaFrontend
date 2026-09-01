@@ -144,6 +144,8 @@ function UsuarioRow({
   const [open, setOpen] = useState(false)
   const af = usuario.actividad_fisica
   const requiereAtencion = af.af_nivel === "Pobre"
+  const retrocedio = usuario.indice_anterior != null && af.af_indice < usuario.indice_anterior
+  const necesitaCita = requiereAtencion || af.af_nivel === "Moderado" || retrocedio
   const { ref: filaRef, resaltado } = useResaltadoAlerta(usuario.usuario_id, () => setOpen(true))
   useEffect(() => { if (notificado) setOpen(false) }, [notificado])
   const fecha = usuario.fecha
@@ -190,7 +192,7 @@ function UsuarioRow({
         </div>
         <div className="flex items-center gap-3 ml-4">
           <div className="hidden sm:flex items-center gap-2 w-52"><IndiceBar indice={af.af_indice} nivel={af.af_nivel} /></div>
-          {requiereAtencion && usuario.usuario_id && (
+          {necesitaCita && usuario.usuario_id && (
             <div className="flex items-center gap-2 shrink-0">
               {notificado === "rechazada" ? (
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#B45309]">
