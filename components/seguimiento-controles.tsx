@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2, Flame } from "lucide-react"
+import { CheckCircle2, Flame, AlertTriangle } from "lucide-react"
 import { api } from "@/lib/api"
 import {
   hoyLocalISO,
@@ -39,6 +39,7 @@ export function SeguimientoControles({
 }) {
   const [enviando, setEnviando] = useState(false)
   const [completando, setCompletando] = useState(false)
+  const [confirmarCompletar, setConfirmarCompletar] = useState(false)
   const [mensaje, setMensaje] = useState<string | null>(null)
   const [historial, setHistorial] = useState<RegistroDiario[] | null>(null)
   const [cargandoHistorial, setCargandoHistorial] = useState(false)
@@ -71,7 +72,7 @@ export function SeguimientoControles({
   }
 
   const completar = async () => {
-    if (!confirm("¿Marcar esta recomendación como completada? No podrás registrar más días en ella.")) return
+    setConfirmarCompletar(false)
     setCompletando(true)
     setMensaje(null)
     try {
@@ -160,14 +161,56 @@ export function SeguimientoControles({
       {mensaje && <p className="mt-2 text-xs font-semibold text-[#16A34A]">{mensaje}</p>}
 
       {!completada && (
-        <button
-          type="button"
-          disabled={completando}
-          onClick={completar}
-          className="mt-3 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#CBD5E1] text-[#374151] hover:bg-[#F8FAFC] disabled:opacity-60 transition-colors"
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setConfirmarCompletar(true)}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#CBD5E1] text-[#374151] hover:bg-[#F8FAFC] transition-colors"
+          >
+            Marcar como completada
+          </button>
+        </div>
+      )}
+
+      {confirmarCompletar && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setConfirmarCompletar(false)}
         >
-          {completando ? "..." : "Marcar como completada"}
-        </button>
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FEF3C7] shrink-0">
+                <AlertTriangle className="w-5 h-5 text-[#D97706]" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-[#1F2937]">Completar recomendación</h3>
+                <p className="text-sm text-[#6B7280] mt-1">
+                  ¿Marcar esta recomendación como completada? No podrás registrar más días en ella.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-5">
+              <button
+                type="button"
+                onClick={() => setConfirmarCompletar(false)}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={completando}
+                onClick={completar}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-60 transition-colors"
+              >
+                {completando ? "..." : "Sí, completar"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
