@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   User,
@@ -16,9 +16,11 @@ import {
   Flame,
   Loader2,
   Upload,
+  ChevronDown,
 } from "lucide-react"
 import { ProfileAvatar } from "@/components/profile-avatar"
 import { XpProgressBar } from "@/components/xp-progress-bar"
+import { InsigniasGrid } from "@/components/insignias-grid"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
 import { UniVitaLogo } from "@/components/univita-logo"
@@ -44,6 +46,7 @@ type XpEvento = {
   id: string
   xp: number
   motivo: string
+  detalle: string | null
   created_at: string
 }
 
@@ -61,6 +64,59 @@ export default function PerfilPage() {
   const [rol, setRol] = useState("")
   const [progreso, setProgreso] = useState<ProgresoGamificacion | null>(null)
   const [historial, setHistorial] = useState<XpEvento[]>([])
+  const [verTodoXp, setVerTodoXp] = useState(false)
+  const [xpExpandido, setXpExpandido] = useState<Set<string>>(new Set())
+  const [diasColapsados, setDiasColapsados] = useState<Set<string>>(new Set())
+
+  // Historial de XP agrupado por día; dentro de cada día se juntan los eventos
+  // seguidos del mismo tipo (ej. "Misión completada ·3") para que no sea un
+  // larguero. El backend ya lo entrega del más reciente al más antiguo.
+  const historialPorDia = useMemo(() => {
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    const etiquetaDia = (iso: string) => {
+      const d = new Date(iso)
+      d.setHours(0, 0, 0, 0)
+      const dias = Math.round((hoy.getTime() - d.getTime()) / 86_400_000)
+      if (dias === 0) return "Hoy"
+      if (dias === 1) return "Ayer"
+      return new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" })
+    }
+
+    const hora = (iso: string) =>
+      new Date(iso).toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" })
+
+    const grupos: {
+      dia: string
+      totalXp: number
+      items: {
+        motivo: string
+        xp: number
+        count: number
+        detalles: { hora: string; xp: number; detalle: string | null }[]
+      }[]
+    }[] = []
+
+    for (const ev of historial) {
+      const dia = etiquetaDia(ev.created_at)
+      let g = grupos[grupos.length - 1]
+      if (!g || g.dia !== dia) {
+        g = { dia, totalXp: 0, items: [] }
+        grupos.push(g)
+      }
+      g.totalXp += ev.xp
+      const sub = { hora: hora(ev.created_at), xp: ev.xp, detalle: ev.detalle }
+      const ultimo = g.items[g.items.length - 1]
+      if (ultimo && ultimo.motivo === ev.motivo) {
+        ultimo.xp += ev.xp
+        ultimo.count += 1
+        ultimo.detalles.push(sub)
+      } else {
+        g.items.push({ motivo: ev.motivo, xp: ev.xp, count: 1, detalles: [sub] })
+      }
+    }
+    return grupos
+  }, [historial])
 
   const [actual, setActual] = useState("")
   const [nueva, setNueva] = useState("")
@@ -400,28 +456,117 @@ export default function PerfilPage() {
               </div>
             </form>
 
+            {rol === "student" && (
+              <div className="mb-6">
+                <InsigniasGrid />
+              </div>
+            )}
+
             <section className="rounded-2xl border border-[#E2E8F0] bg-[#FFFFFF] shadow-sm p-6">
               <h2 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Historial de XP</h2>
-              {historial.length === 0 ? (
+              {historialPorDia.length === 0 ? (
                 <p className="text-sm text-[#6B7280]">
                   Aún no has ganado XP. Completa misiones en tu dashboard.
                 </p>
               ) : (
-                <div className="flex flex-col divide-y divide-[#F1F5F9]">
-                  {historial.map((evento) => (
-                    <div key={evento.id} className="flex items-center justify-between py-3 gap-3">
-                      <div>
-                        <p className="text-sm font-medium text-[#1F2937]">
-                          {motivoXpLabel(evento.motivo)}
-                        </p>
-                        <p className="text-xs text-[#9CA3AF]">
-                          {new Date(evento.created_at).toLocaleString("es-CO")}
-                        </p>
+                <>
+                  <div className="flex flex-col gap-4">
+                    {(verTodoXp ? historialPorDia : historialPorDia.slice(0, 3)).map((g) => {
+                      const colapsado = diasColapsados.has(g.dia)
+                      return (
+                      <div key={g.dia}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDiasColapsados((prev) => {
+                              const s = new Set(prev)
+                              if (s.has(g.dia)) s.delete(g.dia)
+                              else s.add(g.dia)
+                              return s
+                            })
+                          }
+                          className="w-full flex items-center justify-between gap-2 mb-1.5 group"
+                        >
+                          <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">
+                            <ChevronDown
+                              className={`w-3.5 h-3.5 transition-transform ${colapsado ? "-rotate-90" : ""}`}
+                            />
+                            {g.dia}
+                          </span>
+                          <span className="text-xs font-bold text-[#16A34A]">+{g.totalXp} XP</span>
+                        </button>
+                        {!colapsado && (
+                        <div className="flex flex-col divide-y divide-[#F1F5F9] rounded-lg border border-[#F1F5F9]">
+                          {g.items.map((it, i) => {
+                            const clave = `${g.dia}-${i}`
+                            const desglosable = it.count > 1
+                            const abierto = xpExpandido.has(clave)
+                            return (
+                              <div key={i}>
+                                <button
+                                  type="button"
+                                  disabled={!desglosable}
+                                  onClick={() =>
+                                    setXpExpandido((prev) => {
+                                      const s = new Set(prev)
+                                      s.has(clave) ? s.delete(clave) : s.add(clave)
+                                      return s
+                                    })
+                                  }
+                                  className={`w-full flex items-center justify-between gap-3 px-3 py-2 text-left ${
+                                    desglosable ? "hover:bg-[#F8FAFC] cursor-pointer" : "cursor-default"
+                                  }`}
+                                >
+                                  <span className="min-w-0">
+                                    <span className="flex items-center gap-1.5 text-sm text-[#1F2937]">
+                                      {motivoXpLabel(it.motivo)}
+                                      {desglosable && (
+                                        <>
+                                          <span className="text-[#9CA3AF] font-normal">·{it.count}</span>
+                                          <ChevronDown
+                                            className={`w-3.5 h-3.5 text-[#9CA3AF] transition-transform ${abierto ? "rotate-180" : ""}`}
+                                          />
+                                        </>
+                                      )}
+                                    </span>
+                                    {!desglosable && it.detalles[0].detalle && (
+                                      <span className="block text-xs text-[#9CA3AF] truncate">{it.detalles[0].detalle}</span>
+                                    )}
+                                  </span>
+                                  <span className="text-sm font-semibold text-[#16A34A] shrink-0">+{it.xp} XP</span>
+                                </button>
+                                {desglosable && abierto && (
+                                  <div className="bg-[#F8FAFC] px-3 py-1.5 flex flex-col gap-1">
+                                    {it.detalles.map((d, j) => (
+                                      <div key={j} className="flex items-center justify-between gap-3 text-xs pl-3">
+                                        <span className="text-[#6B7280] truncate">
+                                          {d.detalle ?? "Registro"}
+                                          <span className="text-[#B8C0CC]"> · {d.hora}</span>
+                                        </span>
+                                        <span className="font-medium text-[#16A34A] shrink-0">+{d.xp} XP</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                        )}
                       </div>
-                      <span className="text-sm font-bold text-[#16A34A]">+{evento.xp} XP</span>
-                    </div>
-                  ))}
-                </div>
+                      )
+                    })}
+                  </div>
+                  {historialPorDia.length > 3 && (
+                    <button
+                      type="button"
+                      onClick={() => setVerTodoXp((v) => !v)}
+                      className="mt-4 text-xs font-semibold text-[#2563EB] hover:underline"
+                    >
+                      {verTodoXp ? "Ver menos" : `Ver todos los días (${historialPorDia.length})`}
+                    </button>
+                  )}
+                </>
               )}
             </section>
           </>
