@@ -101,6 +101,7 @@ export type ProgresoDimension = {
   total: number
   activas: number
   completadas: number
+  registradas_hoy: number
   mensaje_cierre: string | null
 }
 

@@ -289,7 +289,9 @@ export default function UserDashboard() {
                     : "Con base en tus resultados, estas tres dimensiones son las que más pueden mejorar tu estilo de vida:"}
                 </p>
                 <p className="text-xs text-[#6B7280] mb-4">
-                  Entra a cada plan para ver las indicaciones que debes seguir para subirlas.
+                  Entra a cada plan para ver las indicaciones que debes seguir para subirlas. Cada
+                  día marcas las que hiciste; una recomendación cuenta como completada del plan
+                  cuando decides cerrarla.
                 </p>
                 <div className="flex flex-col divide-y divide-[#F1F5F9]">
                   {dimensionesPrioritarias.map((d) => {
@@ -313,8 +315,8 @@ export default function UserDashboard() {
                             {prog && prog.total > 0 && (
                               <span className="block text-[10px] text-[#9CA3AF] font-normal">
                                 {prog.mensaje_cierre
-                                  ? "✓ Recomendaciones completadas"
-                                  : `${prog.completadas}/${prog.total} recomendaciones completadas`}
+                                  ? "✓ Recomendaciones del plan completadas"
+                                  : `Plan: ${prog.completadas}/${prog.total} recomendaciones completadas · Hoy: ${prog.registradas_hoy}/${prog.activas} registradas`}
                               </span>
                             )}
                           </span>
