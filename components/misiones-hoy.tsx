@@ -39,6 +39,7 @@ export function MisionesHoySection({ onProgresoChange }: MisionesHoyProps) {
       const { data: res } = await api.post(`/gamificacion/misiones/${misionId}/completar`)
       await cargar()
       onProgresoChange?.(res.progreso)
+      window.dispatchEvent(new Event("misiones-actualizadas"))
       let texto = `+${res.xp_ganado} puntos`
       if (res.subio_nivel) texto += " · ¡Subiste de nivel!"
       if (res.nuevo_rank) texto += ` · Nuevo rango: ${res.nuevo_rank[0].toUpperCase()}${res.nuevo_rank.slice(1)}`

@@ -1,13 +1,22 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { Bot, X, Sparkles, Target, ClipboardList } from "lucide-react"
 import { api } from "@/lib/api"
+
+type PlanDimension = {
+  dimension: string
+  label: string
+  completadas: number
+  total: number
+  activas: number
+  registradas_hoy: number
+}
 
 type MensajeAsistente = {
   mensaje: string
   misiones: string[]
-  plan: string[]
+  plan: PlanDimension[]
   pendientes: number
   todo_hecho: boolean
 }
@@ -17,13 +26,26 @@ export function AsistenteUnacHealth() {
   const [datos, setDatos] = useState<MensajeAsistente | null>(null)
   const [cargando, setCargando] = useState(true)
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
     api
       .get("/asistente/mensaje")
       .then(({ data }) => setDatos(data))
       .catch(() => setDatos(null))
       .finally(() => setCargando(false))
   }, [])
+
+  useEffect(() => {
+    cargar()
+  }, [cargar])
+
+  useEffect(() => {
+    if (abierto) cargar()
+  }, [abierto, cargar])
+
+  useEffect(() => {
+    window.addEventListener("misiones-actualizadas", cargar)
+    return () => window.removeEventListener("misiones-actualizadas", cargar)
+  }, [cargar])
 
   const irAMisRetos = () => {
     setAbierto(false)
@@ -59,7 +81,7 @@ export function AsistenteUnacHealth() {
               </button>
             </div>
 
-            <div className="p-4">
+            <div className="p-4 max-h-[65vh] overflow-y-auto">
               {cargando ? (
                 <p className="text-sm text-[#6B7280]">Cargando tus retos...</p>
               ) : (
@@ -84,13 +106,7 @@ export function AsistenteUnacHealth() {
                     />
                   )}
 
-                  {!!datos?.plan.length && (
-                    <ListaRetos
-                      titulo="Dimensiones prioritarias"
-                      icono={<ClipboardList className="w-3.5 h-3.5 text-[#16A34A]" />}
-                      items={datos.plan}
-                    />
-                  )}
+                  {!!datos?.plan.length && <PlanSeguimiento plan={datos.plan} />}
 
                   {!todoHecho && (
                     <button
@@ -127,6 +143,40 @@ export function AsistenteUnacHealth() {
   )
 }
 
+function PlanSeguimiento({ plan }: { plan: PlanDimension[] }) {
+  return (
+    <div className="mt-3">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <ClipboardList className="w-3.5 h-3.5 text-[#16A34A]" />
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">
+          Recomendaciones registradas hoy
+        </p>
+      </div>
+      <ul className="flex flex-col gap-1">
+        {plan.map((d) => {
+          const cerrada = d.total > 0 && d.activas === 0
+          const registro = d.registradas_hoy > 0
+          return (
+            <li key={d.dimension} className="flex items-baseline justify-between gap-2">
+              <span className="text-[12px] text-[#374151] leading-tight">{d.label}</span>
+              <span
+                className={`text-[12px] font-semibold shrink-0 ${
+                  cerrada || registro ? "text-[#16A34A]" : "text-[#94A3B8]"
+                }`}
+              >
+                {cerrada ? "completada" : `${d.registradas_hoy}/${d.activas}`}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+      <p className="mt-2 text-[11px] text-[#94A3B8] leading-snug">
+        Se reinicia cada día. El avance de tu plan lo ves en el panel.
+      </p>
+    </div>
+  )
+}
+
 function ListaRetos({
   titulo,
   icono,
@@ -138,18 +188,15 @@ function ListaRetos({
 }) {
   return (
     <div className="mt-3">
-      <div className="flex items-center gap-1.5 mb-1.5">
+      <div className="flex items-center gap-1.5 mb-1">
         {icono}
         <p className="text-[11px] font-semibold uppercase tracking-wide text-[#94A3B8]">{titulo}</p>
       </div>
       <ul className="flex flex-col gap-1.5">
         {items.map((texto, i) => (
-          <li
-            key={i}
-            className="flex items-center gap-2 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] px-3 py-2"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] shrink-0" />
-            <span className="text-[13px] text-[#374151] leading-tight">{texto}</span>
+          <li key={i} className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full border-[1.5px] border-[#86EFAC] shrink-0" />
+            <span className="text-[12px] text-[#374151] leading-tight">{texto}</span>
           </li>
         ))}
       </ul>
