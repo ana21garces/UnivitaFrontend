@@ -370,6 +370,15 @@ export default function PlanSemanalPage() {
             )}
           </>
         )}
+        <div className="flex justify-center pt-2 pb-4">
+          <Link
+            href="/dashboard/user"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[#E2E8F0] bg-white text-sm font-medium text-[#475569] hover:bg-[#F8FAFC] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Volver al panel
+          </Link>
+        </div>
       </main>
     </div>
   )
