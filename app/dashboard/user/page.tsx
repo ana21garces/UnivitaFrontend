@@ -7,6 +7,7 @@ import Link from "next/link"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { MisionesHoySection } from "@/components/misiones-hoy"
 import { InsigniasContador } from "@/components/insignias-contador"
+import { AsistenteUnacHealth } from "@/components/asistente-unachealth"
 import { getAccessToken, setSurveyDone } from "@/lib/auth"
 import { TrendingUp } from "lucide-react"
 import type { ProgresoDimension } from "@/lib/seguimiento-recomendaciones"
@@ -272,7 +273,9 @@ export default function UserDashboard() {
         </div>
 
         {/* Misiones del día — después de los resultados */}
-        <MisionesHoySection />
+        <div id="misiones-hoy" className="scroll-mt-24">
+          <MisionesHoySection />
+        </div>
 
         {/* Dimensiones prioritarias — las recomendaciones van al final */}
         <div className="grid lg:grid-cols-1 gap-6 items-start">
@@ -360,6 +363,8 @@ export default function UserDashboard() {
           </section>
         </div>
       </main>
+
+      <AsistenteUnacHealth />
     </>
   )
 }
