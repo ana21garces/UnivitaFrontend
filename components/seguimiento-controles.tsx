@@ -45,6 +45,7 @@ export function SeguimientoControles({
   const [cargandoHistorial, setCargandoHistorial] = useState(false)
 
   const completada = seguimiento.estado === "completada"
+  const sinRegistros = seguimiento.total_dias_registrados < 1
   const yaRegistradoHoy = seguimiento.ultima_fecha_registro === hoyLocalISO()
 
   const registrarDia = async (notas: string | null) => {
@@ -154,11 +155,18 @@ export function SeguimientoControles({
         <div className="mt-3">
           <button
             type="button"
+            disabled={sinRegistros}
+            title={sinRegistros ? "Registra al menos un día para poder completarla" : undefined}
             onClick={() => setConfirmarCompletar(true)}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#CBD5E1] text-[#374151] hover:bg-[#F8FAFC] transition-colors"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#CBD5E1] text-[#374151] hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Marcar como completada
           </button>
+          {sinRegistros && (
+            <p className="mt-1.5 text-xs text-[#94A3B8]">
+              Registra al menos un día para poder completarla.
+            </p>
+          )}
         </div>
       )}
 
