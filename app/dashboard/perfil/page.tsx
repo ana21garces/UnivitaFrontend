@@ -286,7 +286,7 @@ export default function PerfilPage() {
           <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Mi perfil</h1>
           <p className="mt-1 text-sm text-[#6B7280]">
             {esUsuario
-              ? "Tu progreso por un lado y tus datos de acceso por el otro."
+              ? "En «Mi progreso» ves tu nivel, tus insignias y tus puntos. En «Mi cuenta», tus datos de acceso."
               : "Tu foto de perfil y tus datos de acceso."}
           </p>
         </div>

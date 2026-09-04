@@ -15,7 +15,7 @@ import {
   Brain,
   Salad,
   Bell,
-  UserCircle,
+  UserCog,
   HelpCircle,
 } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -62,7 +62,7 @@ const TIPO_USUARIO_LABEL: Record<string, string> = {
 const navItemsByRole: Record<string, NavItem[]> = {
   user: [
     { label: "Dashboard", href: "/dashboard/user", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { label: "Mi perfil", href: "/dashboard/perfil", icon: <UserCircle className="w-4 h-4" /> },
+    { label: "Mi perfil", href: "/dashboard/perfil", icon: <UserCog className="w-4 h-4" /> },
     { label: "Ayuda", href: "/dashboard/ayuda", icon: <HelpCircle className="w-4 h-4" /> },
   ],
   admin: [
