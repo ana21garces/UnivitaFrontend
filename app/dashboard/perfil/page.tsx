@@ -67,6 +67,7 @@ export default function PerfilPage() {
   const [verTodoXp, setVerTodoXp] = useState(false)
   const [xpExpandido, setXpExpandido] = useState<Set<string>>(new Set())
   const [diasColapsados, setDiasColapsados] = useState<Set<string>>(new Set())
+  const [tab, setTab] = useState<"progreso" | "cuenta">("progreso")
 
   // Historial de puntos agrupado por día; dentro de cada día se juntan los eventos
   // seguidos del mismo tipo (ej. "Misión completada ·3") para que no sea un
@@ -250,6 +251,8 @@ export default function PerfilPage() {
 
   const rank = progreso?.rank_tier ?? "bronce"
   const esUsuario = rol === "student"
+  const verProgreso = !esUsuario || tab === "progreso"
+  const verCuenta = !esUsuario || tab === "cuenta"
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -282,9 +285,30 @@ export default function PerfilPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold font-heading text-[#1F2937]">Mi perfil</h1>
           <p className="mt-1 text-sm text-[#6B7280]">
-            Tu progreso, foto de perfil y datos de acceso en un solo lugar.
+            {esUsuario
+              ? "En «Mi progreso» ves tu nivel, tus insignias y tus puntos. En «Mi cuenta», tus datos de acceso."
+              : "Tu foto de perfil y tus datos de acceso."}
           </p>
         </div>
+
+        {esUsuario && !loading && (
+          <div className="flex gap-1 border-b border-[#E2E8F0] mb-6">
+            {(["progreso", "cuenta"] as const).map((clave) => (
+              <button
+                key={clave}
+                type="button"
+                onClick={() => setTab(clave)}
+                className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors cursor-pointer ${
+                  tab === clave
+                    ? "border-[#16A34A] text-[#16A34A]"
+                    : "border-transparent text-[#6B7280] hover:text-[#1F2937]"
+                }`}
+              >
+                {clave === "progreso" ? "Mi progreso" : "Mi cuenta"}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center gap-2 text-sm text-[#6B7280]">
@@ -293,7 +317,7 @@ export default function PerfilPage() {
           </div>
         ) : (
           <>
-            {progreso && (
+            {verProgreso && progreso && (
               <section className="rounded-2xl border border-[#E2E8F0] bg-[#FFFFFF] shadow-sm p-6 mb-6">
                 <div className="flex flex-col sm:flex-row items-center gap-6">
                   <ProfileAvatar
@@ -361,6 +385,7 @@ export default function PerfilPage() {
               </section>
             )}
 
+            {verCuenta && (
             <form onSubmit={guardar}>
               <div className="rounded-2xl border border-[#E2E8F0] bg-[#FFFFFF] shadow-sm overflow-hidden mb-6">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-6 border-b border-[#E2E8F0]">
@@ -464,14 +489,15 @@ export default function PerfilPage() {
                 </div>
               </div>
             </form>
+            )}
 
-            {esUsuario && (
+            {esUsuario && verProgreso && (
               <div className="mb-6">
                 <InsigniasGrid />
               </div>
             )}
 
-            {esUsuario && (
+            {esUsuario && verProgreso && (
             <section className="rounded-2xl border border-[#E2E8F0] bg-[#FFFFFF] shadow-sm p-6">
               <h2 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Historial de puntos</h2>
               {historialPorDia.length === 0 ? (

@@ -15,7 +15,8 @@ import {
   Brain,
   Salad,
   Bell,
-  UserCircle,
+  UserCog,
+  HelpCircle,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { UniVitaLogo } from "@/components/univita-logo"
@@ -31,8 +32,18 @@ interface NavItem {
   icon: React.ReactNode
 }
 
+export type RolNavbar =
+  | "user"
+  | "admin"
+  | "capellan"
+  | "actividad-fisica"
+  | "responsabilidad-salud"
+  | "relaciones-interpersonales"
+  | "manejo-estres"
+  | "nutricion"
+
 interface DashboardNavbarProps {
-  role: "user" | "admin" | "capellan" | "actividad-fisica" | "responsabilidad-salud" | "relaciones-interpersonales" | "manejo-estres" | "nutricion"
+  role: RolNavbar
   userName?: string
 }
 
@@ -58,10 +69,17 @@ const TIPO_USUARIO_LABEL: Record<string, string> = {
   administrativo: "Administrativo",
 }
 
+const AYUDA: NavItem = {
+  label: "Ayuda",
+  href: "/dashboard/ayuda",
+  icon: <HelpCircle className="w-4 h-4" />,
+}
+
 const navItemsByRole: Record<string, NavItem[]> = {
   user: [
     { label: "Dashboard", href: "/dashboard/user", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { label: "Mi perfil", href: "/dashboard/perfil", icon: <UserCircle className="w-4 h-4" /> },
+    { label: "Mi perfil", href: "/dashboard/perfil", icon: <UserCog className="w-4 h-4" /> },
+    AYUDA,
   ],
   admin: [
     { label: "Dashboard", href: "/dashboard/admin", icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -69,21 +87,27 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
   capellan: [
     { label: "Psicología Positiva", href: "/dashboard/capellan", icon: <BookHeart className="w-4 h-4" /> },
+    AYUDA,
   ],
   "actividad-fisica": [
     { label: "Actividad Física", href: "/dashboard/actividad-fisica", icon: <Dumbbell className="w-4 h-4" /> },
+    AYUDA,
   ],
   "responsabilidad-salud": [
     { label: "Responsabilidad en Salud", href: "/dashboard/responsabilidad-salud", icon: <Stethoscope className="w-4 h-4" /> },
+    AYUDA,
   ],
   "relaciones-interpersonales": [
     { label: "Relaciones Interpersonales", href: "/dashboard/relaciones-interpersonales", icon: <HeartHandshake className="w-4 h-4" /> },
+    AYUDA,
   ],
   "manejo-estres": [
     { label: "Manejo del Estrés", href: "/dashboard/manejo-estres", icon: <Brain className="w-4 h-4" /> },
+    AYUDA,
   ],
   nutricion: [
     { label: "Nutrición", href: "/dashboard/nutricion", icon: <Salad className="w-4 h-4" /> },
+    AYUDA,
   ],
 }
 

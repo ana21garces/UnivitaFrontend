@@ -96,7 +96,13 @@ function AvatarContent({
           ? "text-[#475569]"
           : "text-[#B45309]"
 
-  return <span className={`${textClass} font-bold ${textColor}`}>{inicial}</span>
+  return (
+    <span
+      className={`w-full h-full flex items-center justify-center ${textClass} font-bold ${textColor}`}
+    >
+      {inicial}
+    </span>
+  )
 }
 
 function PlataFrame({
