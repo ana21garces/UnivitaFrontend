@@ -12,6 +12,7 @@ import {
   Bell,
   FileText,
   Settings,
+  HelpCircle,
   X,
 } from "lucide-react"
 import { UniVitaLogo } from "@/components/univita-logo"
@@ -32,6 +33,7 @@ const NAV: NavItem[] = [
   { label: "Notificaciones", href: "/dashboard/admin/notificaciones", icon: <Bell className="w-[18px] h-[18px]" /> },
   { label: "Reportes", href: "/dashboard/admin/reportes", icon: <FileText className="w-[18px] h-[18px]" /> },
   { label: "Configuración", href: "/dashboard/admin/configuracion", icon: <Settings className="w-[18px] h-[18px]" /> },
+  { label: "Ayuda", href: "/dashboard/admin/ayuda", icon: <HelpCircle className="w-[18px] h-[18px]" /> },
 ]
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
