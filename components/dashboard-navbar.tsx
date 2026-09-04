@@ -16,6 +16,7 @@ import {
   Salad,
   Bell,
   UserCircle,
+  HelpCircle,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { UniVitaLogo } from "@/components/univita-logo"
@@ -62,6 +63,7 @@ const navItemsByRole: Record<string, NavItem[]> = {
   user: [
     { label: "Dashboard", href: "/dashboard/user", icon: <LayoutDashboard className="w-4 h-4" /> },
     { label: "Mi perfil", href: "/dashboard/perfil", icon: <UserCircle className="w-4 h-4" /> },
+    { label: "Ayuda", href: "/dashboard/ayuda", icon: <HelpCircle className="w-4 h-4" /> },
   ],
   admin: [
     { label: "Dashboard", href: "/dashboard/admin", icon: <LayoutDashboard className="w-4 h-4" /> },
