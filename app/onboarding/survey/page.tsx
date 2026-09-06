@@ -1,5 +1,4 @@
 "use client";
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -31,9 +30,7 @@ const DIMENSIONES_CONTEO: [string, number][] = [
 const QUESTIONS_PER_PAGE = 8;
 const TOTAL_PAGES = Math.ceil(TOTAL_QUESTIONS / QUESTIONS_PER_PAGE);
 
-export default function OnboardingSurveyPage() {
-  useTituloPagina("Encuesta HPLP-II")
-  const router = useRouter();
+export default function OnboardingSurveyPage() {  const router = useRouter();
 
   // Demographics
   const [sexo, setSexo] = useState<Sexo>(null);

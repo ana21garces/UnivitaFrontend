@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -45,9 +44,7 @@ const formatFecha = (iso: string) =>
 const selectCls =
   "w-full h-10 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors cursor-pointer"
 
-export default function NotificacionesPage() {
-  useTituloPagina("Notificaciones")
-  const router = useRouter()
+export default function NotificacionesPage() {  const router = useRouter()
 
   const [segmentos, setSegmentos] = useState<Segmentos | null>(null)
   const [historial, setHistorial] = useState<Envio[]>([])

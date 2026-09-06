@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -80,9 +79,7 @@ const ROLE_GROUPS: { label: string; roles: string[] }[] = [
 
 const labelFor = (r: string) => ROLE_LABELS[r] ?? r
 
-export default function UserManagementPage() {
-  useTituloPagina("Gestión de usuarios")
-  const router = useRouter()
+export default function UserManagementPage() {  const router = useRouter()
   const [users, setUsers] = useState<ApiUser[]>([])
   const [yo, setYo] = useState<ApiUser | null>(null)
   const [loading, setLoading] = useState(true)

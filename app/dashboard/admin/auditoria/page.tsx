@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -53,9 +52,7 @@ function formatDuracion(min: number) {
   return m ? `${h} h ${m} min` : `${h} h`
 }
 
-export default function AuditoriaPage() {
-  useTituloPagina("Auditoría")
-  const router = useRouter()
+export default function AuditoriaPage() {  const router = useRouter()
 
   const [items, setItems] = useState<Item[]>([])
   const [total, setTotal] = useState(0)
