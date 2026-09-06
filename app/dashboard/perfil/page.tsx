@@ -23,6 +23,7 @@ import { XpProgressBar } from "@/components/xp-progress-bar"
 import { InsigniasGrid } from "@/components/insignias-grid"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken } from "@/lib/auth"
+import { dias } from "@/lib/utils"
 import { UniVitaLogo } from "@/components/univita-logo"
 import {
   motivoXpLabel,
@@ -205,6 +206,11 @@ export default function PerfilPage() {
     if (datosCambiaron) {
       if (nombre.trim().length < 2) return setMsg({ ok: false, text: "Ingresa tu nombre completo." })
       if (!emailRegex.test(correo)) return setMsg({ ok: false, text: "Ingresa un correo válido." })
+      // El correo es el identificador de acceso: cambiarlo exige la contraseña
+      // actual (el backend también lo valida).
+      if (correoCambio && !actual) {
+        return setMsg({ ok: false, text: "Para cambiar el correo, escribe tu contraseña actual en «Seguridad»." })
+      }
     }
     if (quiereCambiarPass) {
       if (!actual) return setMsg({ ok: false, text: "Ingresa tu contraseña actual para cambiarla." })
@@ -216,16 +222,20 @@ export default function PerfilPage() {
     const correoAntes = correoOriginal
     try {
       if (datosCambiaron) {
-        await api.patch("/users/me", { full_name: nombre.trim(), email: correo.trim() })
+        await api.patch("/users/me", {
+          full_name: nombre.trim(),
+          email: correo.trim(),
+          ...(correoCambio ? { current_password: actual } : {}),
+        })
         setNombreOriginal(nombre.trim())
         setCorreoOriginal(correo.trim())
       }
       if (quiereCambiarPass) {
         await api.patch("/users/me/password", { current_password: actual, new_password: nueva })
-        setActual("")
         setNueva("")
         setConfirmar("")
       }
+      setActual("")
       const correoChanged = correo.trim() !== correoAntes
       setToast(
         correoChanged
@@ -345,7 +355,7 @@ export default function PerfilPage() {
                           <span>Rango: {RANK_LABELS[rank]}</span>
                           <span className="inline-flex items-center gap-1">
                             <Flame className="w-4 h-4 text-orange-500" />
-                            Racha: {progreso.streak_days} días
+                            Racha: {dias(progreso.streak_days)}
                           </span>
                         </div>
                         <p className="mt-2 text-xs text-[#9CA3AF]">
@@ -421,7 +431,10 @@ export default function PerfilPage() {
                   {correoCambio && (
                     <div className="flex items-start gap-1.5 text-xs text-[#B45309] mt-2">
                       <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                      <span>Si cambias tu correo, a partir del próximo inicio de sesión entrarás con el nuevo.</span>
+                      <span>
+                        Para cambiar el correo, escribe tu <strong>contraseña actual</strong> en «Seguridad».
+                        A partir del próximo inicio de sesión entrarás con el nuevo.
+                      </span>
                     </div>
                   )}
                 </div>
@@ -558,7 +571,7 @@ export default function PerfilPage() {
                                       {motivoXpLabel(it.motivo)}
                                       {desglosable && (
                                         <>
-                                          <span className="text-[#9CA3AF] font-normal">·{it.count}</span>
+                                          <span className="text-[#9CA3AF] font-normal">×{it.count}</span>
                                           <ChevronDown
                                             className={`w-3.5 h-3.5 text-[#9CA3AF] transition-transform ${abierto ? "rotate-180" : ""}`}
                                           />

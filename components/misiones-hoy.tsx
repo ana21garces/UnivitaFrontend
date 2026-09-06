@@ -5,6 +5,7 @@ import { CheckCircle2, Flame, Loader2, Target } from "lucide-react"
 import { api } from "@/lib/api"
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import type { MisionesHoy } from "@/lib/gamificacion"
+import { dias } from "@/lib/utils"
 
 interface MisionesHoyProps {
   onProgresoChange?: (progreso: MisionesHoy["progreso"]) => void
@@ -82,7 +83,7 @@ export function MisionesHoySection({ onProgresoChange }: MisionesHoyProps) {
         <div className="flex items-center gap-3 text-xs text-[#6B7280]">
           <span className="inline-flex items-center gap-1">
             <Flame className="w-4 h-4 text-orange-500" />
-            Racha: {data.progreso.streak_days} días
+            Racha: {dias(data.progreso.streak_days)}
           </span>
         </div>
       </div>

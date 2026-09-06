@@ -49,6 +49,7 @@ export function TarjetaSeguimiento({
         <div className="flex-1 pr-4">
           <div className="flex items-center gap-2 mb-1">
             <NivelChip nivel={tarjeta.nivel} />
+            <span className="text-[10px] text-[#94A3B8]">nivel de esta pregunta</span>
             {completada && (
               <span className="text-[10px] font-bold text-[#16A34A] uppercase tracking-wide">Completada</span>
             )}

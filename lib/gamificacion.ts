@@ -41,10 +41,11 @@ export const RANK_LABELS: Record<RankTier, string> = {
 
 export function avatarSrc(avatarUrl: string | null | undefined): string | null {
   if (!avatarUrl) return null
-  const base =
-    process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, "") ??
-    "http://127.0.0.1:8000"
-  return `${base}${avatarUrl}`
+  // Ruta del mismo origen que el front: `/uploads/...` (con el basePath si lo
+  // hay). Next la reenvía al backend con el rewrite de next.config.mjs. Así no
+  // se cuela un `http://127.0.0.1:8000` que el navegador del usuario no alcanza.
+  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "")
+  return `${basePath}${avatarUrl}`
 }
 
 export function motivoXpLabel(motivo: string): string {
