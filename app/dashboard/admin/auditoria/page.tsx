@@ -1,4 +1,5 @@
 "use client"
+import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -53,6 +54,7 @@ function formatDuracion(min: number) {
 }
 
 export default function AuditoriaPage() {
+  useTituloPagina("Auditoría")
   const router = useRouter()
 
   const [items, setItems] = useState<Item[]>([])

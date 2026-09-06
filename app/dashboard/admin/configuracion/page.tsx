@@ -1,4 +1,5 @@
 "use client"
+import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -78,6 +79,7 @@ const formatFecha = (iso: string | null) =>
     : null
 
 export default function ConfiguracionPage() {
+  useTituloPagina("Configuración")
   const router = useRouter()
   const [ciclos, setCiclos] = useState<Ciclo[]>([])
   const [loading, setLoading] = useState(true)

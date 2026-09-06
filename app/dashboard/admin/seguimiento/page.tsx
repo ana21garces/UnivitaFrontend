@@ -1,4 +1,5 @@
 "use client"
+import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -64,6 +65,7 @@ function estiloDelta(delta: number) {
 const conSigno = (n: number) => `${n > 0 ? "+" : ""}${n.toFixed(1)}`
 
 export default function SeguimientoPage() {
+  useTituloPagina("Seguimiento / Estadísticas")
   const router = useRouter()
   const [ciclos, setCiclos] = useState<Ciclo[]>([])
   const [baseId, setBaseId] = useState<number | null>(null)

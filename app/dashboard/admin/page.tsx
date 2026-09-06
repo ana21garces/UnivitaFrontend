@@ -1,4 +1,5 @@
 "use client"
+import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -25,6 +26,7 @@ type Resumen = {
 type ApiUser = { role: string; tipo_usuario: string | null }
 
 export default function AdminDashboard() {
+  useTituloPagina("Panel de administración")
   const router = useRouter()
   const [resumen, setResumen] = useState<Resumen | null>(null)
   const [usuarios, setUsuarios] = useState<ApiUser[]>([])
