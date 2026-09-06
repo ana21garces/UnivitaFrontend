@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { ROLE_HOME } from "@/lib/roles"
 
 /**
  * Middleware de acceso.
@@ -31,17 +32,6 @@ const SURVEY_EXEMPT_PATHS = [
   "/dashboard/nutricion",
   "/dashboard/perfil",
 ]
-
-// Home de cada rol profesional (no pasan por la encuesta).
-const ROLE_HOME: Record<string, string> = {
-  admin: "/dashboard/admin",
-  capellan: "/dashboard/capellan",
-  actividad_fisica: "/dashboard/actividad-fisica",
-  responsabilidad_salud: "/dashboard/responsabilidad-salud",
-  relaciones_interpersonales: "/dashboard/relaciones-interpersonales",
-  manejo_estres: "/dashboard/manejo-estres",
-  nutricion: "/dashboard/nutricion",
-}
 
 /**
  * ¿Hay sesión? Devuelve el payload del JWT (para leer el rol) o `null` si no hay
