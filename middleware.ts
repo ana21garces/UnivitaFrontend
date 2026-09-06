@@ -12,7 +12,9 @@ import { ROLE_HOME } from "@/lib/roles"
  *
  *  - Sin sesión + /dashboard o /onboarding/survey  → a la pantalla de acceso.
  *  - Con sesión + /                                → a su panel.
- *  - Con sesión + /dashboard sin encuesta hecha    → a la encuesta (salvo roles exentos).
+ *  - Con sesión + rol con panel propio (profesional/admin) en una ruta ajena
+ *    → a su panel. NUNCA a la encuesta (H-25).
+ *  - Con sesión encuestable + /dashboard sin encuesta hecha → a la encuesta.
  *  - Con sesión + /onboarding/survey ya hecha      → al panel.
  *
  * El token también está en localStorage y en cada cabecera Authorization; la
@@ -78,11 +80,26 @@ export function middleware(request: NextRequest) {
 
   // ── Con sesión ────────────────────────────────────────────────────────────
 
+  // Panel propio del rol (profesional o admin). Los roles encuestables
+  // (student, o un rol desconocido) no lo tienen.
+  const panelDelRol = sesion.role ? ROLE_HOME[sesion.role] : undefined
+
   // En la pantalla de acceso con sesión activa → a su panel.
   if (pathname === "/") {
-    const home = sesion.role ? ROLE_HOME[sesion.role] : undefined
-    return irA(home ?? (surveyDone ? "/dashboard/user" : "/onboarding/survey"))
+    return irA(panelDelRol ?? (surveyDone ? "/dashboard/user" : "/onboarding/survey"))
   }
+
+  // Un rol con panel propio no pasa nunca por la encuesta: si pide una ruta
+  // que no es la suya (/dashboard/user, otra sección, el onboarding) se le
+  // devuelve a su panel, no a /onboarding/survey (H-25).
+  if (panelDelRol) {
+    if (SURVEY_EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {
+      return NextResponse.next()
+    }
+    return irA(panelDelRol)
+  }
+
+  // ── Rol encuestable ───────────────────────────────────────────────────────
 
   // Rutas exentas del requisito de encuesta.
   if (SURVEY_EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {
