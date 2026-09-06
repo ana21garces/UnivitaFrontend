@@ -7,18 +7,7 @@ import { api } from "@/lib/api"
 import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, getRoleFromToken, setAuthCookie, setSurveyDone } from "@/lib/auth"
-
-// Roles que no pasan por la encuesta: entran directo a su vista.
-// Las claves son el `role` del JWT que emite el backend.
-const ROLE_HOME: Record<string, string> = {
-  admin: "/dashboard/admin",
-  capellan: "/dashboard/capellan",
-  actividad_fisica: "/dashboard/actividad-fisica",
-  responsabilidad_salud: "/dashboard/responsabilidad-salud",
-  relaciones_interpersonales: "/dashboard/relaciones-interpersonales",
-  manejo_estres: "/dashboard/manejo-estres",
-  nutricion: "/dashboard/nutricion",
-};
+import { ROLE_HOME } from "@/lib/roles"
 
 export function LoginForm() {
   const router = useRouter()

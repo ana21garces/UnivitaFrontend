@@ -3,8 +3,10 @@ import {
   clearSession,
   getAccessToken,
   getRefreshToken,
+  getRoleFromToken,
   setAccessToken,
 } from "@/lib/auth"
+import { homePorRol } from "@/lib/roles"
 
 /**
  * Cliente único de la API.
@@ -111,7 +113,9 @@ type Navegable = { replace: (href: string) => void }
  *
  * - **401** — la sesión ya no vale, y renovarla tampoco funcionó: se limpia y
  *   se vuelve al acceso.
- * - **403** — el rol no puede ver esa vista: se le manda a la suya.
+ * - **403** — el rol no puede ver esa vista: se le manda al panel de su rol.
+ *   Antes iba siempre a `/dashboard/user`, y a un profesional o al admin el
+ *   middleware lo mandaba de ahí a la encuesta de estudiante (H-25).
  *
  * Devuelve `true` si ya redirigió, para que la pantalla no siga procesando el
  * error. Cualquier otro código lo maneja quien llama, que es el único que sabe
@@ -124,7 +128,8 @@ export function redirigirPorError(err: unknown, router: Navegable): boolean {
     return true
   }
   if (estadoDeError(err) === 403) {
-    router.replace("/dashboard/user")
+    const token = getAccessToken()
+    router.replace(homePorRol(token ? getRoleFromToken(token) : null))
     return true
   }
   return false
