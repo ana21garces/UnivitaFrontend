@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import {
   AlertTriangle,
@@ -9,6 +10,8 @@ import {
   Users,
 } from "lucide-react"
 import { Preguntas, Seccion } from "@/components/ayuda/seccion"
+
+export const metadata: Metadata = { title: "Ayuda" }
 
 const PREGUNTAS = [
   {

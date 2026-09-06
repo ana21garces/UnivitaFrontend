@@ -1,4 +1,5 @@
 "use client"
+import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -52,6 +53,7 @@ type XpEvento = {
 }
 
 export default function PerfilPage() {
+  useTituloPagina("Mi perfil")
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(true)

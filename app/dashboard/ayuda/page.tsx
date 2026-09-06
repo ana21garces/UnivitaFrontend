@@ -1,4 +1,5 @@
 "use client"
+import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
@@ -43,6 +44,7 @@ const PROFESIONALES: Record<string, { dimension: string; navKey: RolNavbar; pane
 }
 
 export default function AyudaPage() {
+  useTituloPagina("Ayuda")
   const [rol, setRol] = useState<string | null>(null)
   const [listo, setListo] = useState(false)
 

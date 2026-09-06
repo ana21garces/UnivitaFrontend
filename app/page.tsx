@@ -1,5 +1,10 @@
+import type { Metadata } from "next"
 import { LoginForm } from "@/components/login-form"
 import { WellnessPanel } from "@/components/wellness-panel"
+
+// El `template` del layout raíz no aplica a este `page.tsx` (mismo segmento),
+// así que aquí el título va completo.
+export const metadata: Metadata = { title: "Inicio de sesión · UnacHealth" }
 
 export default function LoginPage() {
   return (

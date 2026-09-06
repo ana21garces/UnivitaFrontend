@@ -1,4 +1,5 @@
 "use client"
+import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -100,6 +101,7 @@ function getBarColor(nivel: string) {
 }
 
 export default function UserDashboard() {
+  useTituloPagina("Panel")
   const router = useRouter()
   const [resultado, setResultado] = useState<EncuestaResultado | null>(null)
   const [loading, setLoading] = useState(true)

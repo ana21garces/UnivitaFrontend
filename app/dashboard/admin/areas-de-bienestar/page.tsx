@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import {
   Sparkles,
@@ -8,6 +9,8 @@ import {
   Apple,
   ArrowRight,
 } from "lucide-react"
+
+export const metadata: Metadata = { title: "Áreas de bienestar" }
 
 // Cada área corresponde a la vista completa de un profesional. El admin puede
 // entrar a verlas (el backend le da acceso además de a cada rol).

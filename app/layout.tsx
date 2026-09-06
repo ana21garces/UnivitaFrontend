@@ -5,14 +5,15 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
-  title: 'UnacHealth',
-  icons: {
-    icon: [
-      {
-        url: '/logo.png',
-      }
-    ],
+  // `template` hace que cada página que ponga su propio título salga como
+  // «Mi perfil · UnacHealth»; las que no lo pongan usan `default`.
+  title: {
+    default: 'UnacHealth',
+    template: '%s · UnacHealth',
   },
+  description: 'Pequeños hábitos, grandes cambios.',
+  // El icono de la pestaña lo toma Next de app/icon.png (aplica el basePath
+  // solo; antes /logo.png se servía mal bajo /~ana.garces/univita).
 }
 
 export const viewport: Viewport = {
