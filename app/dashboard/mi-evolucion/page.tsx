@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -68,9 +67,7 @@ function Delta({ antes, despues }: { antes: number; despues: number }) {
   )
 }
 
-export default function MiEvolucionPage() {
-  useTituloPagina("Mi evolución")
-  const router = useRouter()
+export default function MiEvolucionPage() {  const router = useRouter()
   const [mediciones, setMediciones] = useState<Medicion[]>([])
   const [loading, setLoading] = useState(true)
   const [sinDatos, setSinDatos] = useState(false)

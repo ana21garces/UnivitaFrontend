@@ -33,6 +33,7 @@ const SURVEY_EXEMPT_PATHS = [
   "/dashboard/manejo-estres",
   "/dashboard/nutricion",
   "/dashboard/perfil",
+  "/dashboard/ayuda",
 ]
 
 /**

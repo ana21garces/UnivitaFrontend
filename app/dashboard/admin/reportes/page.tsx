@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -44,9 +43,7 @@ function Campo({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export default function ReportesPage() {
-  useTituloPagina("Reportes")
-  const router = useRouter()
+export default function ReportesPage() {  const router = useRouter()
 
   const [usuariosRol, setUsuariosRol] = useState("todos")
   const [segmento, setSegmento] = useState("todas")

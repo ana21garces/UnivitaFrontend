@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -13,9 +12,7 @@ import type { SeguimientoRecomendacion, TarjetasSeguimientoResponse } from "@/li
 
 // ── Página principal ───────────────────────────────────────────────────────
 
-export default function RecomendacionesAFPage() {
-  useTituloPagina("Plan · Actividad física")
-  const router = useRouter()
+export default function RecomendacionesAFPage() {  const router = useRouter()
   const [data, setData] = useState<TarjetasSeguimientoResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")

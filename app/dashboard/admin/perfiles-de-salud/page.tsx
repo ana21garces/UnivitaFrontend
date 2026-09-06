@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -55,9 +54,7 @@ function nivelStyle(nivel: string) {
   return { bg: "bg-[#F1F5F9]", text: "text-[#6B7280]", dot: "bg-[#94A3B8]", bar: "#94A3B8" }
 }
 
-export default function PerfilesDeSaludPage() {
-  useTituloPagina("Perfiles de salud")
-  const router = useRouter()
+export default function PerfilesDeSaludPage() {  const router = useRouter()
   const [perfiles, setPerfiles] = useState<Perfil[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState("")

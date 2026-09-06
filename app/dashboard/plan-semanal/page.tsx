@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useRef, useState } from "react"
 import { useEffect } from "react"
@@ -252,9 +251,7 @@ function TarjetaConHoja({
 
 // ── Página principal ───────────────────────────────────────────────────────
 
-export default function PlanSemanalPage() {
-  useTituloPagina("Plan semanal")
-  const router = useRouter()
+export default function PlanSemanalPage() {  const router = useRouter()
   const [data, setData] = useState<TarjetasSeguimientoResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")

@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -413,9 +412,7 @@ function extraerOpciones(facultades: Facultad[]) {
 
 // ── Página principal ───────────────────────────────────────────────────────
 
-export default function ActividadFisicaPage() {
-  useTituloPagina("Actividad física")
-  const router = useRouter()
+export default function ActividadFisicaPage() {  const router = useRouter()
   const [data, setData] = useState<ActFisicaData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")

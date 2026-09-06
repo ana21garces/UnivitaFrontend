@@ -1,5 +1,4 @@
 "use client"
-import { useTituloPagina } from "@/components/titulo-pagina"
 
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -408,9 +407,7 @@ function extraerOpciones(facultades: Facultad[]) {
 
 // ── Página principal ───────────────────────────────────────────────────────
 
-export default function RespSaludPage() {
-  useTituloPagina("Responsabilidad en salud")
-  const router = useRouter()
+export default function RespSaludPage() {  const router = useRouter()
   const [data, setData] = useState<RespSaludData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")

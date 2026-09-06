@@ -1,19 +1,16 @@
-"use client"
+import type { Metadata } from "next"
+import { AdminShell } from "@/components/admin-shell"
 
-import { useState } from "react"
-import { AdminSidebar } from "@/components/admin-sidebar"
-import { AdminTopbar } from "@/components/admin-topbar"
+// Componente de servidor para poder fijar el título de la pestaña. Las
+// subrutas (user-management, auditoria, …) ponen el suyo con su propio
+// layout.tsx; el índice /dashboard/admin usa este `default`.
+export const metadata: Metadata = {
+  title: {
+    default: "Panel de administración",
+    template: "%s · UnacHealth",
+  },
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <AdminSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:pl-64">
-        <AdminTopbar onMenu={() => setSidebarOpen(true)} />
-        {children}
-      </div>
-    </div>
-  )
+  return <AdminShell>{children}</AdminShell>
 }
