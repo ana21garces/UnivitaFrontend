@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { CheckCircle2, Flame, AlertTriangle } from "lucide-react"
 import { api } from "@/lib/api"
+import { dias } from "@/lib/utils"
 import {
   hoyLocalISO,
   type RegistroDiario,
@@ -60,7 +61,7 @@ export function SeguimientoControles({
       setHistorial(null)
       setMensaje(
         data.racha_aumento
-          ? `¡Racha de ${data.seguimiento.racha_actual} días! +15 puntos`
+          ? `¡Racha de ${dias(data.seguimiento.racha_actual)}! +15 puntos`
           : "Registrado hoy · +15 puntos"
       )
     } catch {
@@ -106,11 +107,11 @@ export function SeguimientoControles({
       <div className="flex flex-wrap items-center gap-3 mb-3">
         {seguimiento.racha_actual > 0 && !completada && (
           <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600">
-            <Flame className="w-4 h-4 text-orange-500" /> Racha: {seguimiento.racha_actual} días
+            <Flame className="w-4 h-4 text-orange-500" /> Racha: {dias(seguimiento.racha_actual)}
           </span>
         )}
         {seguimiento.total_dias_registrados > 0 && (
-          <span className="text-xs text-[#6B7280]">{seguimiento.total_dias_registrados} día(s) registrados</span>
+          <span className="text-xs text-[#6B7280]">{dias(seguimiento.total_dias_registrados)} registrados</span>
         )}
         <button type="button" onClick={toggleHistorial} className="text-xs text-[#2563EB] font-semibold hover:underline">
           {cargandoHistorial ? "Cargando..." : historial !== null ? "Ocultar historial" : "Ver historial"}
