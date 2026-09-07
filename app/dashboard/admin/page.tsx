@@ -24,8 +24,7 @@ type Resumen = {
 
 type ApiUser = { role: string; tipo_usuario: string | null }
 
-export default function AdminDashboard() {
-  const router = useRouter()
+export default function AdminDashboard() {  const router = useRouter()
   const [resumen, setResumen] = useState<Resumen | null>(null)
   const [usuarios, setUsuarios] = useState<ApiUser[]>([])
 

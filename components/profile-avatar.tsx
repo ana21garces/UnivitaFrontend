@@ -10,6 +10,7 @@ interface ProfileAvatarProps {
   avatarUrl?: string | null
   size?: "sm" | "md" | "lg"
   showRankBadge?: boolean
+  plain?: boolean
 }
 
 const SIZE = {
@@ -95,7 +96,13 @@ function AvatarContent({
           ? "text-[#475569]"
           : "text-[#B45309]"
 
-  return <span className={`${textClass} font-bold ${textColor}`}>{inicial}</span>
+  return (
+    <span
+      className={`w-full h-full flex items-center justify-center ${textClass} font-bold ${textColor}`}
+    >
+      {inicial}
+    </span>
+  )
 }
 
 function PlataFrame({
@@ -259,7 +266,31 @@ export function ProfileAvatar({
   avatarUrl,
   size = "md",
   showRankBadge = false,
+  plain = false,
 }: ProfileAvatarProps) {
+  if (plain) {
+    const s = SIZE[size]
+    const src = avatarSrc(avatarUrl)
+    return (
+      <div className={`${s.box} rounded-full overflow-hidden bg-[#EAF3DE] ring-2 ring-[#E2E8F0] flex items-center justify-center shrink-0`}>
+        {src ? (
+          <Image
+            src={src}
+            alt={`Avatar de ${name}`}
+            width={128}
+            height={128}
+            className="w-full h-full object-cover"
+            unoptimized
+          />
+        ) : (
+          <span className={`${s.text} font-bold text-[#16A34A]`}>
+            {name.charAt(0).toUpperCase() || "?"}
+          </span>
+        )}
+      </div>
+    )
+  }
+
   if (rankTier === "platino") {
     return (
       <PlatinoFrame name={name} avatarUrl={avatarUrl} size={size} showRankBadge={showRankBadge} />

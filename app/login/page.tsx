@@ -1,5 +1,8 @@
+import type { Metadata } from "next"
 import { LoginForm } from "@/components/login-form"
 import { WellnessPanel } from "@/components/wellness-panel"
+
+export const metadata: Metadata = { title: "Inicio de sesión · UnacHealth" }
 
 export default function LoginPage() {
   return (

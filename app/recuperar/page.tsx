@@ -1,5 +1,8 @@
+import type { Metadata } from "next"
 import { RecuperarForm } from "@/components/recuperar-form"
 import { WellnessPanel } from "@/components/wellness-panel"
+
+export const metadata: Metadata = { title: "Recuperar contraseña" }
 
 export default function RecuperarPage() {
   return (

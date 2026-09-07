@@ -15,6 +15,7 @@ import {
   Users,
   Pencil,
   Trash2,
+  Info,
 } from "lucide-react"
 
 type Ciclo = {
@@ -46,6 +47,25 @@ function aInput(fecha: Date) {
   return local.toISOString().slice(0, 16)
 }
 
+/** Fecha de cierre a partir de la apertura y una duración; null = sin cierre. */
+function cierreDesdeApertura(apertura: Date, duracion: string): Date | null {
+  if (duracion === "sin") return null
+  const d = new Date(apertura)
+  if (duracion === "1s") d.setDate(d.getDate() + 7)
+  else if (duracion === "2s") d.setDate(d.getDate() + 14)
+  else if (duracion === "3s") d.setDate(d.getDate() + 21)
+  else if (duracion === "1m") d.setMonth(d.getMonth() + 1)
+  return d
+}
+
+const DURACIONES: [string, string][] = [
+  ["1s", "1 semana"],
+  ["2s", "2 semanas"],
+  ["3s", "3 semanas"],
+  ["1m", "1 mes"],
+  ["sin", "Sin cierre"],
+]
+
 const formatFecha = (iso: string | null) =>
   iso
     ? new Date(iso).toLocaleString("es-ES", {
@@ -57,8 +77,7 @@ const formatFecha = (iso: string | null) =>
       })
     : null
 
-export default function ConfiguracionPage() {
-  const router = useRouter()
+export default function ConfiguracionPage() {  const router = useRouter()
   const [ciclos, setCiclos] = useState<Ciclo[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState("")
@@ -67,7 +86,8 @@ export default function ConfiguracionPage() {
 
   const [showProgramar, setShowProgramar] = useState(false)
   const [formError, setFormError] = useState("")
-  const [nuevo, setNuevo] = useState({ nombre: "", apertura: "", cierre: "" })
+  const [nuevo, setNuevo] = useState({ nombre: "", apertura: "", aperturaAhora: true, duracion: "2s" })
+  const [elegibles, setElegibles] = useState<number | null>(null)
 
   const [mover, setMover] = useState<{ ciclo: Ciclo; modo: "extender" | "reabrir" } | null>(null)
   const [nuevaFecha, setNuevaFecha] = useState("")
@@ -81,6 +101,12 @@ export default function ConfiguracionPage() {
     try {
       const { data } = await api.get("/ciclos")
       setCiclos(data.ciclos)
+      try {
+        // Cuántos ya respondieron: es la audiencia de un seguimiento. Informativo,
+        // si falla no bloquea la vista.
+        const r = await api.get("/encuesta/admin/resumen")
+        setElegibles(r.data.completaron_encuesta)
+      } catch {}
     } catch (err) {
       if (!redirigirPorError(err, router)) {
         setLoadError("No pudimos cargar las mediciones. Inténtalo de nuevo.")
@@ -115,11 +141,22 @@ export default function ConfiguracionPage() {
   const actual = ciclos[0]
   const siguienteNumero = (ciclos[0]?.numero ?? 0) + 1
 
+  // Vista previa de la ventana para el resumen del modal.
+  const aperturaPreview = nuevo.aperturaAhora
+    ? new Date()
+    : nuevo.apertura
+      ? new Date(nuevo.apertura)
+      : null
+  const cierrePreview = aperturaPreview
+    ? cierreDesdeApertura(aperturaPreview, nuevo.duracion)
+    : null
+
   function abrirProgramar() {
     setNuevo({
       nombre: `Seguimiento ${Math.max(1, siguienteNumero - 1)}`,
       apertura: aInput(new Date()),
-      cierre: "",
+      aperturaAhora: true,
+      duracion: "2s",
     })
     setFormError("")
     setShowProgramar(true)
@@ -129,16 +166,19 @@ export default function ConfiguracionPage() {
     e.preventDefault()
     setFormError("")
     if (nuevo.nombre.trim().length < 3) return setFormError("Ponle un nombre a la medición.")
-    if (!nuevo.apertura) return setFormError("Indica cuándo se abre.")
-    if (nuevo.cierre && new Date(nuevo.cierre) <= new Date(nuevo.apertura)) {
-      return setFormError("El cierre debe ser posterior a la apertura.")
-    }
+    const apertura = nuevo.aperturaAhora
+      ? new Date()
+      : nuevo.apertura
+        ? new Date(nuevo.apertura)
+        : null
+    if (!apertura) return setFormError("Indica cuándo se abre.")
+    const cierre = cierreDesdeApertura(apertura, nuevo.duracion)
     setSaving(true)
     try {
       await api.post("/ciclos", {
         nombre: nuevo.nombre.trim(),
-        fecha_apertura: aIso(nuevo.apertura),
-        fecha_cierre: nuevo.cierre ? aIso(nuevo.cierre) : null,
+        fecha_apertura: apertura.toISOString(),
+        fecha_cierre: cierre ? cierre.toISOString() : null,
       })
       setShowProgramar(false)
       await cargar()
@@ -244,6 +284,12 @@ export default function ConfiguracionPage() {
     "w-full h-10 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-[#1F2937] text-sm placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#16A34A]/30 focus:border-[#16A34A] transition-colors"
   const btnSec =
     "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-medium text-[#475569] hover:bg-[#F8FAFC] cursor-pointer transition-colors"
+  const chipCls = (active: boolean) =>
+    `text-xs font-medium px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+      active
+        ? "text-[#15803D] bg-[#EAF3DE] border-[#BBF7D0]"
+        : "text-[#475569] bg-[#FFFFFF] border-[#E2E8F0] hover:bg-[#F8FAFC]"
+    }`
 
   const EstadoPill = ({ estado }: { estado: string }) => (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold capitalize ${ESTADO_STYLE[estado]}`}>
@@ -496,26 +542,53 @@ export default function ConfiguracionPage() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-[#1F2937]">Se abre</label>
-                <input
-                  type="datetime-local"
-                  value={nuevo.apertura}
-                  onChange={(e) => setNuevo({ ...nuevo, apertura: e.target.value })}
-                  className={inputCls}
-                />
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setNuevo({ ...nuevo, aperturaAhora: true })} className={chipCls(nuevo.aperturaAhora)}>
+                    Ahora
+                  </button>
+                  <button type="button" onClick={() => setNuevo({ ...nuevo, aperturaAhora: false })} className={chipCls(!nuevo.aperturaAhora)}>
+                    Programar fecha
+                  </button>
+                </div>
+                {!nuevo.aperturaAhora && (
+                  <input
+                    type="datetime-local"
+                    value={nuevo.apertura}
+                    onChange={(e) => setNuevo({ ...nuevo, apertura: e.target.value })}
+                    className={`${inputCls} mt-1`}
+                  />
+                )}
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-[#1F2937]">
-                  Se cierra <span className="font-normal text-[#94A3B8]">(opcional)</span>
-                </label>
-                <input
-                  type="datetime-local"
-                  value={nuevo.cierre}
-                  onChange={(e) => setNuevo({ ...nuevo, cierre: e.target.value })}
-                  className={inputCls}
-                />
-                <p className="text-xs text-[#94A3B8]">
-                  Si la dejas vacía, queda abierta hasta que la cierres a mano.
-                </p>
+                <label className="text-sm font-medium text-[#1F2937]">Duración</label>
+                <div className="flex flex-wrap gap-2">
+                  {DURACIONES.map(([val, label]) => (
+                    <button key={val} type="button" onClick={() => setNuevo({ ...nuevo, duracion: val })} className={chipCls(nuevo.duracion === val)}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 rounded-lg bg-[#F0FDF4] border border-[#DCFCE7] px-3 py-2.5 text-xs text-[#166534] leading-relaxed">
+                <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                  Abre{" "}
+                  <span className="font-semibold">
+                    {nuevo.aperturaAhora ? "hoy" : nuevo.apertura ? formatFecha(aIso(nuevo.apertura)) : "—"}
+                  </span>{" "}
+                  {cierrePreview ? (
+                    <>
+                      y cierra el <span className="font-semibold">{formatFecha(cierrePreview.toISOString())}</span>.
+                    </>
+                  ) : (
+                    <>y queda abierta hasta que la cierres a mano.</>
+                  )}
+                  {elegibles !== null && (
+                    <>
+                      {" "}Le llegará a <span className="font-semibold">{elegibles} {elegibles === 1 ? "persona" : "personas"}</span> que ya respondieron.
+                    </>
+                  )}
+                </span>
               </div>
               <div className="flex items-center gap-3 mt-1">
                 <button type="button" onClick={() => setShowProgramar(false)} disabled={saving} className="flex-1 h-10 rounded-lg border border-[#E2E8F0] bg-[#FFFFFF] text-sm font-medium text-[#6B7280] hover:bg-[#F1F5F9] cursor-pointer disabled:opacity-50">

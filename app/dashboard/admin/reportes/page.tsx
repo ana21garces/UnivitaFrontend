@@ -14,6 +14,8 @@ import {
   Table2,
   Check,
   AlertTriangle,
+  ListChecks,
+  Target,
 } from "lucide-react"
 
 const DIMENSIONES = [
@@ -41,14 +43,19 @@ function Campo({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export default function ReportesPage() {
-  const router = useRouter()
+export default function ReportesPage() {  const router = useRouter()
 
   const [usuariosRol, setUsuariosRol] = useState("todos")
   const [segmento, setSegmento] = useState("todas")
   const [progresionDim, setProgresionDim] = useState("global")
   const [progresionNivel, setProgresionNivel] = useState("")
   const [distribucionDim, setDistribucionDim] = useState("todas")
+  const [cumplimientoDim, setCumplimientoDim] = useState("todas")
+  const [cumplimientoDesde, setCumplimientoDesde] = useState("")
+  const [cumplimientoHasta, setCumplimientoHasta] = useState("")
+  const [misionesDim, setMisionesDim] = useState("todas")
+  const [misionesDesde, setMisionesDesde] = useState("")
+  const [misionesHasta, setMisionesHasta] = useState("")
 
   const [descargando, setDescargando] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -102,13 +109,25 @@ export default function ReportesPage() {
     }
   }
 
+  const cumpParams = {
+    dimension: cumplimientoDim,
+    ...(cumplimientoDesde ? { desde: cumplimientoDesde } : {}),
+    ...(cumplimientoHasta ? { hasta: cumplimientoHasta } : {}),
+  }
+
+  const misionParams = {
+    dimension: misionesDim,
+    ...(misionesDesde ? { desde: misionesDesde } : {}),
+    ...(misionesHasta ? { hasta: misionesHasta } : {}),
+  }
+
   return (
     <>
       <main className="px-4 py-8 sm:px-6">
         <div className="mb-6">
           <h2 className="text-2xl font-bold font-heading text-[#1F2937]">Reportes</h2>
           <p className="mt-1 text-sm text-[#6B7280]">
-            Genera reportes en Excel, PDF o CSV con los datos de la plataforma y de las encuestas. El CSV trae los datos crudos, para analizarlos en SPSS o R.
+            Aquí puedes descargar los resultados de la plataforma y las encuestas. Elige Excel o PDF para verlos y compartirlos, o CSV si vas a analizarlos en otro programa.
           </p>
         </div>
 
@@ -218,6 +237,66 @@ export default function ReportesPage() {
               onCsv={() => descargar("distribucion", "csv", { dimension: distribucionDim })}
               descargando={descargando}
               tipo="distribucion"
+            />
+          </ReporteCard>
+
+          {/* 5 · Cumplimiento de actividades */}
+          <ReporteCard
+            icono={<ListChecks className="w-5 h-5" />}
+            titulo="Recomendaciones del plan"
+            descripcion="Las recomendaciones que cada persona siguió de su plan por dimensión: cuáles, cuántas veces y en qué fechas."
+          >
+            <Campo label="Dimensión">
+              <select value={cumplimientoDim} onChange={(e) => setCumplimientoDim(e.target.value)} className={selectCls}>
+                {DIMENSIONES.filter((d) => d.value !== "global").map((d) => (
+                  <option key={d.value} value={d.value}>{d.label}</option>
+                ))}
+              </select>
+            </Campo>
+            <div className="grid grid-cols-2 gap-3">
+              <Campo label="Desde">
+                <input type="date" value={cumplimientoDesde} onChange={(e) => setCumplimientoDesde(e.target.value)} className={selectCls} />
+              </Campo>
+              <Campo label="Hasta">
+                <input type="date" value={cumplimientoHasta} onChange={(e) => setCumplimientoHasta(e.target.value)} className={selectCls} />
+              </Campo>
+            </div>
+            <Botones
+              onExcel={() => descargar("cumplimiento", "excel", cumpParams)}
+              onPdf={() => descargar("cumplimiento", "pdf", cumpParams)}
+              onCsv={() => descargar("cumplimiento", "csv", cumpParams)}
+              descargando={descargando}
+              tipo="cumplimiento"
+            />
+          </ReporteCard>
+
+          {/* 6 · Misiones diarias realizadas */}
+          <ReporteCard
+            icono={<Target className="w-5 h-5" />}
+            titulo="Misiones de hábitos"
+            descripcion="Las misiones de hábitos (con puntos) que completó cada persona: cuáles, cuántas veces y en qué fechas."
+          >
+            <Campo label="Dimensión">
+              <select value={misionesDim} onChange={(e) => setMisionesDim(e.target.value)} className={selectCls}>
+                {DIMENSIONES.filter((d) => d.value !== "global").map((d) => (
+                  <option key={d.value} value={d.value}>{d.label}</option>
+                ))}
+              </select>
+            </Campo>
+            <div className="grid grid-cols-2 gap-3">
+              <Campo label="Desde">
+                <input type="date" value={misionesDesde} onChange={(e) => setMisionesDesde(e.target.value)} className={selectCls} />
+              </Campo>
+              <Campo label="Hasta">
+                <input type="date" value={misionesHasta} onChange={(e) => setMisionesHasta(e.target.value)} className={selectCls} />
+              </Campo>
+            </div>
+            <Botones
+              onExcel={() => descargar("misiones", "excel", misionParams)}
+              onPdf={() => descargar("misiones", "pdf", misionParams)}
+              onCsv={() => descargar("misiones", "csv", misionParams)}
+              descargando={descargando}
+              tipo="misiones"
             />
           </ReporteCard>
         </div>

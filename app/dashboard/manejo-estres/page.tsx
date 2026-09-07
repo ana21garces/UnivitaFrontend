@@ -5,10 +5,14 @@ import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
-import { ChevronDown, ChevronUp, Users, Brain, AlertCircle, Building2, GraduationCap, Bell, Check } from "lucide-react"
+import { useResaltadoAlerta } from "@/lib/use-resaltado-alerta"
+import { ChevronDown, ChevronUp, Users, Brain, AlertCircle, Building2, GraduationCap, Bell, Check, XCircle, FileDown } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { ComparativoAnterior } from "@/components/comparativo-anterior"
 import { VolverAlPanelAdmin } from "@/components/volver-al-panel-admin"
 import { NotificarModal } from "@/components/notificar-modal"
+import { ReporteIndividualModal, type PreguntaReporte } from "@/components/reporte-individual-modal"
+import { useReporteEnlace } from "@/lib/use-reporte-enlace"
 import {
   EstadisticasSection,
   type EstadisticasDimension,
@@ -38,6 +42,7 @@ type Usuario = {
   tipo_usuario?: string
   universidad?: string
   fecha?: string
+  indice_anterior?: number | null
   manejo_estres: ManejoEstres
 }
 
@@ -101,7 +106,7 @@ function IndiceBar({ indice, nivel }: { indice: number; nivel: string }) {
       <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
         <div className="h-full rounded-full transition-all" style={{ width: `${indice}%`, backgroundColor: cfg.bar }} />
       </div>
-      <span className="text-xs font-semibold text-[#1F2937] w-12 text-right">{indice.toFixed(1)}%</span>
+      <span className="text-xs font-semibold text-[#1F2937] w-10 text-right">{Math.round(indice)}%</span>
       <NivelBadge nivel={nivel} />
     </div>
   )
@@ -126,20 +131,33 @@ function UsuarioRow({
   usuario,
   notificado,
   onNotificar,
+  onReporte,
 }: {
   usuario: Usuario
-  notificado: boolean
+  notificado: string | null
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+  onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(false)
   const me = usuario.manejo_estres
   const requiereAtencion = me.me_nivel === "Pobre"
+  const retrocedio = usuario.indice_anterior != null && me.me_indice < usuario.indice_anterior
+  const necesitaCita = requiereAtencion || me.me_nivel === "Moderado" || retrocedio
+  const { ref: filaRef, resaltado } = useResaltadoAlerta(usuario.usuario_id, () => setOpen(true))
+  useEffect(() => { if (notificado) setOpen(false) }, [notificado])
   const fecha = usuario.fecha
     ? new Date(usuario.fecha).toLocaleDateString("es-CO", { year: "numeric", month: "short", day: "numeric" })
     : null
 
   return (
-    <div className={`border rounded-xl overflow-hidden ${requiereAtencion ? "border-red-200" : "border-[#E2E8F0]"}`}>
+    <div
+      ref={filaRef}
+      className={`border rounded-xl overflow-hidden transition-shadow ${
+        resaltado
+          ? "border-red-400 ring-2 ring-red-400 ring-offset-2"
+          : requiereAtencion ? "border-red-200" : "border-[#E2E8F0]"
+      }`}
+    >
       {/* div en vez de button: el boton de Notificar de adentro quedaria
           anidado en otro boton, invalido en HTML. */}
       <div
@@ -164,26 +182,40 @@ function UsuarioRow({
               </span>
             )}
           </div>
-          <p className="text-xs text-[#6B7280] truncate">{fecha}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-[#6B7280] truncate">{fecha}</p>
+            <ComparativoAnterior actual={me.me_indice} anterior={usuario.indice_anterior} />
+          </div>
         </div>
         <div className="flex items-center gap-3 ml-4">
           <div className="hidden sm:flex items-center gap-2 w-52"><IndiceBar indice={me.me_indice} nivel={me.me_nivel} /></div>
-          {requiereAtencion && usuario.usuario_id && (
-            notificado ? (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A] shrink-0">
-                <Check className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Notificado</span>
-              </span>
-            ) : (
+          {necesitaCita && usuario.usuario_id && (
+            <div className="flex items-center gap-2 shrink-0">
+              {notificado === "rechazada" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#B45309]">
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Rechazó la cita</span>
+                </span>
+              ) : notificado === "aceptada" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A]">
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Aceptó la cita</span>
+                </span>
+              ) : notificado === "pendiente" ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A34A]">
+                  <Check className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Notificado</span>
+                </span>
+              ) : null}
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onNotificar({ nombre: usuario.nombre, usuarioId: usuario.usuario_id! }) }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shrink-0"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 <Bell className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Notificar</span>
+                <span className="hidden sm:inline">{notificado === "rechazada" ? "Volver a invitar" : "Notificar"}</span>
               </button>
-            )
+            </div>
           )}
           {open ? <ChevronUp className="w-4 h-4 text-[#6B7280] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[#6B7280] shrink-0" />}
         </div>
@@ -192,7 +224,7 @@ function UsuarioRow({
       {open && (
         <div className="px-4 pb-4 pt-2 bg-[#F8FAFC] border-t border-[#E2E8F0]">
           <div className="sm:hidden mb-3">
-            <p className="text-xs font-medium text-[#6B7280] mb-1">Índice ME</p>
+            <p className="text-xs font-medium text-[#6B7280] mb-1">Nivel</p>
             <IndiceBar indice={me.me_indice} nivel={me.me_nivel} />
           </div>
           <div className="flex flex-col gap-1.5 mb-3">
@@ -212,7 +244,28 @@ function UsuarioRow({
               )
             })}
           </div>
-          <p className="text-xs text-[#6B7280]"><span className="font-medium">Programa:</span> {usuario.programa}</p>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-xs text-[#6B7280]"><span className="font-medium">Programa:</span> {usuario.programa}</p>
+            {usuario.usuario_id && (
+              <button
+                type="button"
+                onClick={() =>
+                  onReporte({
+                    usuarioId: usuario.usuario_id!,
+                    preguntas: ME_ITEMS.map((item) => ({
+                      numero: item.replace("me_item_", ""),
+                      texto: ME_ITEM_TEXTO[item],
+                      valor: me[item],
+                    })),
+                  })
+                }
+                className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[#16A34A] text-[#16A34A] hover:bg-[#F0FDF4] transition-colors shrink-0"
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                Reporte para remisión
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -225,10 +278,12 @@ function CarreraCard({
   carrera,
   notificados,
   onNotificar,
+  onReporte,
 }: {
   carrera: Carrera
-  notificados: Set<string>
+  notificados: Record<string, string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+  onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(true)
   return (
@@ -248,8 +303,9 @@ function CarreraCard({
             <UsuarioRow
               key={u.encuesta_id ?? i}
               usuario={u}
-              notificado={!!u.usuario_id && notificados.has(u.usuario_id)}
+              notificado={u.usuario_id ? notificados[u.usuario_id] ?? null : null}
               onNotificar={onNotificar}
+              onReporte={onReporte}
             />
           ))}
         </div>
@@ -262,10 +318,12 @@ function FacultadCard({
   facultad,
   notificados,
   onNotificar,
+  onReporte,
 }: {
   facultad: Facultad
-  notificados: Set<string>
+  notificados: Record<string, string>
   onNotificar: (objetivo: { nombre: string; usuarioId: string }) => void
+  onReporte: (objetivo: { usuarioId: string; preguntas: PreguntaReporte[] }) => void
 }) {
   const [open, setOpen] = useState(true)
   return (
@@ -286,7 +344,7 @@ function FacultadCard({
       {open && (
         <div className="px-4 pb-4 flex flex-col gap-3 border-t border-[#E2E8F0] pt-3">
           {facultad.carreras.map((c) => (
-            <CarreraCard key={c.carrera} carrera={c} notificados={notificados} onNotificar={onNotificar} />
+            <CarreraCard key={c.carrera} carrera={c} notificados={notificados} onNotificar={onNotificar} onReporte={onReporte} />
           ))}
         </div>
       )}
@@ -351,8 +409,7 @@ function extraerOpciones(facultades: Facultad[]) {
 
 // ── Página principal ───────────────────────────────────────────────────────
 
-export default function ManejoEstresPage() {
-  const router = useRouter()
+export default function ManejoEstresPage() {  const router = useRouter()
   const [data, setData] = useState<MEData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -363,7 +420,17 @@ export default function ManejoEstresPage() {
 
   const [stats, setStats] = useState<EstadisticasDimension | null>(null)
   const [notifObjetivo, setNotifObjetivo] = useState<{ nombre: string; usuarioId: string } | null>(null)
-  const [notificados, setNotificados] = useState<Set<string>>(new Set())
+  const [reporteObjetivo, setReporteObjetivo] = useState<{ usuarioId: string; preguntas: PreguntaReporte[] } | null>(null)
+
+  useReporteEnlace(!!data, (id) => {
+    const u = (data?.facultades ?? []).flatMap((f) => f.carreras.flatMap((c) => c.usuarios)).find((x) => x.usuario_id === id)
+    if (!u) return
+    setReporteObjetivo({
+      usuarioId: id,
+      preguntas: ME_ITEMS.map((item) => ({ numero: item.replace("me_item_", ""), texto: ME_ITEM_TEXTO[item], valor: u.manejo_estres[item] })),
+    })
+  })
+  const [notificados, setNotificados] = useState<Record<string, string>>({})
 
   const getToken = useCallback(() => {
     const t = getAccessToken()
@@ -423,6 +490,14 @@ export default function ManejoEstresPage() {
   }, [getToken, mergeOpciones, router])
 
   useEffect(() => { fetchData(filtros) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    api.get("/notificaciones/notificados?rol=manejo_estres")
+      .then((res) => setNotificados((prev) => ({ ...prev, ...res.data })))
+      .catch(() => {})
+  }, [getToken])
 
   const handleFiltrosChange = (f: Filtros) => { setFiltros(f); fetchData(f) }
 
@@ -487,6 +562,7 @@ export default function ManejoEstresPage() {
                   facultad={fac}
                   notificados={notificados}
                   onNotificar={setNotifObjetivo}
+                  onReporte={setReporteObjetivo}
                 />
               ))
             )}
@@ -499,8 +575,19 @@ export default function ManejoEstresPage() {
           nombre={notifObjetivo.nombre}
           usuarioId={notifObjetivo.usuarioId}
           mensajeSugerido="Te invitamos a agendar una cita con manejo del estrés para hablar de tus resultados."
+          rol="manejo_estres"
           onClose={() => setNotifObjetivo(null)}
-          onEnviado={(id) => setNotificados((prev) => new Set(prev).add(id))}
+          onEnviado={(id) => setNotificados((prev) => ({ ...prev, [id]: "pendiente" }))}
+        />
+      )}
+
+      {reporteObjetivo && (
+        <ReporteIndividualModal
+          usuarioId={reporteObjetivo.usuarioId}
+          dimensionClave="manejo_estres"
+          dimensionLabel="Manejo del Estrés"
+          preguntas={reporteObjetivo.preguntas}
+          onClose={() => setReporteObjetivo(null)}
         />
       )}
     </div>

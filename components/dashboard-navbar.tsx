@@ -15,11 +15,13 @@ import {
   Brain,
   Salad,
   Bell,
-  UserCircle,
+  UserCog,
+  HelpCircle,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { PerfilMenu } from "@/components/perfil-menu"
+import { NotificacionItem } from "@/components/notificacion-item"
 import { clearSession, LOGIN_PATH } from "@/lib/auth"
 import { api } from "@/lib/api"
 import type { ProgresoGamificacion, RankTier } from "@/lib/gamificacion"
@@ -30,8 +32,18 @@ interface NavItem {
   icon: React.ReactNode
 }
 
+export type RolNavbar =
+  | "user"
+  | "admin"
+  | "capellan"
+  | "actividad-fisica"
+  | "responsabilidad-salud"
+  | "relaciones-interpersonales"
+  | "manejo-estres"
+  | "nutricion"
+
 interface DashboardNavbarProps {
-  role: "user" | "admin" | "capellan" | "actividad-fisica" | "responsabilidad-salud" | "relaciones-interpersonales" | "manejo-estres" | "nutricion"
+  role: RolNavbar
   userName?: string
 }
 
@@ -39,6 +51,10 @@ type Notificacion = {
   id: number
   remitente_nombre: string
   mensaje: string
+  enlace?: string | null
+  tipo?: string | null
+  puede_responder?: boolean
+  respuesta?: string | null
   leida: boolean
   created_at: string
 }
@@ -53,10 +69,17 @@ const TIPO_USUARIO_LABEL: Record<string, string> = {
   administrativo: "Administrativo",
 }
 
+const AYUDA: NavItem = {
+  label: "Ayuda",
+  href: "/dashboard/ayuda",
+  icon: <HelpCircle className="w-4 h-4" />,
+}
+
 const navItemsByRole: Record<string, NavItem[]> = {
   user: [
     { label: "Dashboard", href: "/dashboard/user", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { label: "Mi perfil", href: "/dashboard/perfil", icon: <UserCircle className="w-4 h-4" /> },
+    { label: "Mi perfil", href: "/dashboard/perfil", icon: <UserCog className="w-4 h-4" /> },
+    AYUDA,
   ],
   admin: [
     { label: "Dashboard", href: "/dashboard/admin", icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -64,21 +87,27 @@ const navItemsByRole: Record<string, NavItem[]> = {
   ],
   capellan: [
     { label: "Psicología Positiva", href: "/dashboard/capellan", icon: <BookHeart className="w-4 h-4" /> },
+    AYUDA,
   ],
   "actividad-fisica": [
     { label: "Actividad Física", href: "/dashboard/actividad-fisica", icon: <Dumbbell className="w-4 h-4" /> },
+    AYUDA,
   ],
   "responsabilidad-salud": [
     { label: "Responsabilidad en Salud", href: "/dashboard/responsabilidad-salud", icon: <Stethoscope className="w-4 h-4" /> },
+    AYUDA,
   ],
   "relaciones-interpersonales": [
     { label: "Relaciones Interpersonales", href: "/dashboard/relaciones-interpersonales", icon: <HeartHandshake className="w-4 h-4" /> },
+    AYUDA,
   ],
   "manejo-estres": [
     { label: "Manejo del Estrés", href: "/dashboard/manejo-estres", icon: <Brain className="w-4 h-4" /> },
+    AYUDA,
   ],
   nutricion: [
     { label: "Nutrición", href: "/dashboard/nutricion", icon: <Salad className="w-4 h-4" /> },
+    AYUDA,
   ],
 }
 
@@ -121,8 +150,10 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
   const [panelAbierto, setPanelAbierto] = useState(false)
 
   useEffect(() => {
-    api.get("/notificaciones").then((res) => setNotificaciones(res.data)).catch(() => {})
-  }, [])
+    const rol = role === "user" || role === "admin" ? null : role.replace(/-/g, "_")
+    const url = rol ? `/notificaciones?rol=${rol}` : "/notificaciones"
+    api.get(url).then((res) => setNotificaciones(res.data)).catch(() => {})
+  }, [role])
 
   // Aviso de medición de seguimiento abierta: cuenta como una notificación por
   // leer en la campana. Solo aplica a los usuarios que responden la encuesta.
@@ -140,6 +171,17 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
     setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)))
     try {
       await api.patch(`/notificaciones/${id}/leida`)
+    } catch {
+      // Se reintentara en la siguiente carga de la pagina.
+    }
+  }
+
+  const responder = async (id: number, acepta: boolean) => {
+    setNotificaciones((prev) => prev.map((n) => (
+      n.id === id ? { ...n, respuesta: acepta ? "aceptada" : "rechazada", puede_responder: false, leida: true } : n
+    )))
+    try {
+      await api.post(`/notificaciones/${id}/responder`, { acepta })
     } catch {
       // Se reintentara en la siguiente carga de la pagina.
     }
@@ -163,15 +205,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
         {/* Left: Brand */}
         <div className="flex items-center gap-3">
           <UniVitaLogo size="sm" />
-          <div className="hidden sm:block">
-            <h1 className="text-lg font-bold font-heading text-[#1F2937] leading-tight">
-              UnacHealth
-            </h1>
-            <p className="text-[10px] text-[#6B7280] leading-none">
-              Plataforma para un estilo de vida saludable
-            </p>
-          </div>
-          <h1 className="sm:hidden text-lg font-bold font-heading text-[#1F2937]">
+          <h1 className="text-xl font-bold font-heading text-[#1F2937]">
             UnacHealth
           </h1>
         </div>
@@ -242,23 +276,13 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
                       </div>
                     )}
                     {notificaciones.map((n) => (
-                      <div key={n.id} className={`px-4 py-3 ${n.leida ? "" : "bg-[#F0FDF4]"}`}>
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-[#1F2937]">{n.remitente_nombre}</p>
-                            <p className="text-xs text-[#6B7280] mt-0.5">{n.mensaje}</p>
-                          </div>
-                          {!n.leida && (
-                            <button
-                              type="button"
-                              onClick={() => marcarLeida(n.id)}
-                              className="text-[10px] font-semibold text-[#16A34A] hover:underline shrink-0 cursor-pointer"
-                            >
-                              Descartar
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                      <NotificacionItem
+                        key={n.id}
+                        n={n}
+                        onDescartar={marcarLeida}
+                        onNavegar={() => setPanelAbierto(false)}
+                        onResponder={responder}
+                      />
                     ))}
                   </div>
                 )}

@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, estadoDeError, redirigirPorError } from "@/lib/api"
-import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { DisclaimerBanner } from "@/components/disclaimer-banner"
+import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
-import { ArrowRight, ArrowLeft, TrendingUp, TrendingDown, Minus, LineChart } from "lucide-react"
+import { ArrowRight, ArrowLeft, TrendingUp, TrendingDown, Minus, LineChart, AlertTriangle } from "lucide-react"
 
 type Dim = { indice: number; nivel: string }
 type Resultados = {
@@ -37,6 +37,8 @@ const DIMS: { key: keyof Resultados; name: string }[] = [
   { key: "nutricion", name: "Nutrición" },
   { key: "manejo_estres", name: "Manejo del estrés" },
 ]
+
+const ORDEN_NIVEL: Record<string, number> = { Pobre: 0, Moderado: 1, Bueno: 2, Excelente: 3 }
 
 const formatFecha = (iso: string) =>
   new Date(iso).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })
@@ -92,6 +94,15 @@ export default function MiEvolucionPage() {
   const base = mediciones[mediciones.length - 1]
   const hayComparacion = mediciones.length >= 2
 
+  const hayRetroceso =
+    hayComparacion &&
+    (Math.round(latest.resultados.indice_global) < Math.round(base.resultados.indice_global) ||
+      DIMS.some((d) => {
+        const antes = ORDEN_NIVEL[(base.resultados[d.key] as Dim).nivel] ?? 0
+        const despues = ORDEN_NIVEL[(latest.resultados[d.key] as Dim).nivel] ?? 0
+        return despues < antes
+      }))
+
   return (
     <>
       <DashboardNavbar role="user" />
@@ -139,6 +150,19 @@ export default function MiEvolucionPage() {
                 {etiquetaMedicion(latest)} · {formatFecha(latest.fecha)}
               </span>
             </div>
+
+            {/* Aviso de retroceso */}
+            {hayRetroceso && (
+              <div className="flex items-start gap-3 rounded-xl border border-[#FCD34D] bg-[#FFFBEB] px-4 py-3">
+                <AlertTriangle className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-[#92400E]">Retrocediste respecto a tu punto de partida</p>
+                  <p className="text-xs text-[#B45309] mt-0.5">
+                    En esta medición bajaste en una o más áreas frente a tu línea base. Revisa las marcadas con ▼ y entra a sus planes para recuperarte.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Global */}
             <div className="rounded-xl border border-[#E2E8F0] bg-white shadow-sm p-5">

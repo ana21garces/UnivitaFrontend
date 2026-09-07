@@ -1,19 +1,25 @@
+// AI assisted development
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { LOGIN_PATH } from "@/lib/auth"
+import { ROLE_HOME } from "@/lib/roles"
 
 /**
- * Middleware to enforce onboarding survey completion.
+ * Middleware de acceso.
  *
- * Logic:
- * - If the user navigates to /dashboard/* and has NOT completed the survey
- *   (cookie `univita8_survey_done` is absent), redirect to /onboarding/survey.
- * - If the user navigates to /onboarding/survey and HAS already completed it,
- *   redirect to /dashboard/user (skip the survey).
+ * TR-001: `/` es la landing pública; el inicio de sesión vive en `/login`.
  *
- * In production this would check a DB-backed session; for the MVP we use a cookie
- * that the client sets after survey submission.
+ * - Sin sesión + /dashboard o /onboarding/survey  → a /login.
+ * - Con sesión + /login                           → a su panel.
+ * - Con sesión + rol con panel propio (profesional/admin) en una ruta ajena
+ *   → a su panel. NUNCA a la encuesta (H-25).
+ * - Con sesión encuestable + /dashboard sin encuesta hecha → a la encuesta.
+ * - Con sesión + /onboarding/survey ya hecha      → al panel.
  */
-// Rutas de dashboard que no requieren encuesta completada (roles sin encuesta)
+const AUTH_COOKIE = "univita8_auth"
+const SURVEY_COOKIE = "univita8_survey_done"
+
+// Rutas de dashboard que no requieren encuesta completada (roles sin encuesta).
 const SURVEY_EXEMPT_PATHS = [
   "/dashboard/admin",
   "/dashboard/capellan",
@@ -23,42 +29,71 @@ const SURVEY_EXEMPT_PATHS = [
   "/dashboard/manejo-estres",
   "/dashboard/nutricion",
   "/dashboard/perfil",
+  "/dashboard/ayuda",
 ]
+
+function leerToken(token: string | undefined): { role?: string } | null {
+  if (!token) return null
+  try {
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+    const relleno = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=")
+    return JSON.parse(atob(relleno)) as { role?: string }
+  } catch {
+    return {}
+  }
+}
 
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
-  const surveyDone = request.cookies.get("univita8_survey_done")?.value === "true"
+  const sesion = leerToken(request.cookies.get(AUTH_COOKIE)?.value)
+  const surveyDone = request.cookies.get(SURVEY_COOKIE)?.value === "true"
 
-  // Responder una medición de seguimiento: quien ya hizo la encuesta puede
-  // volver a entrar con ?seguimiento=1. Sin esto la cookie lo devolvería al
-  // dashboard. No es un permiso real: si no hay medición abierta para esa
-  // persona, el backend rechaza la respuesta.
+  const irA = (destino: string) => {
+    const url = request.nextUrl.clone()
+    url.pathname = destino
+    url.search = ""
+    return NextResponse.redirect(url)
+  }
+
   if (pathname.startsWith("/onboarding/survey") && searchParams.has("seguimiento")) {
+    return sesion ? NextResponse.next() : irA(LOGIN_PATH)
+  }
+
+  if (!sesion) {
+    if (pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding/survey")) {
+      return irA(LOGIN_PATH)
+    }
     return NextResponse.next()
   }
 
-  // Rutas exentas del requisito de encuesta
+  const panelDelRol = sesion.role ? ROLE_HOME[sesion.role] : undefined
+
+  if (pathname === LOGIN_PATH) {
+    return irA(panelDelRol ?? (surveyDone ? "/dashboard/user" : "/onboarding/survey"))
+  }
+
+  if (panelDelRol) {
+    if (SURVEY_EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {
+      return NextResponse.next()
+    }
+    return irA(panelDelRol)
+  }
+
   if (SURVEY_EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
   }
 
-  // Heading to dashboard without completing survey -> redirect to survey
   if (pathname.startsWith("/dashboard") && !surveyDone) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/onboarding/survey"
-    return NextResponse.redirect(url)
+    return irA("/onboarding/survey")
   }
 
-  // Heading to survey but already completed -> skip to dashboard
   if (pathname.startsWith("/onboarding/survey") && surveyDone) {
-    const url = request.nextUrl.clone()
-    url.pathname = "/dashboard/user"
-    return NextResponse.redirect(url)
+    return irA("/dashboard/user")
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/onboarding/survey"],
+  matcher: ["/login", "/dashboard/:path*", "/onboarding/survey"],
 }

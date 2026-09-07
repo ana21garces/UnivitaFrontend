@@ -6,19 +6,8 @@ import Link from "next/link"
 import { api } from "@/lib/api"
 import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from "lucide-react"
 import { UniVitaLogo } from "@/components/univita-logo"
-import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, getRoleFromToken, setSurveyDone } from "@/lib/auth"
-
-// Roles que no pasan por la encuesta: entran directo a su vista.
-// Las claves son el `role` del JWT que emite el backend.
-const ROLE_HOME: Record<string, string> = {
-  admin: "/dashboard/admin",
-  capellan: "/dashboard/capellan",
-  actividad_fisica: "/dashboard/actividad-fisica",
-  responsabilidad_salud: "/dashboard/responsabilidad-salud",
-  relaciones_interpersonales: "/dashboard/relaciones-interpersonales",
-  manejo_estres: "/dashboard/manejo-estres",
-  nutricion: "/dashboard/nutricion",
-};
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, getRoleFromToken, setAuthCookie, setSurveyDone } from "@/lib/auth"
+import { ROLE_HOME } from "@/lib/roles"
 
 export function LoginForm() {
   const router = useRouter()
@@ -51,9 +40,10 @@ export function LoginForm() {
         password,
       })
 
-      // Guardar tokens
+      // Guardar tokens (localStorage para el cliente HTTP, cookie para el middleware)
       localStorage.setItem(ACCESS_TOKEN_KEY, data.access_token)
       localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token)
+      setAuthCookie(data.access_token)
 
       const role = getRoleFromToken(data.access_token)
       const home = role ? ROLE_HOME[role] : undefined

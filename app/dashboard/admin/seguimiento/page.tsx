@@ -63,8 +63,7 @@ function estiloDelta(delta: number) {
 
 const conSigno = (n: number) => `${n > 0 ? "+" : ""}${n.toFixed(1)}`
 
-export default function SeguimientoPage() {
-  const router = useRouter()
+export default function SeguimientoPage() {  const router = useRouter()
   const [ciclos, setCiclos] = useState<Ciclo[]>([])
   const [baseId, setBaseId] = useState<number | null>(null)
   const [seguimientoId, setSeguimientoId] = useState<number | null>(null)
