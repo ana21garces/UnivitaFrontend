@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowLeft, Calendar, GraduationCap } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { PublicHeader } from "@/components/public-header"
 import { DisclaimerBanner } from "@/components/disclaimer-banner"
 import { TRANSPARENCY } from "@/lib/content/transparency"
@@ -10,16 +10,8 @@ export const metadata: Metadata = {
   description: TRANSPARENCY.metodologia.intro,
 }
 
-function formatReviewDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleDateString("es-CO", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
-
 export default function MetodologiaPage() {
-  const { metodologia, comoSeConstruyen, quienesLoAvalan, dimensions } =
+  const { metodologia, comoSeConstruyen, dimensions } =
     TRANSPARENCY
 
   return (
@@ -40,14 +32,6 @@ export default function MetodologiaPage() {
           </h1>
           <p className="mt-4 text-base leading-relaxed text-[#6B7280]">
             {metodologia.intro}
-          </p>
-
-          <p className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white border border-[#E2E8F0] px-3 py-2 text-sm text-[#6B7280]">
-            <Calendar className="h-4 w-4 text-[#16A34A]" aria-hidden="true" />
-            Última revisión del contenido:{" "}
-            <strong className="text-[#1F2937]">
-              {formatReviewDate(TRANSPARENCY.lastReviewedDate)}
-            </strong>
           </p>
 
           {/* Flujo */}
@@ -98,7 +82,7 @@ export default function MetodologiaPage() {
                     <th className="px-4 py-3 font-semibold text-[#1F2937]">
                       Área profesional
                     </th>
-                    <th className="px-4 py-3 font-semibold text-[#1F2937]">
+                    <th className="hidden px-4 py-3 font-semibold text-[#1F2937] sm:table-cell">
                       Niveles con orientación
                     </th>
                   </tr>
@@ -114,10 +98,9 @@ export default function MetodologiaPage() {
                       </td>
                       <td className="px-4 py-3 text-[#6B7280]">
                         {dim.responsibleProfessional}
-                        <br />
-                        <span className="text-xs">{dim.credential}</span>
+                        <span className="hidden text-xs sm:block">{dim.credential}</span>
                       </td>
-                      <td className="px-4 py-3 text-[#6B7280]">
+                      <td className="hidden px-4 py-3 text-[#6B7280] sm:table-cell">
                         {dim.nivelesConRecomendacion.join(", ")}
                       </td>
                     </tr>
@@ -171,35 +154,6 @@ export default function MetodologiaPage() {
             </ul>
           </section>
 
-          {/* Respaldo institucional */}
-          <section className="mt-10" aria-labelledby="respaldo-heading">
-            <h2
-              id="respaldo-heading"
-              className="text-xl font-bold font-heading text-[#1F2937]"
-            >
-              Respaldo institucional
-            </h2>
-            <div className="mt-4 rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm">
-              <div className="flex items-start gap-3">
-                <GraduationCap
-                  className="mt-0.5 h-5 w-5 shrink-0 text-[#16A34A]"
-                  aria-hidden="true"
-                />
-                <div>
-                  <h3 className="font-semibold text-[#1F2937]">
-                    {quienesLoAvalan.institution.name}
-                  </h3>
-                  <p className="text-sm font-medium text-[#16A34A]">
-                    {quienesLoAvalan.institution.subtitle}
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
-                    {quienesLoAvalan.institution.description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* Límites */}
           <section className="mt-10" aria-labelledby="limites-heading">
             <h2
@@ -234,7 +188,7 @@ export default function MetodologiaPage() {
                 >
                   {section.title}
                 </h2>
-                <p className="mt-3 text-base leading-relaxed text-[#6B7280]">
+                <p className="mt-3 text-sm leading-relaxed text-[#6B7280]">
                   {section.content}
                 </p>
               </section>

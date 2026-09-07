@@ -165,7 +165,7 @@ function construirHtml(
   <h2>Detalle de ${esc(dimensionLabel)}</h2>
   <ul class="preguntas">${preguntasHtml || "<li>Sin detalle disponible.</li>"}</ul>
 
-  <p class="pie">Los niveles y porcentajes salen del cuestionario PEPS II. Este reporte es un resumen para acompañar una remisión; no reemplaza la valoración del profesional que atienda el caso.</p>
+  <p class="pie">Los niveles y porcentajes salen del instrumento HPLP-II ASD. Este reporte es un resumen para acompañar una remisión; no reemplaza la valoración del profesional que atienda el caso.</p>
 </body></html>`
 }
 

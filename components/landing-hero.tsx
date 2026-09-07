@@ -20,8 +20,8 @@ const DIMENSIONES = [
   { label: "Actividad física", icon: Dumbbell, color: "#2563EB", bg: "#EFF6FF" },
   { label: "Psicología positiva", icon: Sparkles, color: "#D97706", bg: "#FFFBEB" },
   { label: "Manejo del estrés", icon: Brain, color: "#0891B2", bg: "#ECFEFF" },
-  { label: "Relaciones", icon: Users, color: "#DB2777", bg: "#FDF2F8" },
-  { label: "Salud", icon: Heart, color: "#16A34A", bg: "#F0FDF4" },
+  { label: "Relaciones interpersonales", icon: Users, color: "#DB2777", bg: "#FDF2F8" },
+  { label: "Responsabilidad en salud", icon: Heart, color: "#16A34A", bg: "#F0FDF4" },
 ] as const
 
 export function LandingHero() {
@@ -53,7 +53,7 @@ export function LandingHero() {
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left lg:pt-2">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#BBF7D0] bg-white/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#15803D] shadow-sm backdrop-blur-sm">
             <Leaf className="h-3.5 w-3.5" aria-hidden="true" />
-            Universidad Adventista de Colombia
+            Universidad Adventista de Colombia (UNAC)
           </span>
 
           <h1
@@ -71,7 +71,7 @@ export function LandingHero() {
             <strong className="font-semibold text-[#1F2937]">{TRANSPARENCY.appName}</strong>{" "}
             te guía a conocer tus hábitos en{" "}
             <strong className="text-[#16A34A]">6 dimensiones</strong>, completar
-            desafíos y recibir orientación de profesionales UNAC.
+            desafíos y recibir orientación por parte de profesionales de la UNAC.
           </p>
 
           <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
