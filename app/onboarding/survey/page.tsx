@@ -11,6 +11,7 @@ import {
   buildSurveyPayload,
 } from "@/lib/survey-data";
 import { setSurveyDone } from "@/lib/auth";
+import { DisclaimerBanner } from "@/components/disclaimer-banner";
 
 import Select from "react-select";
 
@@ -257,13 +258,12 @@ export default function OnboardingSurveyPage() {
               Consentimiento informado
             </h2>
 
-            <div className="text-sm text-[#6B7280] leading-relaxed space-y-3 max-h-[55vh] overflow-y-auto pr-2">
+            <div className="text-sm text-[#6B7280] leading-relaxed space-y-3 max-h-[40vh] overflow-y-auto pr-2">
               <p>
-                Reciba un cordial saludo. Esta encuesta tiene como objetivo
-                analizar el grado en que los estudiantes, docentes y personal
-                administrativo adoptan un estilo de vida saludable, con el fin
-                de identificar áreas críticas y desarrollar un programa de
-                intervención.
+                Reciba un cordial saludo. Este cuestionario tiene como objetivo
+                conocer tus hábitos de estilo de vida saludable, con el fin de
+                orientarte en tu proceso de autoconocimiento y mejoramiento
+                personal.
               </p>
 
               <p>
@@ -282,6 +282,9 @@ export default function OnboardingSurveyPage() {
                 Puede retirarse del estudio en cualquier momento.
               </p>
             </div>
+
+            {/* TR-004: aviso informativo — se suma al consentimiento (PG-002), no lo reemplaza */}
+            <DisclaimerBanner compact showMetodologiaLink className="mt-4" />
 
             {/* Dudas o consultas */}
             <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mt-4 px-3 py-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-center">
@@ -332,10 +335,10 @@ export default function OnboardingSurveyPage() {
               <div className="hidden sm:block"><UniVitaLogo size="sm" /></div>
               <div>
                 <h1 className="text-base sm:text-2xl font-bold font-heading text-[#1F2937] leading-tight">
-                  Encuesta de Estilo de Vida
+                  Cuestionario de Estilo de Vida
                 </h1>
                 <p className="text-xs text-[#6B7280] leading-none mt-0.5">
-                  UnacHealth
+                  UnacHealth — guía de autoconocimiento
                 </p>
               </div>
             </div>
@@ -382,12 +385,14 @@ export default function OnboardingSurveyPage() {
             </h2>
 
             <p className="text-sm text-[#065F46] leading-relaxed">
-              Este cuestionario contiene oraciones acerca de su estilo de vida o
-              hábitos personales en el presente. Por favor, responda a cada
-              oración lo más exacto posible y trate de no pasar por alto ninguna
-              oración. Indique la frecuencia con la que usted se dedica a cada
-              conducta o costumbre
+              Este cuestionario contiene oraciones acerca de tu estilo de vida y
+              hábitos personales. Responde con la mayor sinceridad posible; no hay
+              respuestas correctas o incorrectas. Tus respuestas orientan las
+              recomendaciones de bienestar que recibirás.
             </p>
+            <div className="mt-4">
+              <DisclaimerBanner compact />
+            </div>
           </section>
         )}
         {/* Datos demográficos: solo en la primera página. En un seguimiento ya

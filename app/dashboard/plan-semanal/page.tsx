@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import { ArrowLeft, ChevronDown, ChevronUp, Printer, AlertCircle, BookOpen } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { RecomendacionTransparencia } from "@/components/recomendacion-transparencia"
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -470,7 +471,7 @@ export default function PlanSemanalPage() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    if (!getAccessToken()) { router.replace("/"); return }
+    if (!getAccessToken()) { router.replace(LOGIN_PATH); return }
 
     api
       .get("/encuesta/recomendaciones/psicologia-positiva")
@@ -534,6 +535,14 @@ export default function PlanSemanalPage() {
             <AlertCircle className="w-5 h-5 shrink-0" />
             <p className="text-sm">{error}</p>
           </div>
+        )}
+
+        {!loading && !error && data && (
+          <RecomendacionTransparencia
+            dimensionKey="psicologia_positiva"
+            nivel={data.pp_nivel}
+            tarjetas={data.tarjetas}
+          />
         )}
 
         {/* Tarjetas */}

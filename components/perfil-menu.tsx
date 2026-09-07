@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ChevronDown, UserCog, LogOut } from "lucide-react"
 import { ProfileAvatar } from "@/components/profile-avatar"
-import { clearSession } from "@/lib/auth"
+import { clearSession, LOGIN_PATH } from "@/lib/auth"
 import type { RankTier } from "@/lib/gamificacion"
 
 type PerfilMenuProps = {
@@ -36,7 +36,7 @@ export function PerfilMenu({
 
   const cerrarSesion = () => {
     clearSession()
-    router.replace("/")
+    router.replace(LOGIN_PATH)
   }
 
   return (

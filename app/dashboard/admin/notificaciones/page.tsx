@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import {
   Megaphone,
   Send,
@@ -80,7 +80,7 @@ export default function NotificacionesPage() {
 
   useEffect(() => {
     if (!getAccessToken()) {
-      router.replace("/")
+      router.replace(LOGIN_PATH)
       return
     }
     cargar()

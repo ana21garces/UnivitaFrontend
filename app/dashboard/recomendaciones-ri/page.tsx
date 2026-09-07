@@ -4,9 +4,10 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, estadoDeError, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import { ArrowLeft, ChevronDown, ChevronUp, AlertCircle, HeartHandshake } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { RecomendacionTransparencia } from "@/components/recomendacion-transparencia"
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -104,7 +105,7 @@ export default function RecomendacionesRIPage() {
   const [noEncuesta, setNoEncuesta] = useState(false)
 
   useEffect(() => {
-    if (!getAccessToken()) { router.replace("/"); return }
+    if (!getAccessToken()) { router.replace(LOGIN_PATH); return }
 
     api
       .get("/encuesta/recomendaciones/relaciones-interpersonales")
@@ -193,6 +194,14 @@ export default function RecomendacionesRIPage() {
             <AlertCircle className="w-5 h-5 shrink-0" />
             <p className="text-sm">{error}</p>
           </div>
+        )}
+
+        {!loading && !error && !noEncuesta && data && (
+          <RecomendacionTransparencia
+            dimensionKey="relaciones_interpersonales"
+            nivel={data.ri_nivel}
+            tarjetas={data.tarjetas}
+          />
         )}
 
         {/* Tarjetas */}

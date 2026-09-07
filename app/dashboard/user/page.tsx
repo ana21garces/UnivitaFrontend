@@ -6,7 +6,10 @@ import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import Link from "next/link"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
 import { MisionesHoySection } from "@/components/misiones-hoy"
-import { getAccessToken, setSurveyDone } from "@/lib/auth"
+import { DisclaimerBanner } from "@/components/disclaimer-banner"
+import { PorQueVeoEsto } from "@/components/por-que-veo-esto"
+import { getAccessToken, LOGIN_PATH, setSurveyDone } from "@/lib/auth"
+import type { DimensionKey } from "@/lib/content/transparency"
 import { TrendingUp } from "lucide-react"
 
 type DimensionResult = { indice: number; nivel: string }
@@ -80,7 +83,7 @@ export default function UserDashboard() {
 
   useEffect(() => {
     const fetchResultado = async () => {
-      if (!getAccessToken()) { router.push("/"); return }
+      if (!getAccessToken()) { router.push(LOGIN_PATH); return }
       try {
         const { data } = await api.get("/encuesta/resultado")
         setResultado(data)
@@ -131,7 +134,7 @@ export default function UserDashboard() {
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold font-heading text-[#1F2937]">¡Bienvenido de nuevo!</h2>
             <p className="mt-1 text-sm text-[#6B7280]">
-              Completaste el cuestionario PEPS II — aquí están tus resultados y misiones de hoy.
+              Completaste el cuestionario de estilo de vida — aquí está tu orientación según tus respuestas y misiones de hoy.
             </p>
           </div>
           <Link
@@ -145,11 +148,13 @@ export default function UserDashboard() {
 
         <MisionesHoySection />
 
+        <DisclaimerBanner className="mb-6" />
+
         {/* PEPS II global + dimensiones */}
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Resultado global */}
           <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
-            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Resultado global PEPS II</h3>
+            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">Tu orientación global</h3>
             <div className="text-center mb-5">
               <p className="text-5xl font-bold" style={{ color: getNivelColor(resultados.nivel_global) }}>
                 {Math.round(resultados.indice_global)}
@@ -261,6 +266,25 @@ export default function UserDashboard() {
             )}
           </section>
         </div>
+
+        {/* ¿Por qué veo esto? por dimensión */}
+        <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6 mb-6">
+          <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-4">
+            ¿Por qué veo esta orientación?
+          </h3>
+          <p className="text-xs text-[#6B7280] mb-4">
+            Cada dimensión muestra el nivel que obtuviste y el área profesional que redactó el contenido orientativo.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {dimensions.map((dim) => (
+              <PorQueVeoEsto
+                key={dim.key}
+                dimensionKey={dim.key as DimensionKey}
+                nivel={dim.nivel}
+              />
+            ))}
+          </div>
+        </section>
       </main>
     </>
   )

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import {
   Search,
   Plus,
@@ -100,7 +100,7 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     if (!getAccessToken()) {
-      router.replace("/")
+      router.replace(LOGIN_PATH)
       return
     }
     // Traemos también la cuenta propia: sobre uno mismo no se puede cambiar el

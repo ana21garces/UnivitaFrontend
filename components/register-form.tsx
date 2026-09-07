@@ -94,7 +94,7 @@ export function RegisterForm() {
 
       // El registro devuelve el usuario, no tokens. Enviamos al login con la
       // marca para mostrar el aviso "Cuenta creada. Ahora inicia sesión".
-      router.push("/?registro=exitoso")
+      router.push("/login?registro=exitoso")
     } catch (err: any) {
       const detail = err.response?.data?.detail
       let msg = "Error al registrarse"
@@ -290,7 +290,7 @@ export function RegisterForm() {
       {/* Login link */}
       <p className="text-center text-sm text-[#6B7280]">
         ¿Ya tienes cuenta?{" "}
-        <Link href="/" className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors">
+        <Link href="/login" className="font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors">
           Inicia sesión
         </Link>
       </p>

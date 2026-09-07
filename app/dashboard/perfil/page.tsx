@@ -20,7 +20,7 @@ import {
 import { ProfileAvatar } from "@/components/profile-avatar"
 import { XpProgressBar } from "@/components/xp-progress-bar"
 import { api, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import { UniVitaLogo } from "@/components/univita-logo"
 import {
   motivoXpLabel,
@@ -88,7 +88,7 @@ export default function PerfilPage() {
 
   useEffect(() => {
     if (!getAccessToken()) {
-      router.replace("/")
+      router.replace(LOGIN_PATH)
       return
     }
     Promise.all([api.get("/users/me"), cargarGamificacion()])

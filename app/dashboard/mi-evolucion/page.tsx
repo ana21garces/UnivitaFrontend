@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
-import { getAccessToken } from "@/lib/auth"
+import { DisclaimerBanner } from "@/components/disclaimer-banner"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import { ArrowRight, ArrowLeft, TrendingUp, TrendingDown, Minus, LineChart } from "lucide-react"
 
 type Dim = { indice: number; nivel: string }
@@ -73,7 +74,7 @@ export default function MiEvolucionPage() {
 
   useEffect(() => {
     if (!getAccessToken()) {
-      router.replace("/")
+      router.replace(LOGIN_PATH)
       return
     }
     api
@@ -109,6 +110,8 @@ export default function MiEvolucionPage() {
             Compara tu punto de partida con tu medición más reciente.
           </p>
         </div>
+
+        <DisclaimerBanner compact className="mb-6" />
 
         {loading ? (
           <p className="text-sm text-[#6B7280]">Cargando...</p>

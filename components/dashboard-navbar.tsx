@@ -20,7 +20,7 @@ import {
 import { useEffect, useState } from "react"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { PerfilMenu } from "@/components/perfil-menu"
-import { clearSession } from "@/lib/auth"
+import { clearSession, LOGIN_PATH } from "@/lib/auth"
 import { api } from "@/lib/api"
 import type { ProgresoGamificacion, RankTier } from "@/lib/gamificacion"
 
@@ -154,7 +154,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
 
   const handleLogout = () => {
     clearSession()
-    router.replace("/")
+    router.replace(LOGIN_PATH)
   }
 
   return (
