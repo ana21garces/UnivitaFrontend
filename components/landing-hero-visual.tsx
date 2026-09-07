@@ -33,7 +33,7 @@ export function LandingHeroVisual() {
           />
 
           <Image
-            src={`${BASE}/images/hero-ejercicio.jpg`}
+            src={`${BASE}/images/hero-ejercicio.png`}
             alt="Persona corriendo con hábitos saludables y actividad física"
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
