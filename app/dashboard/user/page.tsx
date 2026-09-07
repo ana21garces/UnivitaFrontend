@@ -174,7 +174,7 @@ export default function UserDashboard() {
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold font-heading text-[#1F2937]">¡Bienvenido de nuevo!</h2>
             <p className="mt-1 text-sm text-[#6B7280]">
-              Completaste el cuestionario PEPS II — aquí están tus resultados y misiones de hoy.
+              Completaste el cuestionario de salud — aquí están tus resultados y misiones de hoy.
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -193,7 +193,7 @@ export default function UserDashboard() {
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Resultado global */}
           <section className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm p-6">
-            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Resultado global PEPS II</h3>
+            <h3 className="text-lg font-bold font-heading text-[#1F2937] mb-1">Resultado global</h3>
             <p className="text-xs text-[#6B7280] mb-4">Tu bienestar general según el cuestionario de salud</p>
             <div className="text-center mb-4">
               <p className="text-5xl font-bold" style={{ color: getNivelColor(resultados.nivel_global) }}>

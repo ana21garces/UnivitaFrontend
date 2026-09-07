@@ -37,28 +37,19 @@ export const TRANSPARENCY = {
   appName: "UnacHealth",
   tagline: "Guía informativa para tu bienestar integral",
 
-  /** Fecha de última revisión del contenido de transparencia y metodología */
-  lastReviewedDate: "2026-03-01",
-
   queEsUnacHealth: {
     title: "Qué es UnacHealth",
     paragraphs: [
-      "UnacHealth es una guía informativa y orientativa diseñada para apoyar el mejoramiento personal y el autoconocimiento del estudiante universitario.",
-      "Te ayuda a reflexionar sobre tus hábitos de vida en seis dimensiones del bienestar y a recibir orientación práctica basada en evidencia.",
-      "UnacHealth no es un diagnóstico médico ni una evaluación clínica. No sustituye la atención de un profesional de la salud.",
+      "UnacHealth es una plataforma web que promueve la adopción de estilos de vida saludables en estudiantes universitarios, a partir de un instrumento validado que evalúa sus hábitos en seis dimensiones del bienestar.",
+      "Usa gamificación: misiones diarias, puntos, niveles, insignias y rachas, para sostener la práctica continua de los hábitos, e inteligencia artificial para acompañarte día a día con mensajes personalizados según tu avance.",
+      "Las recomendaciones de cada dimensión son elaboradas y revisadas por el profesional del área, no por la IA. UnacHealth no es un diagnóstico médico ni una evaluación clínica, y no sustituye la atención de un profesional de la salud.",
     ],
   },
 
   quienesLoAvalan: {
     title: "Quiénes lo avalan",
     intro:
-      "Las recomendaciones de UnacHealth son elaboradas y revisadas por un equipo de profesionales especializados, uno por cada área de bienestar, bajo el respaldo institucional de la Universidad Adventista de Colombia (UNAC) y su Capellanía Universitaria.",
-    institution: {
-      name: "Universidad Adventista de Colombia (UNAC)",
-      subtitle: "Capellanía Universitaria",
-      description:
-        "Institución que respalda el proyecto y garantiza que el contenido orientativo se alinea con los valores y el acompañamiento integral del estudiante.",
-    },
+      "Cada recomendación de UnacHealth fue escrita y revisada por el profesional de su área, pensando en el día a día de un estudiante universitario. No son consejos genéricos: cada uno responde a una pregunta concreta del cuestionario en la que mostraste una oportunidad de mejora.",
     experts: [
       {
         displayName: "Profesional en Salud",
@@ -86,7 +77,7 @@ export const TRANSPARENCY = {
         credential: "",
       },
       {
-        displayName: "Profesional en Relaciones",
+        displayName: "Profesional en Relaciones Interpersonales",
         area: "Relaciones Interpersonales",
         credential: "",
       },
@@ -101,22 +92,27 @@ export const TRANSPARENCY = {
   comoSeConstruyen: {
     title: "Cómo se construyen las recomendaciones",
     summary:
-      "Cada recomendación sigue un proceso estructurado que combina un instrumento validado con la revisión humana de expertos. Ninguna tarjeta es generada por inteligencia artificial.",
+      "Cada recomendación combina un instrumento validado con contenido redactado por el profesional de su área. Ninguna tarjeta es generada por inteligencia artificial.",
     steps: [
       {
-        title: "1. Cuestionario validado",
+        title: "1. Respondes el instrumento",
         description:
-          "Completas el instrumento HPLP-II ASD (52 ítems) que explora tus hábitos en seis dimensiones del bienestar.",
+          "Completas el HPLP-II ASD, un instrumento validado de 52 ítems que explora tus hábitos en las seis dimensiones del bienestar.",
       },
       {
-        title: "2. Nivel por dimensión",
+        title: "2. Conoces tu perfil",
         description:
-          "El sistema calcula tu nivel en cada dimensión según la metodología PEPS II. Este nivel orienta qué tipo de contenido recibirás.",
+          "Obtienes un nivel en cada dimensión. Eso muestra dónde estás bien y en qué áreas conviene empezar a trabajar.",
       },
       {
-        title: "3. Tarjetas revisadas por expertos",
+        title: "3. Recibes orientación de tus áreas más bajas",
         description:
-          "Recibes tarjetas de orientación redactadas y revisadas por el profesional del área correspondiente. El contenido es humano, no generado por IA.",
+          "Para las dimensiones donde hay oportunidad de mejora, recibes tarjetas escritas por el profesional de esa área. El contenido es humano, no generado por IA.",
+      },
+      {
+        title: "4. Las practicas día a día",
+        description:
+          "Registras cada recomendación que cumples y avanzas con misiones, puntos y rachas. Cuando vuelvas a responder el instrumento, verás cómo cambió tu perfil.",
       },
     ],
     metodologiaLink: "/metodologia",
@@ -127,7 +123,7 @@ export const TRANSPARENCY = {
     title: "En qué se basa",
     instrument: "HPLP-II ASD",
     instrumentFullName:
-      "Health-Promoting Lifestyle Profile II — Adaptación para el contexto universitario",
+      "Health-Promoting Lifestyle Profile II — adaptación al contexto universitario adventista hispanohablante",
     items: 52,
     dimensions: 6,
     dimensionNames: [
@@ -139,8 +135,8 @@ export const TRANSPARENCY = {
       "Psicología Positiva",
     ],
     paragraphs: [
-      "El instrumento base es el HPLP-II ASD, un cuestionario validado de 52 ítems distribuidos en 6 dimensiones del estilo de vida saludable.",
-      "La adaptación utilizada en UnacHealth fue diseñada para el contexto del estudiante universitario y alineada con la metodología PEPS II del proyecto.",
+      "El instrumento base es el HPLP-II (Health-Promoting Lifestyle Profile II), un cuestionario validado de 52 ítems distribuidos en 6 dimensiones del estilo de vida saludable.",
+      "UnacHealth usa el HPLP-II ASD, su adaptación al contexto universitario adventista hispanohablante.",
     ],
   },
 
@@ -150,7 +146,7 @@ export const TRANSPARENCY = {
    */
   disclaimer: {
     title: "Aviso importante",
-    text: "UnacHealth es una guía informativa y orientativa pensada para tu mejoramiento personal y tu autoconocimiento. Sus resultados y recomendaciones se basan en un cuestionario validado y en el criterio de profesionales de salud, psicología y nutrición, pero no son un diagnóstico ni reemplazan la consulta con un médico o profesional de salud. Ante cualquier duda sobre tu bienestar, consulta a un profesional.",
+    text: "UnacHealth evalúa tus hábitos con un instrumento validado y te acompaña a mejorarlos con orientación escrita por los profesionales de cada área del bienestar. Es una herramienta educativa y de seguimiento personal: no diagnostica, no valora clínicamente tu salud y no reemplaza la atención de un médico o profesional de la salud. Si algo sobre tu bienestar te preocupa, consulta directamente con un profesional.",
     metodologiaLinkLabel: "¿Por qué estas recomendaciones?",
   },
 
@@ -249,32 +245,42 @@ export const TRANSPARENCY = {
       "UnacHealth no diagnostica condiciones de salud ni reemplaza la atención médica o psicológica profesional.",
       "Las recomendaciones son orientativas y se basan en tus respuestas al cuestionario; no predicen tu salud futura.",
       "No todas las dimensiones ni todos los niveles generan tarjetas de orientación (ver tabla más abajo).",
-      "El contenido no es generado por inteligencia artificial: cada tarjeta fue redactada y revisada por un profesional del área.",
+      "Las tarjetas de orientación no las genera la inteligencia artificial: cada una fue redactada y revisada por un profesional del área. La IA solo redacta el saludo del asistente y nunca da orientación de salud.",
       "Los puntos de corte y fórmulas internas no se exponen; solo se muestra el nivel resultante para facilitar tu autoconocimiento.",
     ],
     coberturaTitle: "¿Qué niveles generan recomendaciones?",
     coberturaIntro:
       "No todas las dimensiones cubren los cuatro niveles del instrumento. Esto responde a criterios del equipo profesional de cada área, no a limitaciones técnicas ocultas.",
     nutricionDestacado: {
-      title: "Nutrición: solo niveles Pobre y Moderado",
+      title: "Por qué en algunas dimensiones no ves tarjetas",
       content:
-        "Las profesionales del área de Nutrición y Dietética decidieron que las fichas orientativas de esta dimensión apliquen únicamente a los niveles Pobre y Moderado. Si tu resultado es Bueno o Excelente, no verás tarjetas de nutrición: es una decisión de contenido del equipo profesional, no un fallo de la plataforma.",
+        "Tu nivel puede ser Excelente en cualquiera de las seis dimensiones: eso no cambia. Lo que cambia es hasta qué nivel hay tarjetas de orientación. En cuatro dimensiones se orienta solo en Pobre y Moderado, y en Actividad Física y Psicología Positiva también en Bueno. Es un criterio del equipo profesional de cada área, no una limitación de la plataforma: si tu nivel es más alto, no recibes tarjetas porque ya muestras prácticas saludables ahí.",
     },
     sections: [
       {
         title: "Instrumento: HPLP-II ASD",
         content:
-          "Utilizamos el Health-Promoting Lifestyle Profile II en su adaptación para estudiantes universitarios (HPLP-II ASD). El cuestionario consta de 52 ítems con escala Likert de 1 a 4, agrupados en 6 dimensiones: Relaciones Interpersonales, Nutrición, Responsabilidad en la Salud, Actividad Física, Manejo del Estrés y Psicología Positiva.",
+          "Utilizamos el Health-Promoting Lifestyle Profile II (HPLP-II) en su adaptación al contexto universitario adventista hispanohablante (HPLP-II ASD). Consta de 52 ítems con escala Likert de 1 a 4, agrupados en 6 dimensiones: Relaciones Interpersonales, Nutrición, Responsabilidad en la Salud, Actividad Física, Manejo del Estrés y Psicología Positiva.",
       },
       {
-        title: "Metodología PEPS II",
+        title: "Cómo se calculan los niveles",
         content:
-          "Los índices por dimensión se calculan según la metodología PEPS II, que clasifica cada área en niveles de bienestar (Pobre, Moderado, Bueno, Excelente). Estos niveles orientan qué contenido recibirás, sin exponer fórmulas ni umbrales exactos.",
+          "A partir de tus respuestas se obtiene un índice por dimensión, que clasifica cada área en un nivel de bienestar (Pobre, Moderado, Bueno o Excelente). Estos niveles orientan qué contenido recibirás, sin exponer fórmulas ni umbrales exactos.",
       },
       {
         title: "Recomendaciones humanas",
         content:
           "Las tarjetas de recomendación son redactadas por profesionales de cada área y revisadas antes de publicarse en la plataforma. No se utilizan modelos de inteligencia artificial para generar el contenido orientativo que recibes.",
+      },
+      {
+        title: "Gamificación",
+        content:
+          "Para sostener la práctica continua de los hábitos, la plataforma incorpora misiones diarias, puntos, niveles, insignias y rachas. Estos elementos acompañan el seguimiento de tus recomendaciones y no modifican tu resultado en el cuestionario ni el contenido que recibes.",
+      },
+      {
+        title: "Dónde se usa la inteligencia artificial",
+        content:
+          "Cada día, al abrir tu panel, el asistente te saluda con un mensaje escrito para ti: reconoce tu racha, te recuerda cuántas misiones te faltan y te señala la dimensión en la que vale la pena poner el foco. Ese mensaje lo redacta la inteligencia artificial, así que cambia contigo a medida que avanzas. Su papel es motivarte, no evaluarte: no calcula tus niveles, no decide qué recomendaciones recibes y no da orientación de salud. Eso queda en manos del instrumento y de los profesionales de cada área.",
       },
       {
         title: "Seguimiento y evolución",

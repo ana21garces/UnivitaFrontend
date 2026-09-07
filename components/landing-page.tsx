@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BookOpen,
   ClipboardList,
-  GraduationCap,
   Shield,
   Users,
 } from "lucide-react"
@@ -87,26 +86,6 @@ export function LandingPage() {
                   {quienesLoAvalan.intro}
                 </p>
 
-                <div className="mt-8 rounded-2xl border border-[#E2E8F0] bg-white p-6 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <GraduationCap
-                      className="mt-0.5 h-5 w-5 shrink-0 text-[#16A34A]"
-                      aria-hidden="true"
-                    />
-                    <div>
-                      <h3 className="text-lg font-semibold text-[#1F2937]">
-                        {quienesLoAvalan.institution.name}
-                      </h3>
-                      <p className="text-sm font-medium text-[#16A34A]">
-                        {quienesLoAvalan.institution.subtitle}
-                      </p>
-                      <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">
-                        {quienesLoAvalan.institution.description}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
                 <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {quienesLoAvalan.experts.map((expert) => (
                     <li
@@ -149,7 +128,7 @@ export function LandingPage() {
                   {comoSeConstruyen.summary}
                 </p>
 
-                <ol className="mt-8 grid gap-6 md:grid-cols-3">
+                <ol className="mt-8 grid gap-6 sm:grid-cols-2">
                   {comoSeConstruyen.steps.map((step, i) => (
                     <li
                       key={step.title}
