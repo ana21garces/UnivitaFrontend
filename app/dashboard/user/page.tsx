@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import Link from "next/link"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
-import { DisclaimerBanner } from "@/components/disclaimer-banner"
 import { MisionesHoySection } from "@/components/misiones-hoy"
 import { InsigniasContador } from "@/components/insignias-contador"
 import { AsistenteUnacHealth } from "@/components/asistente-unachealth"
@@ -277,8 +276,6 @@ export default function UserDashboard() {
         <div id="misiones-hoy" className="scroll-mt-24">
           <MisionesHoySection />
         </div>
-
-        <DisclaimerBanner className="mb-6" />
 
         {/* Dimensiones prioritarias — las recomendaciones van al final */}
         <div className="grid lg:grid-cols-1 gap-6 items-start">

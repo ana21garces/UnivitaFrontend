@@ -421,9 +421,6 @@ export default function OnboardingSurveyPage() {
                 </div>
               ))}
             </div>
-            <div className="mt-4">
-              <DisclaimerBanner compact />
-            </div>
           </section>
         )}
         {/* Datos demográficos: solo en la primera página. En un seguimiento ya
