@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import { Search, Eye, X } from "lucide-react"
 import { avatarSrc } from "@/lib/gamificacion"
 
@@ -67,7 +67,7 @@ export default function PerfilesDeSaludPage() {  const router = useRouter()
 
   useEffect(() => {
     if (!getAccessToken()) {
-      router.replace("/")
+      router.replace(LOGIN_PATH)
       return
     }
     api

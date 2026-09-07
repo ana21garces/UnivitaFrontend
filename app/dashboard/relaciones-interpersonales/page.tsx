@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import { RANGO_POR_NIVEL } from "@/lib/niveles"
 import { useResaltadoAlerta } from "@/lib/use-resaltado-alerta"
 import { ChevronDown, ChevronUp, Users, HeartHandshake, AlertCircle, Building2, GraduationCap, Bell, Check, XCircle, FileDown } from "lucide-react"
@@ -436,7 +436,7 @@ export default function RelacionesInterpersonalesPage() {  const router = useRo
 
   const getToken = useCallback(() => {
     const t = getAccessToken()
-    if (!t) { router.replace("/"); return null }
+    if (!t) { router.replace(LOGIN_PATH); return null }
     return t
   }, [router])
 

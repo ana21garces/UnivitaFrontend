@@ -5,9 +5,10 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import { ArrowLeft, ChevronDown, ChevronUp, Printer, AlertCircle, BookOpen, BookHeart } from "lucide-react"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { RecomendacionTransparencia } from "@/components/recomendacion-transparencia"
 import { TarjetaSeguimiento, NivelChip } from "@/components/tarjeta-seguimiento"
 import { SeguimientoControles } from "@/components/seguimiento-controles"
 import type {
@@ -251,13 +252,14 @@ function TarjetaConHoja({
 
 // ── Página principal ───────────────────────────────────────────────────────
 
-export default function PlanSemanalPage() {  const router = useRouter()
+export default function PlanSemanalPage() {
+  const router = useRouter()
   const [data, setData] = useState<TarjetasSeguimientoResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   useEffect(() => {
-    if (!getAccessToken()) { router.replace("/"); return }
+    if (!getAccessToken()) { router.replace(LOGIN_PATH); return }
 
     api
       .get("/seguimiento-recomendaciones/psicologia-positiva/tarjetas")
@@ -367,6 +369,14 @@ export default function PlanSemanalPage() {  const router = useRouter()
                 )}
               </div>
             )}
+            <RecomendacionTransparencia
+              dimensionKey="psicologia_positiva"
+              nivel={data.nivel_dimension}
+              tarjetas={data.tarjetas.map(({ tarjeta }) => ({
+                pregunta_num: tarjeta.pregunta_num,
+                pregunta_texto: tarjeta.pregunta_texto,
+              }))}
+            />
           </>
         )}
         <div className="flex justify-center pt-2 pb-4">

@@ -1,24 +1,20 @@
+// AI assisted development
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { LOGIN_PATH } from "@/lib/auth"
 import { ROLE_HOME } from "@/lib/roles"
 
 /**
  * Middleware de acceso.
  *
- * Antes solo miraba la cookie `univita8_survey_done`, así que un usuario SIN
- * sesión que entraba a /dashboard terminaba viendo la encuesta completa en vez
- * de la pantalla de acceso. Ahora también mira `univita8_auth` (una copia del
- * access token que el cliente pone al iniciar sesión):
+ * TR-001: `/` es la landing pública; el inicio de sesión vive en `/login`.
  *
- *  - Sin sesión + /dashboard o /onboarding/survey  → a la pantalla de acceso.
- *  - Con sesión + /                                → a su panel.
- *  - Con sesión + rol con panel propio (profesional/admin) en una ruta ajena
- *    → a su panel. NUNCA a la encuesta (H-25).
- *  - Con sesión encuestable + /dashboard sin encuesta hecha → a la encuesta.
- *  - Con sesión + /onboarding/survey ya hecha      → al panel.
- *
- * El token también está en localStorage y en cada cabecera Authorization; la
- * cookie no añade superficie, solo permite al middleware ver que hay sesión.
+ * - Sin sesión + /dashboard o /onboarding/survey  → a /login.
+ * - Con sesión + /login                           → a su panel.
+ * - Con sesión + rol con panel propio (profesional/admin) en una ruta ajena
+ *   → a su panel. NUNCA a la encuesta (H-25).
+ * - Con sesión encuestable + /dashboard sin encuesta hecha → a la encuesta.
+ * - Con sesión + /onboarding/survey ya hecha      → al panel.
  */
 const AUTH_COOKIE = "univita8_auth"
 const SURVEY_COOKIE = "univita8_survey_done"
@@ -36,12 +32,6 @@ const SURVEY_EXEMPT_PATHS = [
   "/dashboard/ayuda",
 ]
 
-/**
- * ¿Hay sesión? Devuelve el payload del JWT (para leer el rol) o `null` si no hay
- * cookie. No se rechaza por caducidad: de eso ya se encarga el cliente HTTP
- * (renueva con el refresh token, y si tampoco vale, limpia y manda a "/"). El
- * middleware solo distingue «hay cookie de sesión» de «no hay».
- */
 function leerToken(token: string | undefined): { role?: string } | null {
   if (!token) return null
   try {
@@ -49,7 +39,7 @@ function leerToken(token: string | undefined): { role?: string } | null {
     const relleno = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=")
     return JSON.parse(atob(relleno)) as { role?: string }
   } catch {
-    return {} // cookie presente pero ilegible: se trata como «con sesión»
+    return {}
   }
 }
 
@@ -65,34 +55,23 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Responder una medición de seguimiento con ?seguimiento=1 (quien ya hizo la
-  // encuesta puede volver). Requiere sesión.
   if (pathname.startsWith("/onboarding/survey") && searchParams.has("seguimiento")) {
-    return sesion ? NextResponse.next() : irA("/")
+    return sesion ? NextResponse.next() : irA(LOGIN_PATH)
   }
 
-  // ── Sin sesión ────────────────────────────────────────────────────────────
   if (!sesion) {
     if (pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding/survey")) {
-      return irA("/")
+      return irA(LOGIN_PATH)
     }
-    return NextResponse.next() // "/" y demás públicas
+    return NextResponse.next()
   }
 
-  // ── Con sesión ────────────────────────────────────────────────────────────
-
-  // Panel propio del rol (profesional o admin). Los roles encuestables
-  // (student, o un rol desconocido) no lo tienen.
   const panelDelRol = sesion.role ? ROLE_HOME[sesion.role] : undefined
 
-  // En la pantalla de acceso con sesión activa → a su panel.
-  if (pathname === "/") {
+  if (pathname === LOGIN_PATH) {
     return irA(panelDelRol ?? (surveyDone ? "/dashboard/user" : "/onboarding/survey"))
   }
 
-  // Un rol con panel propio no pasa nunca por la encuesta: si pide una ruta
-  // que no es la suya (/dashboard/user, otra sección, el onboarding) se le
-  // devuelve a su panel, no a /onboarding/survey (H-25).
   if (panelDelRol) {
     if (SURVEY_EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {
       return NextResponse.next()
@@ -100,19 +79,14 @@ export function middleware(request: NextRequest) {
     return irA(panelDelRol)
   }
 
-  // ── Rol encuestable ───────────────────────────────────────────────────────
-
-  // Rutas exentas del requisito de encuesta.
   if (SURVEY_EXEMPT_PATHS.some((p) => pathname.startsWith(p))) {
     return NextResponse.next()
   }
 
-  // /dashboard sin haber hecho la encuesta → a la encuesta.
   if (pathname.startsWith("/dashboard") && !surveyDone) {
     return irA("/onboarding/survey")
   }
 
-  // /onboarding/survey ya hecha → al panel.
   if (pathname.startsWith("/onboarding/survey") && surveyDone) {
     return irA("/dashboard/user")
   }
@@ -121,5 +95,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/onboarding/survey"],
+  matcher: ["/login", "/dashboard/:path*", "/onboarding/survey"],
 }

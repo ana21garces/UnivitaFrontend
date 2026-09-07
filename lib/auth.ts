@@ -1,3 +1,7 @@
+// AI assisted development
+/** Ruta pública de inicio de sesión (TR-001: la raíz `/` es la landing). */
+export const LOGIN_PATH = "/login"
+
 export const ACCESS_TOKEN_KEY = "access_token"
 export const REFRESH_TOKEN_KEY = "refresh_token"
 export const SURVEY_COOKIE = "univita8_survey_done"

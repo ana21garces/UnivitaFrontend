@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation"
 import { api, estadoDeError, redirigirPorError } from "@/lib/api"
 import Link from "next/link"
 import { DashboardNavbar } from "@/components/dashboard-navbar"
+import { DisclaimerBanner } from "@/components/disclaimer-banner"
 import { MisionesHoySection } from "@/components/misiones-hoy"
 import { InsigniasContador } from "@/components/insignias-contador"
 import { AsistenteUnacHealth } from "@/components/asistente-unachealth"
-import { getAccessToken, setSurveyDone } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH, setSurveyDone } from "@/lib/auth"
 import { TrendingUp } from "lucide-react"
 import type { ProgresoDimension } from "@/lib/seguimiento-recomendaciones"
 
@@ -99,14 +100,15 @@ function getBarColor(nivel: string) {
   }
 }
 
-export default function UserDashboard() {  const router = useRouter()
+export default function UserDashboard() {
+  const router = useRouter()
   const [resultado, setResultado] = useState<EncuestaResultado | null>(null)
   const [loading, setLoading] = useState(true)
   const [progreso, setProgreso] = useState<Record<string, ProgresoDimension>>({})
 
   useEffect(() => {
     const fetchResultado = async () => {
-      if (!getAccessToken()) { router.push("/"); return }
+      if (!getAccessToken()) { router.push(LOGIN_PATH); return }
       try {
         const { data } = await api.get("/encuesta/resultado")
         setResultado(data)
@@ -275,6 +277,8 @@ export default function UserDashboard() {  const router = useRouter()
         <div id="misiones-hoy" className="scroll-mt-24">
           <MisionesHoySection />
         </div>
+
+        <DisclaimerBanner className="mb-6" />
 
         {/* Dimensiones prioritarias — las recomendaciones van al final */}
         <div className="grid lg:grid-cols-1 gap-6 items-start">

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import {
   Users,
   ClipboardCheck,
@@ -73,7 +73,7 @@ export default function ReportesPage() {  const router = useRouter()
     params: Record<string, string>,
   ) {
     if (!getAccessToken()) {
-      router.replace("/")
+      router.replace(LOGIN_PATH)
       return
     }
     const clave = `${tipo}-${formato}`

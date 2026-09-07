@@ -4,6 +4,7 @@ import {
   getAccessToken,
   getRefreshToken,
   getRoleFromToken,
+  LOGIN_PATH,
   setAccessToken,
 } from "@/lib/auth"
 import { homePorRol } from "@/lib/roles"
@@ -124,7 +125,7 @@ type Navegable = { replace: (href: string) => void }
 export function redirigirPorError(err: unknown, router: Navegable): boolean {
   if (estadoDeError(err) === 401) {
     clearSession()
-    router.replace("/")
+    router.replace(LOGIN_PATH)
     return true
   }
   if (estadoDeError(err) === 403) {

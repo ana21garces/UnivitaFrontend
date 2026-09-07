@@ -11,6 +11,7 @@ import {
   buildSurveyPayload,
 } from "@/lib/survey-data";
 import { setSurveyDone } from "@/lib/auth";
+import { DisclaimerBanner } from "@/components/disclaimer-banner";
 import { FACULTADES as facultades } from "@/lib/facultades";
 
 import Select from "react-select";
@@ -30,7 +31,8 @@ const DIMENSIONES_CONTEO: [string, number][] = [
 const QUESTIONS_PER_PAGE = 8;
 const TOTAL_PAGES = Math.ceil(TOTAL_QUESTIONS / QUESTIONS_PER_PAGE);
 
-export default function OnboardingSurveyPage() {  const router = useRouter();
+export default function OnboardingSurveyPage() {
+  const router = useRouter();
 
   // Demographics
   const [sexo, setSexo] = useState<Sexo>(null);
@@ -265,6 +267,8 @@ export default function OnboardingSurveyPage() {  const router = useRouter();
               </p>
             </div>
 
+            <DisclaimerBanner compact showMetodologiaLink className="mt-4" />
+
             {/* Dudas o consultas */}
             <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mt-4 px-3 py-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-center">
               <Phone className="w-4 h-4 text-[#16A34A] shrink-0" />
@@ -416,6 +420,9 @@ export default function OnboardingSurveyPage() {  const router = useRouter();
                   <span className="text-xs font-bold text-[#16A34A] shrink-0">{total}</span>
                 </div>
               ))}
+            </div>
+            <div className="mt-4">
+              <DisclaimerBanner compact />
             </div>
           </section>
         )}

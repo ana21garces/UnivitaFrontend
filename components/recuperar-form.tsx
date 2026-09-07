@@ -272,7 +272,7 @@ export function RecuperarForm() {
             </p>
           </div>
           <Link
-            href="/"
+            href="/login"
             className="w-full h-11 flex items-center justify-center rounded-lg text-[#FFFFFF] text-sm font-semibold transition-all shadow-md shadow-[#16A34A]/20 hover:shadow-lg hover:shadow-[#16A34A]/25"
             style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
           >
@@ -286,7 +286,7 @@ export function RecuperarForm() {
         <p className="text-center text-sm text-[#6B7280]">
           ¿Recordaste tu contraseña?{" "}
           <Link
-            href="/"
+            href="/login"
             className="relative font-semibold text-[#16A34A] transition-colors
             after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-0
             after:bg-[#16A34A] after:transition-all after:duration-300

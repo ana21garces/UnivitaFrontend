@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ChevronDown, UserCog, LogOut } from "lucide-react"
 import { api } from "@/lib/api"
-import { clearSession, getAccessToken, getRoleFromToken } from "@/lib/auth"
+import { clearSession, getAccessToken, getRoleFromToken, LOGIN_PATH } from "@/lib/auth"
 import { ProfileAvatar } from "@/components/profile-avatar"
 import type { RankTier } from "@/lib/gamificacion"
 
@@ -57,7 +57,7 @@ export function PerfilMenu({
       await api.post("/auth/logout")
     } catch {}
     clearSession()
-    router.replace("/")
+    router.replace(LOGIN_PATH)
   }
 
   return (

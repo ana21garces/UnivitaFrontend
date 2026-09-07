@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
-import { getAccessToken } from "@/lib/auth"
+import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
 import {
   Search,
   LogIn,
@@ -87,7 +87,7 @@ export default function AuditoriaPage() {  const router = useRouter()
   // Carga de la bitácora (con debounce para no consultar en cada tecla).
   useEffect(() => {
     if (!getAccessToken()) {
-      router.replace("/")
+      router.replace(LOGIN_PATH)
       return
     }
     const t = setTimeout(() => {
