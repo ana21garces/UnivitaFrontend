@@ -234,14 +234,14 @@ export default function OnboardingSurveyPage() {
       {showConsentModal && (
         <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl border border-slate-200 p-6">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#EAF3DE] text-[#16A34A] mx-auto mb-3">
-              <ShieldCheck className="w-6 h-6" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#EAF3DE] text-[#16A34A] mx-auto mb-2">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <h2 className="text-center text-xl font-bold text-[#1F2937] mb-4">
+            <h2 className="text-center text-xl font-bold text-[#1F2937] mb-3">
               Consentimiento informado
             </h2>
 
-            <div className="text-sm text-[#6B7280] leading-relaxed space-y-3 text-justify">
+            <div className="text-sm text-[#6B7280] leading-snug space-y-2 text-justify">
               <p>
                 Reciba un cordial saludo. Esta encuesta tiene como objetivo
                 analizar el grado en que los estudiantes, docentes y personal
@@ -267,17 +267,16 @@ export default function OnboardingSurveyPage() {
               </p>
             </div>
 
-            <DisclaimerBanner compact showMetodologiaLink={false} className="mt-4" />
+            <DisclaimerBanner compact showMetodologiaLink={false} className="mt-3" />
 
             {/* Dudas o consultas */}
-            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mt-4 px-3 py-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-center">
+            <div className="flex flex-wrap items-center justify-center gap-x-2 mt-3 text-sm">
               <Phone className="w-4 h-4 text-[#16A34A] shrink-0" />
-              <span className="text-sm text-[#166534]">Dudas o consultas:</span>
-              <span className="text-sm font-bold text-[#16A34A]">317 7745079</span>
+              <span className="text-[#166534]">Dudas o consultas:</span>
+              <span className="font-bold text-[#16A34A]">317 7745079</span>
             </div>
 
-            {/* Checkbox */}
-            <label className="flex items-start gap-3 mt-5 cursor-pointer">
+            <label className="flex items-start gap-3 mt-4 cursor-pointer">
               <input
                 type="checkbox"
                 checked={consentChecked}
@@ -292,8 +291,7 @@ export default function OnboardingSurveyPage() {
               </span>
             </label>
 
-            {/* Buttons */}
-            <div className="flex justify-center mt-6">
+            <div className="flex justify-center mt-4">
               <button
                 disabled={!consentChecked}
                 onClick={() => {
