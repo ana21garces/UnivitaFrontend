@@ -233,7 +233,7 @@ export default function OnboardingSurveyPage() {
     <div className="min-h-screen bg-[#F8FAFC]" ref={topRef}>
       {showConsentModal && (
         <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white max-w-lg w-full rounded-2xl shadow-xl border border-slate-200 p-6">
+          <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl border border-slate-200 p-6">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#EAF3DE] text-[#16A34A] mx-auto mb-3">
               <ShieldCheck className="w-6 h-6" />
             </div>
@@ -241,7 +241,7 @@ export default function OnboardingSurveyPage() {
               Consentimiento informado
             </h2>
 
-            <div className="text-sm text-[#6B7280] leading-relaxed space-y-3 max-h-[55vh] overflow-y-auto pr-2">
+            <div className="text-sm text-[#6B7280] leading-relaxed space-y-3 text-justify">
               <p>
                 Reciba un cordial saludo. Esta encuesta tiene como objetivo
                 analizar el grado en que los estudiantes, docentes y personal
@@ -267,7 +267,7 @@ export default function OnboardingSurveyPage() {
               </p>
             </div>
 
-            <DisclaimerBanner compact showMetodologiaLink className="mt-4" />
+            <DisclaimerBanner compact showMetodologiaLink={false} className="mt-4" />
 
             {/* Dudas o consultas */}
             <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 mt-4 px-3 py-2.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] text-center">
