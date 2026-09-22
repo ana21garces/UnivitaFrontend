@@ -1,4 +1,6 @@
 import { CompletarDatosDemograficos } from "@/components/completar-datos-demograficos"
+import { UsabilidadGate } from "@/components/usabilidad-gate"
+import { UsabilidadAreaPrompt } from "@/components/usabilidad-area-prompt"
 
 export default function DashboardLayout({
   children,
@@ -9,6 +11,8 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-[#F8FAFC]">
       {children}
       <CompletarDatosDemograficos />
+      <UsabilidadGate />
+      <UsabilidadAreaPrompt />
     </div>
   )
 }

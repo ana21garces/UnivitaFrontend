@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api, redirigirPorError } from "@/lib/api"
 import { getAccessToken, LOGIN_PATH } from "@/lib/auth"
+import { CampanaUsabilidad } from "@/components/campana-usabilidad"
 import {
   CalendarPlus,
   CalendarClock,
@@ -16,6 +17,7 @@ import {
   Pencil,
   Trash2,
   Info,
+  ClipboardCheck,
 } from "lucide-react"
 
 type Ciclo = {
@@ -83,6 +85,7 @@ export default function ConfiguracionPage() {  const router = useRouter()
   const [loadError, setLoadError] = useState("")
   const [saving, setSaving] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
+  const [vista, setVista] = useState<"mediciones" | "usabilidad">("mediciones")
 
   const [showProgramar, setShowProgramar] = useState(false)
   const [formError, setFormError] = useState("")
@@ -318,22 +321,48 @@ export default function ConfiguracionPage() {  const router = useRouter()
   return (
     <>
       <main className="px-4 py-8 sm:px-6">
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold font-heading text-[#1F2937]">Configuración</h2>
-            <p className="mt-1 text-sm text-[#6B7280]">
-              Programa las mediciones de la encuesta y consulta su participación.
-            </p>
-          </div>
-          <button
-            onClick={abrirProgramar}
-            className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold text-[#FFFFFF] shadow-md shadow-[#16A34A]/20 hover:shadow-lg transition-all cursor-pointer shrink-0"
-            style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
-          >
-            <CalendarPlus className="w-4 h-4" />
-            Programar medición
-          </button>
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold font-heading text-[#1F2937]">Configuración</h2>
+          <p className="mt-1 text-sm text-[#6B7280]">
+            Gestiona las mediciones de la encuesta y la campaña de usabilidad.
+          </p>
         </div>
+
+        <div className="mb-6 inline-flex p-1 rounded-xl bg-[#F1F5F9] border border-[#E2E8F0]">
+          {([
+            ["mediciones", "Mediciones", <CalendarClock key="m" className="w-4 h-4" />],
+            ["usabilidad", "Encuesta de usabilidad", <ClipboardCheck key="u" className="w-4 h-4" />],
+          ] as const).map(([val, label, icono]) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setVista(val)}
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                vista === val
+                  ? "bg-[#16A34A] text-white shadow-sm"
+                  : "text-[#475569] hover:text-[#1F2937]"
+              }`}
+            >
+              {icono}
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {vista === "usabilidad" && <CampanaUsabilidad />}
+
+        {vista === "mediciones" && (
+          <>
+            <div className="mb-5 flex justify-end">
+              <button
+                onClick={abrirProgramar}
+                className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-lg text-sm font-semibold text-[#FFFFFF] shadow-md shadow-[#16A34A]/20 hover:shadow-lg transition-all cursor-pointer shrink-0"
+                style={{ background: "linear-gradient(135deg, #16A34A, #22C55E)" }}
+              >
+                <CalendarPlus className="w-4 h-4" />
+                Programar medición
+              </button>
+            </div>
 
         {loadError && (
           <div className="mb-4 flex items-center gap-1.5 text-sm text-[#DC2626]">
@@ -495,6 +524,8 @@ export default function ConfiguracionPage() {  const router = useRouter()
               en la ronda que le corresponde. El nombre sí se puede editar en cualquier momento, y una
               medición que aún no tiene respuestas se puede eliminar.
             </p>
+          </>
+        )}
           </>
         )}
       </main>
