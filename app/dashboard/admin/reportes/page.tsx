@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   ListChecks,
   Target,
+  Gauge,
 } from "lucide-react"
 
 const DIMENSIONES = [
@@ -46,6 +47,8 @@ function Campo({ label, children }: { label: string; children: React.ReactNode }
 export default function ReportesPage() {  const router = useRouter()
 
   const [usuariosRol, setUsuariosRol] = useState("todos")
+  const [usabilidadRol, setUsabilidadRol] = useState("todos")
+  const [usabilidadDetalleRol, setUsabilidadDetalleRol] = useState("todos")
   const [segmento, setSegmento] = useState("todas")
   const [progresionDim, setProgresionDim] = useState("global")
   const [progresionNivel, setProgresionNivel] = useState("")
@@ -297,6 +300,50 @@ export default function ReportesPage() {  const router = useRouter()
               onCsv={() => descargar("misiones", "csv", misionParams)}
               descargando={descargando}
               tipo="misiones"
+            />
+          </ReporteCard>
+
+          {/* 7 · Encuesta de usabilidad (CSUQ) */}
+          <ReporteCard
+            icono={<Gauge className="w-5 h-5" />}
+            titulo="Encuesta de usabilidad"
+            descripcion="Qué tan fácil de usar les pareció la plataforma (cuestionario CSUQ, escala 1–7): promedio por ítem, subescalas y global."
+          >
+            <Campo label="Roles a incluir">
+              <select value={usabilidadRol} onChange={(e) => setUsabilidadRol(e.target.value)} className={selectCls}>
+                <option value="todos">Todos los roles</option>
+                <option value="usuarios">Solo estudiantes</option>
+                <option value="profesionales">Solo profesionales</option>
+              </select>
+            </Campo>
+            <Botones
+              onExcel={() => descargar("usabilidad", "excel", { rol: usabilidadRol })}
+              onPdf={() => descargar("usabilidad", "pdf", { rol: usabilidadRol })}
+              onCsv={() => descargar("usabilidad", "csv", { rol: usabilidadRol })}
+              descargando={descargando}
+              tipo="usabilidad"
+            />
+          </ReporteCard>
+
+          {/* 8 · Encuesta de usabilidad — respuestas (datos crudos) */}
+          <ReporteCard
+            icono={<Table2 className="w-5 h-5" />}
+            titulo="Usabilidad — respuestas"
+            descripcion="Los datos crudos: una fila por persona con sus 16 respuestas (1–7) y sus puntajes, para hacer tu propio análisis. Ideal en Excel o CSV."
+          >
+            <Campo label="Roles a incluir">
+              <select value={usabilidadDetalleRol} onChange={(e) => setUsabilidadDetalleRol(e.target.value)} className={selectCls}>
+                <option value="todos">Todos los roles</option>
+                <option value="usuarios">Solo estudiantes</option>
+                <option value="profesionales">Solo profesionales</option>
+              </select>
+            </Campo>
+            <Botones
+              onExcel={() => descargar("usabilidad_detalle", "excel", { rol: usabilidadDetalleRol })}
+              onPdf={() => descargar("usabilidad_detalle", "pdf", { rol: usabilidadDetalleRol })}
+              onCsv={() => descargar("usabilidad_detalle", "csv", { rol: usabilidadDetalleRol })}
+              descargando={descargando}
+              tipo="usabilidad_detalle"
             />
           </ReporteCard>
         </div>
