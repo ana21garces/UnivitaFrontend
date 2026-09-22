@@ -30,6 +30,7 @@ const SURVEY_EXEMPT_PATHS = [
   "/dashboard/nutricion",
   "/dashboard/perfil",
   "/dashboard/ayuda",
+  "/dashboard/usabilidad",
 ]
 
 function leerToken(token: string | undefined): { role?: string } | null {
