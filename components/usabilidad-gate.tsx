@@ -34,7 +34,7 @@ export function UsabilidadGate() {
           <ClipboardList className="w-7 h-7 text-[#16A34A]" />
         </div>
         <h2 className="mt-4 text-lg font-bold font-heading text-[#1F2937]">
-          Ayúdanos a mejorar UnacHealth
+          Cuestionario de usabilidad en sistemas informáticos (CSUQ)
         </h2>
         <p className="mt-1 text-sm text-[#6B7280]">
           Para continuar, responde una encuesta corta sobre tu experiencia con la plataforma. Toma menos de 5 minutos y es anónima en los resultados.
