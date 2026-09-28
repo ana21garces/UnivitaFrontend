@@ -94,7 +94,7 @@ export default function UsabilidadPage() {
             <span className="text-xs font-semibold uppercase tracking-wide">Encuesta de usabilidad</span>
           </div>
           <h1 className="mt-1 text-2xl sm:text-3xl font-bold font-heading text-[#1F2937]">
-            Ayúdanos a mejorar UnacHealth
+            Cuestionario de usabilidad en sistemas informáticos (CSUQ)
           </h1>
           <p className="mt-1 text-sm text-[#6B7280]">
             Responde esta encuesta corta sobre tu experiencia con la plataforma. Toma menos de 5 minutos y es anónima en los resultados.
