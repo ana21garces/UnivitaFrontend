@@ -80,7 +80,7 @@ export default function MetodologiaPage() {
                       Dimensión
                     </th>
                     <th className="px-4 py-3 font-semibold text-[#1F2937]">
-                      Área profesional
+                      Profesional que la avala
                     </th>
                     <th className="hidden px-4 py-3 font-semibold text-[#1F2937] sm:table-cell">
                       Niveles con orientación
