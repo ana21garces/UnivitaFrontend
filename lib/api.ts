@@ -68,6 +68,10 @@ async function renovarSesion(): Promise<string | null> {
       { refresh_token: refresh },
       { headers: { "ngrok-skip-browser-warning": "true" } },
     )
+    // Si el usuario cerró sesión mientras esta renovación estaba en vuelo, no
+    // hay que resucitarla: escribir el token volvería a poner la cookie y el
+    // middleware lo devolvería de /login a su panel.
+    if (getRefreshToken() !== refresh) return null
     setAccessToken(data.access_token)
     return data.access_token
   } catch {
@@ -105,6 +109,29 @@ api.interceptors.response.use(
     return api(original)
   },
 )
+
+/**
+ * Cierra la sesión. Primero se borra en el navegador y luego se avisa a la
+ * API, nunca al revés: si se esperaba la respuesta y la API estaba lenta, el
+ * botón no hacía nada hasta que respondía.
+ *
+ * El aviso va con `keepalive` para que sobreviva a la navegación, y la
+ * navegación es completa (no `router.replace`) para que Next no sirva la
+ * redirección de `/login` al panel que tenía en caché.
+ */
+export function cerrarSesion() {
+  const token = getAccessToken()
+  clearSession()
+  if (token) {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
+      keepalive: true,
+    }).catch(() => {})
+  }
+  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/$/, "")
+  window.location.replace(`${basePath}${LOGIN_PATH}`)
+}
 
 /** Lo mínimo que se necesita del router. Evita depender de tipos internos de Next. */
 type Navegable = { replace: (href: string) => void }

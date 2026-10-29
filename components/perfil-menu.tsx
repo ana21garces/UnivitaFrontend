@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ChevronDown, UserCog, LogOut } from "lucide-react"
-import { api } from "@/lib/api"
-import { clearSession, getAccessToken, getRoleFromToken, LOGIN_PATH } from "@/lib/auth"
+import { api, cerrarSesion } from "@/lib/api"
+import { getAccessToken, getRoleFromToken } from "@/lib/auth"
 import { ProfileAvatar } from "@/components/profile-avatar"
 import type { RankTier } from "@/lib/gamificacion"
 
@@ -25,7 +24,6 @@ export function PerfilMenu({
   avatarUrl,
   currentLevel,
 }: PerfilMenuProps) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [esUsuario, setEsUsuario] = useState(false)
 
@@ -51,14 +49,6 @@ export function PerfilMenu({
     const id = setInterval(latir, 60000)
     return () => clearInterval(id)
   }, [])
-
-  const cerrarSesion = async () => {
-    try {
-      await api.post("/auth/logout")
-    } catch {}
-    clearSession()
-    router.replace(LOGIN_PATH)
-  }
 
   return (
     <div className="relative">

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   LogOut,
@@ -22,8 +22,7 @@ import { useEffect, useState } from "react"
 import { UniVitaLogo } from "@/components/univita-logo"
 import { PerfilMenu } from "@/components/perfil-menu"
 import { NotificacionItem } from "@/components/notificacion-item"
-import { clearSession, LOGIN_PATH } from "@/lib/auth"
-import { api } from "@/lib/api"
+import { api, cerrarSesion } from "@/lib/api"
 import type { ProgresoGamificacion, RankTier } from "@/lib/gamificacion"
 
 interface NavItem {
@@ -190,14 +189,8 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
   const noLeidas = notificaciones.filter((n) => !n.leida).length + (seguimiento ? 1 : 0)
 
   const pathname = usePathname()
-  const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const navItems = navItemsByRole[role] || []
-
-  const handleLogout = () => {
-    clearSession()
-    router.replace(LOGIN_PATH)
-  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#E2E8F0] bg-[#FFFFFF]">
@@ -338,7 +331,7 @@ export function DashboardNavbar({ role, userName }: DashboardNavbarProps) {
             })}
             <button
               type="button"
-              onClick={() => { setMobileOpen(false); handleLogout() }}
+              onClick={() => { setMobileOpen(false); cerrarSesion() }}
               className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F1F5F9] transition-colors cursor-pointer text-left"
             >
               <LogOut className="w-4 h-4" />
