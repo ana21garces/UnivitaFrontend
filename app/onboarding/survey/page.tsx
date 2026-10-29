@@ -2,9 +2,9 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, AlertCircle, ChevronUp, Send, ShieldCheck, Phone, Clock } from "lucide-react";
+import { CheckCircle2, AlertCircle, ChevronUp, Send, ShieldCheck, Phone, Clock, LogOut } from "lucide-react";
 import { UniVitaLogo } from "@/components/univita-logo";
-import { api, estadoDeError, redirigirPorError } from "@/lib/api";
+import { api, cerrarSesion, estadoDeError, redirigirPorError } from "@/lib/api";
 import {
   QUESTIONS,
   LIKERT_LABELS,
@@ -99,6 +99,10 @@ export default function OnboardingSurveyPage() {
   const [consentChecked, setConsentChecked] = useState(false);
   const [consentAceptadoEn, setConsentAceptadoEn] = useState<string | null>(null);
   const [showIntro, setShowIntro] = useState(false);
+  // Salir sin terminar. El middleware la vuelve a traer aquí al entrar, así que
+  // la encuesta sigue siendo obligatoria; solo deja de atrapar a quien no
+  // puede hacerla en ese momento (el botón «atrás» la devolvía a la encuesta).
+  const [showSalirModal, setShowSalirModal] = useState(false);
 
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -307,6 +311,44 @@ export default function OnboardingSurveyPage() {
                 Continuar
               </button>
             </div>
+            <div className="flex justify-center mt-3">
+              <button
+                onClick={cerrarSesion}
+                className="text-xs text-[#6B7280] underline underline-offset-2 hover:text-[#374151] cursor-pointer"
+              >
+                Salir y hacerla después
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showSalirModal && (
+        <div className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white max-w-md w-full rounded-2xl shadow-xl border border-slate-200 p-6 text-center">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#FEF3C7] text-[#D97706] mx-auto mb-3">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-bold text-[#1F2937] mb-2">¿Salir sin terminar?</h2>
+            <p className="text-sm text-[#6B7280] leading-relaxed">
+              {esSeguimiento
+                ? "Si sales ahora, tus respuestas no se guardarán y tendrás que empezar de nuevo cuando vuelvas a responderla."
+                : "Si sales ahora, tus respuestas no se guardarán. La próxima vez que entres tendrás que hacer la encuesta desde el principio antes de ver tu panel."}
+            </p>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row">
+              <button
+                onClick={() => setShowSalirModal(false)}
+                className="flex-1 py-2.5 rounded-lg text-white text-sm font-semibold"
+                style={{ background: "linear-gradient(135deg,#16A34A,#22C55E)" }}
+              >
+                Seguir respondiendo
+              </button>
+              <button
+                onClick={cerrarSesion}
+                className="flex-1 py-2.5 rounded-lg border border-[#E2E8F0] text-sm font-semibold text-[#DC2626] hover:bg-[#FEF2F2]"
+              >
+                Salir de todos modos
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -372,6 +414,14 @@ export default function OnboardingSurveyPage() {
               <span className="text-xs font-bold text-[#1F2937]">
                 {progressPct}%
               </span>
+              <button
+                onClick={() => (answeredCount > 0 ? setShowSalirModal(true) : cerrarSesion())}
+                title="Salir y hacerla después"
+                className="ml-1 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-[#6B7280] hover:bg-[#F1F5F9] hover:text-[#374151] cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Salir</span>
+              </button>
             </div>
           </div>
 
