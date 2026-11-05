@@ -92,11 +92,14 @@ export function LandingPage() {
                       key={expert.area}
                       className="rounded-xl border border-[#E2E8F0] bg-white p-5 shadow-sm"
                     >
-                      <h3 className="font-semibold text-[#1F2937]">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[#16A34A]">
+                        {expert.area}
+                      </p>
+                      <h3 className="mt-2 font-semibold text-[#1F2937]">
                         {expert.displayName}
                       </h3>
-                      <p className="mt-1 text-sm font-medium text-[#16A34A]">
-                        {expert.area}
+                      <p className="mt-1 text-sm text-[#6B7280]">
+                        {expert.credential}
                       </p>
                     </li>
                   ))}
